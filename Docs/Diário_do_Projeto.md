@@ -18,18 +18,25 @@ Ultima modificacao: 2026-06-12 17:46:16 -03:00
 - Registrada diretriz inicial para modelo comercial SaaS com planos, limites por usuarios, limites de IA e armazenamento.
 - Preparada a estrutura inicial para publicacao em Git/GitHub com `README.md`, `.gitignore` e `AGENTS.md`.
 - Definida protecao para nao versionar planilhas e bases reais de prospeccao no repositorio publico.
+- Repositorio publico criado no GitHub: `https://github.com/RCBonna/xCRM`.
+- Commit inicial publicado na branch `main`.
+- Issues epicas criadas no GitHub:
+  - `#1` Epico: Fundacao SaaS multi tenant
+  - `#2` Epico: CRM Base
+  - `#3` Epico: Importacao de planilha de prospeccao
+  - `#4` Epico: Modulo do Vendedor
+  - `#5` Epico: Modulo do Gestor
+  - `#6` Epico: IA assistiva no MVP
 
 ### Observacoes
 
-- A pasta `D:\OneDrive\Apps\xCRM` ainda nao esta inicializada como repositorio Git.
-- Por isso, ainda nao foi possivel criar ou atualizar Issues no GitHub.
-- Quando o repositorio for criado/conectado ao GitHub, a primeira issue sugerida e uma epica de planejamento do MVP.
+- A pasta `D:\OneDrive\Apps\xCRM` agora esta inicializada como repositorio Git.
+- O repositorio GitHub esta publico.
+- A planilha real de prospeccao esta ignorada pelo `.gitignore` e nao foi publicada.
 - A planilha informa 359 registros no dashboard, mas a leitura estrutural encontrou 379 linhas com algum conteudo; a importacao precisara de normalizacao e validacao.
 
 ### Proximas acoes
 
-- Criar repositorio Git/GitHub.
-- Abrir issues epicas no GitHub.
 - Detalhar UX/design.
 - Criar ERD inicial.
 - Especificar primeira migration SQL para Supabase/PostgreSQL com Prisma.
