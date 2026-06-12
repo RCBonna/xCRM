@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-12 17:46:16 -03:00  
+Ultima modificacao: 2026-06-12 18:19:01 -03:00  
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -137,3 +137,38 @@ Impacto:
 - O schema Prisma devera refletir `tenant_id` em todas as tabelas operacionais.
 - Politicas RLS do Supabase deverao ser criadas e documentadas junto das migrations SQL.
 - A autenticacao sera Supabase Auth, entao a modelagem precisa considerar o vinculo entre usuarios da aplicacao e usuarios autenticados no Supabase.
+
+## 2026-06-12 18:19:01 -03:00 - Schema Prisma inicial
+
+Status: Schema criado, sem migration aplicada
+
+Objetivo:
+
+- Materializar a primeira versao do modelo multi tenant em `prisma/schema.prisma`.
+- Preparar a base para gerar migrations PostgreSQL/Supabase.
+
+Blocos modelados:
+
+- Tenants e usuarios.
+- Equipes e membros.
+- Empresas/prospects e contatos.
+- Pipelines, etapas e oportunidades.
+- Auditoria de movimentacao de etapa.
+- Atividades e follow-ups.
+- Interacoes para linha do tempo.
+- Anexos.
+- Jobs de IA.
+- Importacoes e linhas importadas.
+
+Comandos relacionados:
+
+```bash
+npx prisma init --datasource-provider postgresql
+npm run prisma:validate
+npm run prisma:generate
+```
+
+Notas:
+
+- Ainda nao foi aplicada migration no banco porque o projeto Supabase real nao foi conectado nesta etapa.
+- A proxima etapa de banco deve revisar indices, constraints e politicas RLS antes de aplicar a primeira migration.

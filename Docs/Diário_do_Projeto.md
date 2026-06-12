@@ -30,6 +30,12 @@ Ultima modificacao: 2026-06-12 18:19:01 -03:00
 - Avaliada a decisao sobre temas de cores.
 - Registrada recomendacao para definir agora a arquitetura de temas com `Sistema`, `Claro`, `Escuro`, `Azul` e `Verde`, mantendo `Sistema`, `Claro` e `Escuro` como prioridade do MVP.
 - Criada a issue `#7` Epico: UX, design system e temas.
+- Iniciada a fundacao tecnica do MVP com Next.js, TypeScript, Tailwind, Prisma, Supabase client e estrutura PWA/web.
+- Criado schema Prisma inicial multi tenant para tenants, usuarios, equipes, empresas, contatos, funil, oportunidades, atividades, interacoes, anexos, IA e importacoes.
+- Criada tela inicial operacional para validar densidade visual, funil previsto, metricas da base e seletor de temas.
+- Validado `npm run prisma:validate`, `npm run prisma:generate`, `npm run lint` e `npm run build`.
+- Tentada validacao no navegador interno em `http://127.0.0.1:3000`, mas o navegador nao conseguiu anexar a aba local; o servidor respondeu HTTP 200.
+- Criada a issue `#8` para acompanhar vulnerabilidades moderadas transitivas apontadas por `npm audit`.
 
 ### Observacoes
 
@@ -42,5 +48,5 @@ Ultima modificacao: 2026-06-12 18:19:01 -03:00
 
 - Detalhar UX/design.
 - Definir tokens iniciais de design e preferencia de tema.
-- Criar ERD inicial.
-- Especificar primeira migration SQL para Supabase/PostgreSQL com Prisma.
+- Criar ERD inicial a partir do schema Prisma.
+- Conectar projeto Supabase real e preparar primeira migration SQL com RLS.

@@ -32,3 +32,5 @@ Thumbs.db
 *.tsv
 NFC-e/
 
+
+/src/generated/prisma
