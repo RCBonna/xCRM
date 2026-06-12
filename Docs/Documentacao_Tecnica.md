@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-12 20:13:05 -03:00  
+Ultima modificacao: 2026-06-12 20:36:47 -03:00  
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -54,6 +54,19 @@ npm install
 
 3. Configurar variaveis do Supabase.
 
+Projeto Supabase remoto atual:
+
+- Nome: `xCRM`
+- Ref: `qeadwfyedxhswqcxyeuq`
+- Regiao: Sao Paulo (`sa-east-1`)
+
+Variaveis esperadas:
+
+- `DATABASE_URL`: URL pooler Supabase para uso da aplicacao.
+- `DIRECT_URL`: URL direta Supabase para migrations e operacoes administrativas.
+- `NEXT_PUBLIC_SUPABASE_URL`: URL publica do projeto Supabase.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: chave publica/publishable do Supabase.
+
 4. Gerar Prisma Client:
 
 ```bash
@@ -92,11 +105,22 @@ Entidades iniciais:
 - Jobs de IA.
 - Importacoes.
 
-Observacao:
+Migration inicial aplicada:
 
-- Nenhuma migration foi aplicada ainda.
-- A primeira migration deve ser criada depois da conexao com o projeto Supabase real.
-- RLS deve ser documentado junto da migration.
+- `supabase/migrations/20260612203250_init_xcrm_core.sql`
+
+Resultado remoto:
+
+- 16 tabelas principais criadas.
+- Row Level Security ativado nas entidades multi tenant.
+- 62 policies RLS criadas.
+- Helper privado `private.current_tenant_ids()` criado para isolamento por tenant.
+
+Observacoes:
+
+- O acesso direto via Prisma usa credenciais de banco e deve continuar aplicando filtros de tenant na camada de aplicacao.
+- O acesso via Supabase API para usuarios autenticados fica limitado por RLS.
+- `anon` nao recebeu permissao nas tabelas do CRM.
 
 ## Temas
 
@@ -125,12 +149,24 @@ npm run lint
 npm run build
 ```
 
+Validacoes apos aplicar a migration:
+
+```bash
+npm run prisma:validate
+npm run lint
+npm run build
+supabase migration list --linked
+supabase db lint --linked --schema public --level warning --fail-on error
+```
+
 ## Pendencias tecnicas imediatas
 
-- Conectar projeto Supabase real.
-- Definir `.env` local com credenciais reais.
-- Criar primeira migration Prisma.
-- Documentar politicas RLS.
+- Implementar autenticacao com Supabase Auth.
+- Criar tenant ativo na sessao.
+- Criar script/fluxo seguro para primeiro tenant e primeiro usuario owner.
 - Criar ERD inicial.
-- Implementar autenticacao e tenant ativo.
 
+## Issues tecnicas relacionadas
+
+- `#1` Fundacao SaaS multi tenant.
+- `#10` Supabase Auth e onboarding do primeiro tenant.

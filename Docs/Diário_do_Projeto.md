@@ -39,6 +39,16 @@ Ultima modificacao: 2026-06-12 18:19:01 -03:00
 - Registrada regra permanente: a cada mudanca, atualizar documentacao tecnica e manual do usuario quando houver impacto tecnico, funcional ou visivel.
 - Criados os documentos vivos `Docs/Documentacao_Tecnica.md` e `Docs/Manual_do_Usuario.md`.
 - Criada a issue `#9` para acompanhar a manutencao da documentacao tecnica e do manual do usuario.
+- Criado o projeto Supabase remoto `xCRM`, ref `qeadwfyedxhswqcxyeuq`, na regiao Sao Paulo (`sa-east-1`).
+- Linkado o repositorio local ao projeto Supabase remoto.
+- Preenchido `.env` local com `DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_SUPABASE_URL` e chave publica do Supabase; o arquivo continua ignorado pelo Git.
+- Ajustado o schema Prisma para usar `gen_random_uuid()` como default de UUID no banco.
+- Gerada e aplicada a migration `20260612203250_init_xcrm_core.sql` no Supabase remoto.
+- A migration criou 16 tabelas publicas e ativou RLS nas entidades multi tenant.
+- Verificado no banco remoto: 16 tabelas criadas, 62 policies RLS e migration registrada no historico remoto.
+- Validado `npm run prisma:validate`, `npm run lint` e `npm run build` depois da conexao Supabase/migration.
+- Validado `supabase db lint --linked --schema public --level warning --fail-on error`, sem erros de schema.
+- Criada a issue `#10` para implementar Supabase Auth e onboarding do primeiro tenant/owner.
 
 ### Observacoes
 
@@ -52,4 +62,5 @@ Ultima modificacao: 2026-06-12 18:19:01 -03:00
 - Detalhar UX/design.
 - Definir tokens iniciais de design e preferencia de tema.
 - Criar ERD inicial a partir do schema Prisma.
-- Conectar projeto Supabase real e preparar primeira migration SQL com RLS.
+- Implementar fluxo de autenticacao Supabase Auth e tenant ativo.
+- Criar seed/onboarding seguro para primeiro tenant e primeiro usuario owner.

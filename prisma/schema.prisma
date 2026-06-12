@@ -78,7 +78,7 @@ enum JobStatus {
 }
 
 model Tenant {
-  id        String       @id @default(uuid()) @db.Uuid
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name      String
   legalName String?      @map("legal_name")
   document  String?
@@ -107,7 +107,7 @@ model Tenant {
 }
 
 model User {
-  id         String       @id @default(uuid()) @db.Uuid
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId   String       @map("tenant_id") @db.Uuid
   authUserId String?      @unique @map("auth_user_id") @db.Uuid
   name       String
@@ -137,7 +137,7 @@ model User {
 }
 
 model Team {
-  id            String   @id @default(uuid()) @db.Uuid
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId      String   @map("tenant_id") @db.Uuid
   name          String
   managerUserId String?  @map("manager_user_id") @db.Uuid
@@ -153,7 +153,7 @@ model Team {
 }
 
 model TeamMember {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId  String   @map("tenant_id") @db.Uuid
   teamId    String   @map("team_id") @db.Uuid
   userId    String   @map("user_id") @db.Uuid
@@ -169,7 +169,7 @@ model TeamMember {
 }
 
 model Account {
-  id           String        @id @default(uuid()) @db.Uuid
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId     String        @map("tenant_id") @db.Uuid
   ownerUserId  String?       @map("owner_user_id") @db.Uuid
   name         String
@@ -199,7 +199,7 @@ model Account {
 }
 
 model Contact {
-  id           String   @id @default(uuid()) @db.Uuid
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId     String   @map("tenant_id") @db.Uuid
   accountId    String   @map("account_id") @db.Uuid
   ownerUserId  String?  @map("owner_user_id") @db.Uuid
@@ -227,7 +227,7 @@ model Contact {
 }
 
 model Pipeline {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId  String   @map("tenant_id") @db.Uuid
   name      String
   isDefault Boolean  @default(false) @map("is_default")
@@ -243,7 +243,7 @@ model Pipeline {
 }
 
 model PipelineStage {
-  id         String   @id @default(uuid()) @db.Uuid
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId   String   @map("tenant_id") @db.Uuid
   pipelineId String   @map("pipeline_id") @db.Uuid
   name       String
@@ -266,7 +266,7 @@ model PipelineStage {
 }
 
 model Opportunity {
-  id                String            @id @default(uuid()) @db.Uuid
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId          String            @map("tenant_id") @db.Uuid
   accountId         String            @map("account_id") @db.Uuid
   contactId         String?           @map("contact_id") @db.Uuid
@@ -297,7 +297,7 @@ model Opportunity {
 }
 
 model StageMovement {
-  id              String   @id @default(uuid()) @db.Uuid
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId        String   @map("tenant_id") @db.Uuid
   opportunityId   String   @map("opportunity_id") @db.Uuid
   fromStageId     String?  @map("from_stage_id") @db.Uuid
@@ -317,7 +317,7 @@ model StageMovement {
 }
 
 model Activity {
-  id            String         @id @default(uuid()) @db.Uuid
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId      String         @map("tenant_id") @db.Uuid
   accountId     String?        @map("account_id") @db.Uuid
   contactId     String?        @map("contact_id") @db.Uuid
@@ -345,7 +345,7 @@ model Activity {
 }
 
 model Interaction {
-  id            String               @id @default(uuid()) @db.Uuid
+  id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId      String               @map("tenant_id") @db.Uuid
   accountId     String?              @map("account_id") @db.Uuid
   contactId     String?              @map("contact_id") @db.Uuid
@@ -370,7 +370,7 @@ model Interaction {
 }
 
 model Attachment {
-  id               String   @id @default(uuid()) @db.Uuid
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId         String   @map("tenant_id") @db.Uuid
   entityType       String   @map("entity_type")
   entityId         String   @map("entity_id") @db.Uuid
@@ -388,7 +388,7 @@ model Attachment {
 }
 
 model AiJob {
-  id              String    @id @default(uuid()) @db.Uuid
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId        String    @map("tenant_id") @db.Uuid
   requestedByUserId String  @map("requested_by_user_id") @db.Uuid
   jobType         String    @map("job_type")
@@ -408,7 +408,7 @@ model AiJob {
 }
 
 model ImportBatch {
-  id               String    @id @default(uuid()) @db.Uuid
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId         String    @map("tenant_id") @db.Uuid
   uploadedByUserId String    @map("uploaded_by_user_id") @db.Uuid
   fileName         String    @map("file_name")
@@ -429,7 +429,7 @@ model ImportBatch {
 }
 
 model ImportRow {
-  id             String    @id @default(uuid()) @db.Uuid
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId       String    @map("tenant_id") @db.Uuid
   importId       String    @map("import_id") @db.Uuid
   rowNumber      Int       @map("row_number")
@@ -446,3 +446,4 @@ model ImportRow {
   @@index([tenantId, status])
   @@map("import_rows")
 }
+

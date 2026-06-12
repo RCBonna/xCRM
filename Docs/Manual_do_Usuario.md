@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-12 20:13:05 -03:00  
+Ultima modificacao: 2026-06-12 20:36:47 -03:00  
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -75,3 +75,18 @@ No MVP, a prioridade e garantir:
 - IA assistiva.
 - Relatorios de gestor.
 
+## Situacao atual do acesso
+
+O projeto Supabase ja foi criado e o banco inicial foi preparado, mas o login ainda nao esta disponivel para usuarios finais.
+
+Enquanto o fluxo de autenticacao nao for implementado:
+
+- Nao ha usuario final para entrar no sistema.
+- Nao ha tenant/empresa criado pela interface.
+- A tela inicial continua sendo uma tela operacional de fundacao tecnica.
+
+Proximo recurso esperado para uso real:
+
+- Login com Supabase Auth.
+- Criacao ou associacao do primeiro tenant.
+- Primeiro usuario owner da empresa.
