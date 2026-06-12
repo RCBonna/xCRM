@@ -1,7 +1,7 @@
 # Plano de Implementacao do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-12 17:46:16 -03:00  
+Ultima modificacao: 2026-06-12 18:19:01 -03:00  
 Status: Proposta inicial para validacao e evolucao diaria
 
 ## 1. Objetivo
@@ -512,6 +512,35 @@ Diretriz de design:
 - Desktop eficiente para gestor.
 - Poucos cliques para registrar contato e proximo passo.
 
+### Temas de cores
+
+Decisao recomendada:
+
+- Definir agora a arquitetura de temas.
+- Implementar suporte a multiplos temas desde o inicio do design system.
+- Adiar a lapidacao visual das paletas finais para a fase de UX/design.
+
+Temas previstos:
+
+- `Sistema`: segue a preferencia do dispositivo/navegador.
+- `Claro`: interface clara fixa.
+- `Escuro`: interface escura fixa.
+- `Azul`: tema de destaque azul, adequado para uso corporativo tradicional.
+- `Verde`: tema de destaque verde, adequado para leitura de funil, progresso e operacao comercial.
+
+Motivo:
+
+- O suporte a temas afeta tokens de design, componentes, preferencias do usuario e persistencia no banco/local storage, entao e melhor prever a estrutura agora.
+- As cores finais devem ser refinadas depois com telas reais, para evitar decidir uma paleta sem validar densidade, contraste, tabelas, kanban, dashboards e mobile.
+- A implementacao deve usar variaveis/tokens, nao classes espalhadas por tela, para permitir trocar tema sem reescrever componentes.
+
+Regras iniciais:
+
+- `Sistema`, `Claro` e `Escuro` devem entrar no MVP.
+- `Azul` e `Verde` podem entrar como temas opcionais se o custo for baixo depois que os tokens estiverem prontos.
+- Todos os temas precisam respeitar contraste, legibilidade e estados de foco/erro/sucesso.
+- A preferencia de tema deve ser salva por usuario e respeitar tenant quando houver configuracao visual da empresa.
+
 ## 8. Stack tecnologica sugerida
 
 ### Web
@@ -779,6 +808,7 @@ IA minima no MVP, se desejado:
 - Autenticacao: Supabase Auth.
 - Primeiro alvo mobile: PWA.
 - Nivel inicial de IA no MVP: IA assistiva simples e contextual.
+- Arquitetura de temas: prever `Sistema`, `Claro`, `Escuro`, `Azul` e `Verde`, com `Sistema`, `Claro` e `Escuro` como prioridade do MVP.
 
 ### Modelo comercial do SaaS
 

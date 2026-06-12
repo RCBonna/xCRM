@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-12 17:46:16 -03:00
+Ultima modificacao: 2026-06-12 18:19:01 -03:00
 
 ## 2026-06-12
 
@@ -27,6 +27,9 @@ Ultima modificacao: 2026-06-12 17:46:16 -03:00
   - `#4` Epico: Modulo do Vendedor
   - `#5` Epico: Modulo do Gestor
   - `#6` Epico: IA assistiva no MVP
+- Avaliada a decisao sobre temas de cores.
+- Registrada recomendacao para definir agora a arquitetura de temas com `Sistema`, `Claro`, `Escuro`, `Azul` e `Verde`, mantendo `Sistema`, `Claro` e `Escuro` como prioridade do MVP.
+- Criada a issue `#7` Epico: UX, design system e temas.
 
 ### Observacoes
 
@@ -38,5 +41,6 @@ Ultima modificacao: 2026-06-12 17:46:16 -03:00
 ### Proximas acoes
 
 - Detalhar UX/design.
+- Definir tokens iniciais de design e preferencia de tema.
 - Criar ERD inicial.
 - Especificar primeira migration SQL para Supabase/PostgreSQL com Prisma.
