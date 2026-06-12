@@ -22,6 +22,8 @@ A documentacao viva do projeto fica em:
 - `Docs/Plano_Implementacao_CRM.md`
 - `Docs/Diário_do_Projeto.md`
 - `Docs/SQL_Necessidades_e_Mudancas.md`
+- `Docs/Documentacao_Tecnica.md`
+- `Docs/Manual_do_Usuario.md`
 
 ## Desenvolvimento local
 

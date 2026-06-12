@@ -36,6 +36,9 @@ Ultima modificacao: 2026-06-12 18:19:01 -03:00
 - Validado `npm run prisma:validate`, `npm run prisma:generate`, `npm run lint` e `npm run build`.
 - Tentada validacao no navegador interno em `http://127.0.0.1:3000`, mas o navegador nao conseguiu anexar a aba local; o servidor respondeu HTTP 200.
 - Criada a issue `#8` para acompanhar vulnerabilidades moderadas transitivas apontadas por `npm audit`.
+- Registrada regra permanente: a cada mudanca, atualizar documentacao tecnica e manual do usuario quando houver impacto tecnico, funcional ou visivel.
+- Criados os documentos vivos `Docs/Documentacao_Tecnica.md` e `Docs/Manual_do_Usuario.md`.
+- Criada a issue `#9` para acompanhar a manutencao da documentacao tecnica e do manual do usuario.
 
 ### Observacoes
 
