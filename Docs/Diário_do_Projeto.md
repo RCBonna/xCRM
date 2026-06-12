@@ -49,6 +49,13 @@ Ultima modificacao: 2026-06-12 18:19:01 -03:00
 - Validado `npm run prisma:validate`, `npm run lint` e `npm run build` depois da conexao Supabase/migration.
 - Validado `supabase db lint --linked --schema public --level warning --fail-on error`, sem erros de schema.
 - Criada a issue `#10` para implementar Supabase Auth e onboarding do primeiro tenant/owner.
+- Implementado login/cadastro com Supabase Auth.
+- Implementado onboarding do primeiro tenant: cria empresa, usuario owner, funil padrao, etapas iniciais e primeira tarefa interna.
+- Criado dashboard autenticado com metricas reais do tenant, funil padrao e acao de sair.
+- Alterada a rota raiz para redirecionar conforme sessao: sem login vai para `/login`, com login sem tenant vai para `/onboarding`, com tenant vai para `/dashboard`.
+- Criada migration `20260612211500_allow_auth_user_multi_tenant.sql` para permitir que o mesmo usuario Supabase Auth participe de mais de um tenant.
+- Validado `npm run prisma:generate`, `npm run prisma:validate`, `npm run lint` e `npm run build`.
+- Validado HTTP local: `/login` respondeu 200 e `/dashboard` respondeu 307 sem sessao.
 
 ### Observacoes
 
@@ -62,5 +69,5 @@ Ultima modificacao: 2026-06-12 18:19:01 -03:00
 - Detalhar UX/design.
 - Definir tokens iniciais de design e preferencia de tema.
 - Criar ERD inicial a partir do schema Prisma.
-- Implementar fluxo de autenticacao Supabase Auth e tenant ativo.
-- Criar seed/onboarding seguro para primeiro tenant e primeiro usuario owner.
+- Testar manualmente cadastro, login e onboarding com um usuario real.
+- Implementar layout autenticado mais completo e protecao de rotas por papel.

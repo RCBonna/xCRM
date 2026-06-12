@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-12 20:36:47 -03:00  
+Ultima modificacao: 2026-06-12 20:50:44 -03:00  
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -274,3 +274,37 @@ Proxima necessidade SQL:
 - Criar fluxo seguro de onboarding para primeiro tenant e primeiro usuario owner.
 - Revisar se as permissoes de `authenticated` devem ser refinadas por role antes das telas administrativas.
 - Criar seed controlado ou script administrativo para bootstrap inicial.
+
+## 2026-06-12 20:50:44 -03:00 - Auth user multi tenant
+
+Status: Aplicada no banco remoto
+
+Migration:
+
+- Arquivo: `supabase/migrations/20260612211500_allow_auth_user_multi_tenant.sql`
+
+Objetivo:
+
+- Permitir que uma mesma identidade do Supabase Auth possa participar de mais de um tenant no futuro.
+- Alinhar a constraint de `users.auth_user_id` com a funcao RLS `private.current_tenant_ids()`, que ja retorna uma lista de tenants por usuario autenticado.
+
+Comandos executados:
+
+```bash
+supabase db push --linked --password [REDACTED] --yes
+npm run prisma:validate
+```
+
+SQL aplicado:
+
+```sql
+DROP INDEX IF EXISTS "public"."users_auth_user_id_key";
+
+CREATE INDEX IF NOT EXISTS "users_auth_user_id_idx"
+ON "public"."users"("auth_user_id");
+```
+
+Observacao:
+
+- A tabela `users` continua com unicidade por tenant/e-mail.
+- O onboarding atual cria uma linha `users` vinculada ao `auth.uid()` do Supabase para o tenant criado.

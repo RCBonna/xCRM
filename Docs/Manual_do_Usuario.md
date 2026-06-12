@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-12 20:36:47 -03:00  
+Ultima modificacao: 2026-06-12 20:50:44 -03:00  
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -63,10 +63,56 @@ No MVP, a prioridade e garantir:
 - Claro.
 - Escuro.
 
+## Login e primeiro acesso
+
+O login inicial ja esta disponivel em `/login`.
+
+Na tela de login, o usuario pode:
+
+- Entrar com e-mail e senha.
+- Criar um novo acesso com nome, e-mail e senha.
+
+Depois de criar o acesso:
+
+- Se o projeto exigir confirmacao de e-mail, o usuario deve confirmar o e-mail antes de entrar.
+- Se a sessao ja estiver ativa, o usuario sera levado para o onboarding.
+
+## Onboarding da empresa
+
+O onboarding esta disponivel em `/onboarding` para usuarios autenticados que ainda nao tem empresa vinculada.
+
+Nesta tela, o usuario informa:
+
+- Nome da empresa.
+- Nome do usuario owner.
+
+Ao confirmar, o sistema cria:
+
+- A empresa/tenant.
+- O usuario owner.
+- O funil comercial padrao.
+- As etapas iniciais do funil.
+- Uma primeira tarefa interna.
+
+Depois disso, o usuario vai para `/dashboard`.
+
+## Dashboard inicial
+
+O dashboard inicial esta disponivel em `/dashboard`.
+
+Ele mostra:
+
+- Nome da empresa atual.
+- Perfil do usuario.
+- Metricas reais do tenant.
+- Etapas do funil padrao.
+- Proximas acoes sugeridas.
+- Botao de sair.
+- Seletor de temas.
+
 ## Fluxos ainda nao implementados
 
-- Login.
-- Selecao de empresa/tenant.
+- Selecao de empresa/tenant quando o usuario participar de mais de uma empresa.
 - Cadastro de empresa/prospect.
 - Cadastro de contato.
 - Funil real.
@@ -77,16 +123,6 @@ No MVP, a prioridade e garantir:
 
 ## Situacao atual do acesso
 
-O projeto Supabase ja foi criado e o banco inicial foi preparado, mas o login ainda nao esta disponivel para usuarios finais.
+O login, o cadastro de acesso e o onboarding inicial ja existem.
 
-Enquanto o fluxo de autenticacao nao for implementado:
-
-- Nao ha usuario final para entrar no sistema.
-- Nao ha tenant/empresa criado pela interface.
-- A tela inicial continua sendo uma tela operacional de fundacao tecnica.
-
-Proximo recurso esperado para uso real:
-
-- Login com Supabase Auth.
-- Criacao ou associacao do primeiro tenant.
-- Primeiro usuario owner da empresa.
+Ainda falta validar manualmente o fluxo completo com um usuario real pela interface e depois evoluir permissao por papel, selecao de tenant e telas operacionais.

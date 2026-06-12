@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-12 20:36:47 -03:00  
+Ultima modificacao: 2026-06-12 20:50:44 -03:00  
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -39,6 +39,10 @@ Atualizar quando houver mudancas em:
 - `src/app`: rotas e telas do App Router.
 - `src/components`: componentes reutilizaveis de interface.
 - `src/lib`: clientes e utilitarios de infraestrutura.
+- `src/app/auth/actions.ts`: Server Actions de login, cadastro, logout e onboarding.
+- `src/app/login`: tela de login e criacao de acesso.
+- `src/app/onboarding`: criacao do primeiro tenant e usuario owner.
+- `src/app/dashboard`: painel autenticado inicial.
 - `prisma/schema.prisma`: modelo de dados multi tenant.
 - `Docs`: documentacao viva do projeto.
 
@@ -108,6 +112,7 @@ Entidades iniciais:
 Migration inicial aplicada:
 
 - `supabase/migrations/20260612203250_init_xcrm_core.sql`
+- `supabase/migrations/20260612211500_allow_auth_user_multi_tenant.sql`
 
 Resultado remoto:
 
@@ -170,3 +175,37 @@ supabase db lint --linked --schema public --level warning --fail-on error
 
 - `#1` Fundacao SaaS multi tenant.
 - `#10` Supabase Auth e onboarding do primeiro tenant.
+
+## Autenticacao e onboarding
+
+Fluxo implementado:
+
+1. Usuario acessa `/login`.
+2. Usuario entra com e-mail/senha ou cria um novo acesso via Supabase Auth.
+3. A rota raiz (`/`) redireciona conforme estado:
+   - sem sessao: `/login`
+   - com sessao e sem usuario de app: `/onboarding`
+   - com sessao e usuario de app: `/dashboard`
+4. O onboarding cria:
+   - tenant
+   - usuario owner vinculado ao `auth.uid()`
+   - funil comercial padrao
+   - etapas iniciais
+   - primeira tarefa interna
+
+Arquivos principais:
+
+- `src/lib/supabase/server.ts`
+- `src/lib/supabase/browser.ts`
+- `src/lib/auth.ts`
+- `src/app/auth/actions.ts`
+- `src/app/login/page.tsx`
+- `src/app/onboarding/page.tsx`
+- `src/app/dashboard/page.tsx`
+
+Observacoes de seguranca:
+
+- A criacao do tenant e feita em Server Action.
+- O segredo do banco fica apenas no `.env` local/ambiente de servidor.
+- O arquivo `.env` continua ignorado pelo Git.
+- Usuarios anonimos nao recebem permissoes nas tabelas do CRM.
