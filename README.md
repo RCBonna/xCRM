@@ -59,6 +59,8 @@ Durante o desenvolvimento, o app exibe no topo da tela uma versao no formato `AA
 
 O valor atual fica em `src/lib/app-version.ts` e deve ser atualizado sempre que qualquer arquivo do sistema for alterado.
 
+Observacao local: `npm run dev` inicia o Next com `NODE_OPTIONS=--use-system-ca` para evitar falhas de certificado em chamadas ao Supabase Auth no Windows/Node.
+
 ## Dados sensiveis
 
 Arquivos de prospeccao, planilhas com contatos, bases de clientes e outros dados reais nao devem ser versionados neste repositorio publico.

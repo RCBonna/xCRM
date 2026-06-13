@@ -61,6 +61,12 @@ Ultima modificacao: 2026-06-12 18:19:01 -03:00
 - Campos de senha do login/cadastro agora permitem mostrar/ocultar conteudo.
 - Senha minima ajustada para 8 caracteres no cliente e nas Server Actions.
 - Criada a issue `#11` para recuperacao de senha por e-mail e politica futura de senha forte.
+- Criada a issue `#12` para documentar o bug `fetch failed` ao criar acesso.
+- Identificada causa local do erro: Node nao verificava a cadeia de certificado do Supabase Auth sem `NODE_OPTIONS=--use-system-ca`.
+- Ajustado `npm run dev` para iniciar o Next com `cross-env NODE_OPTIONS=--use-system-ca`.
+- Melhorado tratamento de erro de login/cadastro para exibir mensagem amigavel quando o servico de autenticacao nao puder ser acessado.
+- Atualizada versao WIP para `2026-06-12 21:39:41`.
+- Reiniciado servidor local e validado `/login` com resposta HTTP 200.
 
 ### Observacoes
 

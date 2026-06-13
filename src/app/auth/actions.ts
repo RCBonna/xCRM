@@ -21,6 +21,10 @@ function encodeMessage(message: string) {
   return encodeURIComponent(message);
 }
 
+function getAuthConnectionErrorMessage() {
+  return "Nao foi possivel conectar ao servico de autenticacao. Tente novamente em instantes.";
+}
+
 export async function signInAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
@@ -34,10 +38,18 @@ export async function signInAction(formData: FormData) {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  let authResult: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>;
+
+  try {
+    authResult = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+  } catch {
+    redirect(`/login?error=${encodeMessage(getAuthConnectionErrorMessage())}`);
+  }
+
+  const { data, error } = authResult;
 
   if (error || !data.user) {
     redirect(`/login?error=${encodeMessage("E-mail ou senha invalidos.")}`);
@@ -60,15 +72,23 @@ export async function signUpAction(formData: FormData) {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        name,
+  let authResult: Awaited<ReturnType<typeof supabase.auth.signUp>>;
+
+  try {
+    authResult = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+        },
       },
-    },
-  });
+    });
+  } catch {
+    redirect(`/login?error=${encodeMessage(getAuthConnectionErrorMessage())}`);
+  }
+
+  const { data, error } = authResult;
 
   if (error) {
     redirect(`/login?error=${encodeMessage(error.message)}`);

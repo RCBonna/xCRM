@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-12 21:02:34 -03:00  
+Ultima modificacao: 2026-06-12 21:39:41 -03:00  
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -79,6 +79,8 @@ Regra atual de senha:
 - Neste momento de desenvolvimento, o sistema ainda nao exige senha forte.
 - Recuperacao de senha por e-mail sera implementada posteriormente.
 
+Se o servico de autenticacao nao puder ser acessado, o sistema exibira uma mensagem amigavel pedindo para tentar novamente.
+
 Depois de criar o acesso:
 
 - Se o projeto exigir confirmacao de e-mail, o usuario deve confirmar o e-mail antes de entrar.
@@ -129,7 +131,7 @@ Essa informacao ajuda a confirmar qual pacote de mudancas esta sendo testado.
 
 Versao atual:
 
-- `2026-06-12 21:01:27`
+- `2026-06-12 21:39:41`
 
 ## Fluxos ainda nao implementados
 

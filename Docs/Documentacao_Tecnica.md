@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-12 21:02:34 -03:00  
+Ultima modificacao: 2026-06-12 21:39:41 -03:00  
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -91,6 +91,8 @@ npm run prisma:validate
 npm run dev
 ```
 
+O script `npm run dev` usa `cross-env NODE_OPTIONS=--use-system-ca next dev` para evitar erro local de certificado ao chamar Supabase Auth no Windows/Node.
+
 ## Banco de dados
 
 O schema inicial esta em `prisma/schema.prisma`.
@@ -178,6 +180,7 @@ supabase db lint --linked --schema public --level warning --fail-on error
 - `#1` Fundacao SaaS multi tenant.
 - `#10` Supabase Auth e onboarding do primeiro tenant.
 - `#11` Recuperacao de senha e politica de senha forte.
+- `#12` Bug `fetch failed` ao criar acesso.
 
 ## Autenticacao e onboarding
 
@@ -214,6 +217,7 @@ Observacoes de seguranca:
 - Usuarios anonimos nao recebem permissoes nas tabelas do CRM.
 - Senhas exigem minimo de 8 caracteres no fluxo atual.
 - Recuperacao de senha e politica forte foram registradas para implementacao posterior na issue `#11`.
+- Chamadas de login/cadastro tratam falhas de conexao com mensagem amigavel, sem expor `fetch failed` cru ao usuario.
 
 ## Versao WIP no topo
 
@@ -225,7 +229,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-12 21:01:27`
+- Valor: `2026-06-12 21:39:41`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`
