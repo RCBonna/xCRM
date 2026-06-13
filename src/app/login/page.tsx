@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { signInAction, signUpAction } from "@/app/auth/actions";
+import { PasswordField } from "@/components/password-field";
 import { getDefaultRedirectPath } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -82,12 +83,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               </label>
               <label className="grid gap-1 text-sm">
                 <span className="font-medium">Senha</span>
-                <input
-                  required
+                <PasswordField
                   name="password"
-                  type="password"
                   autoComplete="current-password"
-                  className="h-10 rounded-md border border-border bg-background px-3 text-sm"
                 />
               </label>
               <button className="mt-2 h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
@@ -121,14 +119,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               </label>
               <label className="grid gap-1 text-sm">
                 <span className="font-medium">Senha</span>
-                <input
-                  required
-                  minLength={6}
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  className="h-10 rounded-md border border-border bg-background px-3 text-sm"
-                />
+                <PasswordField name="password" autoComplete="new-password" />
               </label>
               <button className="mt-2 h-10 rounded-md border border-border px-4 text-sm font-medium">
                 Criar acesso

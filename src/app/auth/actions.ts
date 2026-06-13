@@ -25,6 +25,14 @@ export async function signInAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
+  if (password.length < 8) {
+    redirect(
+      `/login?error=${encodeMessage(
+        "A senha deve ter no minimo 8 caracteres.",
+      )}`,
+    );
+  }
+
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -42,6 +50,14 @@ export async function signUpAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const name = String(formData.get("name") ?? "").trim();
+
+  if (password.length < 8) {
+    redirect(
+      `/login?error=${encodeMessage(
+        "A senha deve ter no minimo 8 caracteres.",
+      )}`,
+    );
+  }
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signUp({

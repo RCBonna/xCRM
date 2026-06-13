@@ -56,6 +56,11 @@ Ultima modificacao: 2026-06-12 18:19:01 -03:00
 - Criada migration `20260612211500_allow_auth_user_multi_tenant.sql` para permitir que o mesmo usuario Supabase Auth participe de mais de um tenant.
 - Validado `npm run prisma:generate`, `npm run prisma:validate`, `npm run lint` e `npm run build`.
 - Validado HTTP local: `/login` respondeu 200 e `/dashboard` respondeu 307 sem sessao.
+- Adicionado banner global no topo da tela com `Versao: 2026-06-12 21:01:27`.
+- Registrada regra de WIP: toda mudanca em arquivo do sistema deve atualizar a versao exibida no topo.
+- Campos de senha do login/cadastro agora permitem mostrar/ocultar conteudo.
+- Senha minima ajustada para 8 caracteres no cliente e nas Server Actions.
+- Criada a issue `#11` para recuperacao de senha por e-mail e politica futura de senha forte.
 
 ### Observacoes
 

@@ -10,6 +10,7 @@
 - Quando terminarmos ajustes ou implementacoes, verificar no GitHub se tem issue e atualizar.
 - Nao e necessario avisar sobre a pasta NFC-e, pois e uma pasta somente de testes de importacao de cupom.
 - A cada mudanca no app, atualizar tambem a documentacao tecnica e o manual do usuario quando a mudanca afetar arquitetura, configuracao, fluxo, tela, regra de negocio, permissao, IA, importacao, banco de dados ou comportamento visivel.
+- Como o projeto esta em WIP, manter no topo da tela a informacao `Versao: AAAA-MM-DD hh:mm:ss`. Todas as vezes que qualquer arquivo do sistema for alterado, atualizar esta informacao para a data/hora da mudanca. Futuramente isso pode ser substituido por build/commit do Git.
 
 ## Documentos obrigatorios
 

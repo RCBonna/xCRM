@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-12 20:50:44 -03:00  
+Ultima modificacao: 2026-06-12 21:02:34 -03:00  
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -71,6 +71,13 @@ Na tela de login, o usuario pode:
 
 - Entrar com e-mail e senha.
 - Criar um novo acesso com nome, e-mail e senha.
+- Mostrar ou ocultar o conteudo do campo de senha.
+
+Regra atual de senha:
+
+- Minimo de 8 caracteres.
+- Neste momento de desenvolvimento, o sistema ainda nao exige senha forte.
+- Recuperacao de senha por e-mail sera implementada posteriormente.
 
 Depois de criar o acesso:
 
@@ -109,6 +116,20 @@ Ele mostra:
 - Proximas acoes sugeridas.
 - Botao de sair.
 - Seletor de temas.
+
+## Versao exibida no topo
+
+Durante o WIP, o sistema mostra no topo da tela uma versao no formato:
+
+```text
+Versao: AAAA-MM-DD hh:mm:ss
+```
+
+Essa informacao ajuda a confirmar qual pacote de mudancas esta sendo testado.
+
+Versao atual:
+
+- `2026-06-12 21:01:27`
 
 ## Fluxos ainda nao implementados
 

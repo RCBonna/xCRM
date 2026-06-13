@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-12 20:50:44 -03:00  
+Ultima modificacao: 2026-06-12 21:02:34 -03:00  
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -43,6 +43,8 @@ Atualizar quando houver mudancas em:
 - `src/app/login`: tela de login e criacao de acesso.
 - `src/app/onboarding`: criacao do primeiro tenant e usuario owner.
 - `src/app/dashboard`: painel autenticado inicial.
+- `src/components/version-banner.tsx`: banner global de versao WIP.
+- `src/lib/app-version.ts`: valor unico da versao exibida no topo.
 - `prisma/schema.prisma`: modelo de dados multi tenant.
 - `Docs`: documentacao viva do projeto.
 
@@ -175,6 +177,7 @@ supabase db lint --linked --schema public --level warning --fail-on error
 
 - `#1` Fundacao SaaS multi tenant.
 - `#10` Supabase Auth e onboarding do primeiro tenant.
+- `#11` Recuperacao de senha e politica de senha forte.
 
 ## Autenticacao e onboarding
 
@@ -209,3 +212,25 @@ Observacoes de seguranca:
 - O segredo do banco fica apenas no `.env` local/ambiente de servidor.
 - O arquivo `.env` continua ignorado pelo Git.
 - Usuarios anonimos nao recebem permissoes nas tabelas do CRM.
+- Senhas exigem minimo de 8 caracteres no fluxo atual.
+- Recuperacao de senha e politica forte foram registradas para implementacao posterior na issue `#11`.
+
+## Versao WIP no topo
+
+Enquanto o projeto estiver em desenvolvimento, toda tela deve exibir no topo:
+
+```text
+Versao: AAAA-MM-DD hh:mm:ss
+```
+
+Implementacao atual:
+
+- Valor: `2026-06-12 21:01:27`
+- Arquivo fonte: `src/lib/app-version.ts`
+- Componente global: `src/components/version-banner.tsx`
+- Renderizacao: `src/app/layout.tsx`
+
+Regra:
+
+- A cada mudanca em qualquer arquivo do sistema, atualizar `APP_VERSION`.
+- Futuramente esta informacao pode ser substituida por build/commit do Git.
