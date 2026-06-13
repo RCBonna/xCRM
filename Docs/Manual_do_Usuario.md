@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-12 21:39:41 -03:00  
+Ultima modificacao: 2026-06-12 21:54:36 -03:00  
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -85,6 +85,7 @@ Depois de criar o acesso:
 
 - Se o projeto exigir confirmacao de e-mail, o usuario deve confirmar o e-mail antes de entrar.
 - Se a sessao ja estiver ativa, o usuario sera levado para o onboarding.
+- Depois do login, se o usuario ainda nao tiver empresa vinculada, o sistema deve abrir o onboarding da empresa.
 
 ## Onboarding da empresa
 
@@ -131,7 +132,7 @@ Essa informacao ajuda a confirmar qual pacote de mudancas esta sendo testado.
 
 Versao atual:
 
-- `2026-06-12 21:39:41`
+- `2026-06-12 21:54:36`
 
 ## Fluxos ainda nao implementados
 

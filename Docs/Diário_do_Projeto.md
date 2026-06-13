@@ -67,6 +67,11 @@ Ultima modificacao: 2026-06-12 18:19:01 -03:00
 - Melhorado tratamento de erro de login/cadastro para exibir mensagem amigavel quando o servico de autenticacao nao puder ser acessado.
 - Atualizada versao WIP para `2026-06-12 21:39:41`.
 - Reiniciado servidor local e validado `/login` com resposta HTTP 200.
+- Criada a issue `#13` para documentar o erro `Runtime DriverAdapterError` apos login.
+- Reproduzido o problema: `DATABASE_URL` via pooler retornava `(ENOTFOUND) tenant/user postgres.qeadwfyedxhswqcxyeuq not found`, enquanto `DIRECT_URL` encontrava `public.users`.
+- Ajustado o cliente Prisma para priorizar `DIRECT_URL` e usar `DATABASE_URL` apenas como fallback.
+- Corrigido exemplo de `DIRECT_URL` no `.env.example` para o host direto `db.[PROJECT-REF].supabase.co`.
+- Atualizada versao WIP para `2026-06-12 21:54:36`.
 
 ### Observacoes
 

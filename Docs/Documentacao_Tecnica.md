@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-12 21:39:41 -03:00  
+Ultima modificacao: 2026-06-12 21:54:36 -03:00  
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -68,8 +68,8 @@ Projeto Supabase remoto atual:
 
 Variaveis esperadas:
 
-- `DATABASE_URL`: URL pooler Supabase para uso da aplicacao.
-- `DIRECT_URL`: URL direta Supabase para migrations e operacoes administrativas.
+- `DATABASE_URL`: URL pooler Supabase, mantida para compatibilidade e usos futuros.
+- `DIRECT_URL`: URL direta Supabase usada pelo Prisma no runtime local e para migrations/operacoes administrativas.
 - `NEXT_PUBLIC_SUPABASE_URL`: URL publica do projeto Supabase.
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: chave publica/publishable do Supabase.
 
@@ -92,6 +92,8 @@ npm run dev
 ```
 
 O script `npm run dev` usa `cross-env NODE_OPTIONS=--use-system-ca next dev` para evitar erro local de certificado ao chamar Supabase Auth no Windows/Node.
+
+O cliente Prisma em `src/lib/prisma.ts` prioriza `DIRECT_URL` quando ela esta configurada. Esse padrao evita falhas observadas no pooler durante o fluxo de login/onboarding no ambiente local.
 
 ## Banco de dados
 
@@ -181,6 +183,7 @@ supabase db lint --linked --schema public --level warning --fail-on error
 - `#10` Supabase Auth e onboarding do primeiro tenant.
 - `#11` Recuperacao de senha e politica de senha forte.
 - `#12` Bug `fetch failed` ao criar acesso.
+- `#13` Bug `DriverAdapterError` apos login usando conexao pooler.
 
 ## Autenticacao e onboarding
 
@@ -229,7 +232,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-12 21:39:41`
+- Valor: `2026-06-12 21:54:36`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

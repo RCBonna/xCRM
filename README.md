@@ -61,6 +61,8 @@ O valor atual fica em `src/lib/app-version.ts` e deve ser atualizado sempre que 
 
 Observacao local: `npm run dev` inicia o Next com `NODE_OPTIONS=--use-system-ca` para evitar falhas de certificado em chamadas ao Supabase Auth no Windows/Node.
 
+O runtime Prisma prioriza `DIRECT_URL` quando configurada. No Supabase local/remoto deste projeto, essa conexao direta e a rota validada para consultas do app durante o WIP.
+
 ## Dados sensiveis
 
 Arquivos de prospeccao, planilhas com contatos, bases de clientes e outros dados reais nao devem ser versionados neste repositorio publico.
