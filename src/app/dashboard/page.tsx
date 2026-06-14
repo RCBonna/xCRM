@@ -5,8 +5,10 @@ import {
   ClipboardList,
   LogOut,
   Sparkles,
+  UserRound,
   UsersRound,
 } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/app/auth/actions";
@@ -16,10 +18,10 @@ import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const nextActions = [
-  "Revisar configuracoes iniciais da empresa.",
-  "Importar a planilha de prospeccao.",
+  "Revisar configurações iniciais da empresa.",
+  "Importar a planilha de prospecção.",
   "Distribuir prospects para vendedores.",
-  "Comecar a registrar contatos e follow-ups.",
+  "Começar a registrar contatos e follow-ups.",
 ];
 
 export default async function DashboardPage() {
@@ -59,7 +61,7 @@ export default async function DashboardPage() {
 
   const metrics = [
     {
-      label: "Empresas/prospects",
+      label: "Empresas/Prospects",
       value: accountCount,
       detail: "registros no tenant atual",
       icon: Building2,
@@ -71,18 +73,21 @@ export default async function DashboardPage() {
       icon: UsersRound,
     },
     {
-      label: "Atividades pendentes",
+      label: "Atividades Pendentes",
       value: activityCount,
       detail: "tarefas abertas para a equipe",
       icon: CalendarClock,
     },
     {
-      label: "Etapas do funil",
+      label: "Etapas do Funil",
       value: stages.length,
-      detail: "pipeline comercial padrao",
+      detail: "pipeline comercial padrão",
       icon: ClipboardList,
     },
   ];
+  const userIdentity = appUser.name || user.email || "Usuario autenticado";
+  const userEmail = appUser.email || user.email || "E-mail não informado";
+  const userRole = appUser.role.toLowerCase();
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -96,14 +101,27 @@ export default async function DashboardPage() {
               Painel do xCRM
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-              Voce esta como {appUser.role.toLowerCase()} em um tenant
-              protegido por Supabase Auth e RLS.
+              Você está como {userRole} em um tenant protegido por Supabase Auth
+              e RLS.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex h-12 min-w-0 items-center gap-2 rounded-md border border-border bg-surface px-3 text-left">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary">
+                <UserRound size={16} aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-medium leading-4">
+                  {userIdentity}
+                </p>
+                <p className="truncate text-[11px] leading-4 text-muted">
+                  {userEmail} - {userRole}
+                </p>
+              </div>
+            </div>
             <ThemeSelector />
             <form action={signOutAction}>
-              <button className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium">
+              <button className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium">
                 <LogOut size={16} aria-hidden />
                 Sair
               </button>
@@ -142,7 +160,7 @@ export default async function DashboardPage() {
           <div className="rounded-md border border-border bg-surface">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div>
-                <h2 className="text-base font-semibold">Funil padrao</h2>
+                <h2 className="text-base font-semibold">Funil Padrão</h2>
                 <p className="text-sm text-muted">
                   Etapas criadas automaticamente no onboarding.
                 </p>
@@ -177,7 +195,7 @@ export default async function DashboardPage() {
             <div className="border-b border-border px-4 py-3">
               <h2 className="flex items-center gap-2 text-base font-semibold">
                 <Sparkles size={18} className="text-primary" aria-hidden />
-                Proximas acoes
+                Próximas Ações
               </h2>
               <p className="text-sm text-muted">
                 Primeiros passos para transformar a base em uso real.
@@ -193,6 +211,14 @@ export default async function DashboardPage() {
                 </li>
               ))}
             </ol>
+            <div className="border-t border-border p-4">
+              <Link
+                href="/accounts"
+                className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+              >
+                Abrir Empresas/Prospects
+              </Link>
+            </div>
           </aside>
         </section>
       </div>

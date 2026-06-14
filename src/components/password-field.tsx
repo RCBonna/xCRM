@@ -28,8 +28,8 @@ export function PasswordField({
       />
       <button
         type="button"
-        title={isVisible ? "Ocultar senha" : "Mostrar senha"}
-        aria-label={isVisible ? "Ocultar senha" : "Mostrar senha"}
+        title={isVisible ? "Ocultar Senha" : "Mostrar Senha"}
+        aria-label={isVisible ? "Ocultar Senha" : "Mostrar Senha"}
         onClick={() => setIsVisible((current) => !current)}
         className="absolute right-1 top-1 inline-flex h-8 w-8 items-center justify-center rounded text-muted"
       >

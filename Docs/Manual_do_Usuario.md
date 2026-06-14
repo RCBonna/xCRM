@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-12 21:54:36 -03:00  
+Ultima modificacao: 2026-06-14 18:59:34 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -63,15 +63,30 @@ No MVP, a prioridade e garantir:
 - Claro.
 - Escuro.
 
-## Login e primeiro acesso
+## Login e Primeiro Acesso
 
 O login inicial ja esta disponivel em `/login`.
 
 Na tela de login, o usuario pode:
 
-- Entrar com e-mail e senha.
-- Criar um novo acesso com nome, e-mail e senha.
+- Alternar entre as abas `Entrar` e `Criar Acesso`.
+- Entrar com e-mail e senha na aba `Entrar`.
+- Criar um novo acesso com nome, e-mail e senha na aba `Criar Acesso`.
 - Mostrar ou ocultar o conteudo do campo de senha.
+
+A aba selecionada recebe destaque visual com indicador na borda inferior.
+
+Quando nao ha mensagem de erro ou aviso, o painel superior da area de acesso mostra textos rotativos sobre o xCRM. Os textos mudam automaticamente a cada 30 segundos. Quando existe erro ou aviso, o painel mostra a mensagem do sistema.
+
+Os botoes principais das abas `Entrar` e `Criar Acesso` ficam alinhados no rodape da area do formulario.
+
+A aba `Criar Acesso` mantem respiro visual entre o campo de senha e o botao principal.
+
+Se o e-mail informado em `Criar Acesso` ja existir no app, o sistema orienta o usuario a entrar com sua senha.
+
+Se o e-mail ainda nao estiver confirmado no Supabase Auth, o sistema informa que e necessario verificar a caixa de entrada e spam antes de entrar.
+
+Se o servico de autenticacao atingir limite de envio de e-mails, o sistema orienta aguardar alguns minutos antes de tentar novamente.
 
 Regra atual de senha:
 
@@ -91,34 +106,120 @@ Depois de criar o acesso:
 
 O onboarding esta disponivel em `/onboarding` para usuarios autenticados que ainda nao tem empresa vinculada.
 
+No topo do formulario, a tela mostra discretamente a sessao atual com o nome e/ou e-mail do usuario autenticado.
+
 Nesta tela, o usuario informa:
 
-- Nome da empresa.
-- Nome do usuario owner.
+- Nome da Empresa.
+- Nome do Usuario Owner.
 
 Ao confirmar, o sistema cria:
 
 - A empresa/tenant.
 - O usuario owner.
-- O funil comercial padrao.
+- O Funil Comercial Padrao.
 - As etapas iniciais do funil.
 - Uma primeira tarefa interna.
 
 Depois disso, o usuario vai para `/dashboard`.
 
-## Dashboard inicial
+## Dashboard Inicial
 
 O dashboard inicial esta disponivel em `/dashboard`.
 
 Ele mostra:
 
-- Nome da empresa atual.
-- Perfil do usuario.
+- Nome da Empresa atual.
+- Nome, e-mail e perfil do usuario logado.
 - Metricas reais do tenant.
-- Etapas do funil padrao.
-- Proximas acoes sugeridas.
-- Botao de sair.
+- Etapas do Funil Padrao.
+- Proximas Acoes sugeridas.
+- Botao de Sair.
 - Seletor de temas.
+
+No cabecalho do dashboard, o bloco do usuario logado, o seletor de temas e o botao de sair usam a mesma altura visual.
+
+O dashboard possui um atalho `Abrir Empresas/Prospects`.
+
+## Empresas/Prospects
+
+A tela `/accounts` permite cadastrar a Base Comercial inicial do tenant.
+
+No cabecalho, a tela mostra discretamente o usuario logado, e-mail e perfil atual.
+
+Campos disponiveis para empresa/prospect:
+
+- Empresa/Prospect.
+- Cidade.
+- UF, escolhida em uma lista fechada de siglas brasileiras.
+- Site, sem obrigatoriedade de informar `https://` no cadastro inicial.
+- Fornecedor/Atividade/Marca.
+- Origem.
+
+Tambem e possivel informar um Contato Principal opcional com:
+
+- Nome.
+- E-mail.
+- Telefone, limitado a 15 caracteres.
+
+Tambem e possivel informar uma Proxima Acao opcional, com:
+
+- Acao.
+- Data e Hora.
+
+Quando a Empresa/Prospect e cadastrada, o sistema grava automaticamente um Historico de criacao. Se um contato for informado, ele nasce como Contato Principal. Se a Proxima Acao for informada, ela fica registrada como atividade pendente.
+
+A tela lista a Base Comercial disponivel para o usuario e mostra o Contato Principal quando existir.
+
+Na base comercial, o usuario pode:
+
+- Buscar por empresa/prospect, cidade, UF, site, fornecedor principal, origem ou contato.
+- Filtrar por status: todos, prospects, clientes, perdidos e arquivados.
+- Limpar filtros para voltar a lista geral.
+- Ver o Ultimo Historico registrado.
+- Ver a Proxima Acao pendente quando houver.
+- Abrir o detalhe de uma Empresa/Prospect pelo nome do registro.
+
+Na tela de detalhe da Empresa/Prospect, o usuario pode:
+
+- Voltar para a lista pelo link `Empresas/Prospects` no topo da tela.
+- Ver Dados Basicos.
+- Editar Empresa/Prospect, cidade, UF, site, Fornecedor/Atividade/Marca, origem e Observacao Comercial.
+- Ver Contato Principal.
+- Ver Contatos cadastrados.
+- Abrir e recolher contatos adicionais quando houver mais de um contato cadastrado.
+- Criar Novo Contato com Nome, Função/Cargo, E-mail e Telefone.
+- Salvar Alterações de dados básicos ou de um contato existente apenas depois de modificar alguma informação.
+- Tornar outro contato o Contato Principal.
+- Excluir contatos que não estejam marcados como Contato Principal.
+- Identificar o Contato Principal pela faixa de ações do próprio contato.
+- Ver Oportunidades registradas para a Empresa/Prospect.
+- Criar uma Nova Oportunidade com Título, Contato opcional, Etapa, Valor Estimado e Previsão de Fechamento.
+- Mover uma Oportunidade para outra Etapa do Funil.
+- Ver o ultimo registro do Historico em formato compacto e expandir os demais registros quando necessario.
+- Ver Proximas Acoes pendentes.
+- Criar uma Nova Acao pendente com descricao e Data e Hora opcionais.
+- Concluir uma Acao pendente para move-la para Acoes Concluidas.
+- Ver a última Ação Concluída em formato compacto e expandir as demais quando necessário.
+
+Regras atuais de visibilidade:
+
+- Owner, admin e gestor veem a base comercial do tenant.
+- Perfis operacionais veem apenas registros sob sua responsabilidade.
+
+Observacoes de uso:
+
+- A Observacao Comercial fica disponivel na tela de detalhe da Empresa/Prospect.
+- Apenas um contato pode ficar marcado como Contato Principal por Empresa/Prospect.
+- O Contato Principal não pode ser excluído antes de escolher outro contato como principal.
+- O último contato restante de uma Empresa/Prospect não pode ser excluído.
+- O texto `Ultimo Historico` mostra o ultimo evento de auditoria do cadastro, como `Dados Atualizados` ou `Prospect Criado`; ele nao representa um status como incompleto ou nao atualizado.
+- A criacao, alteracao e troca de Contato Principal registram automaticamente uma linha no Historico.
+- A criacao e a conclusao de acoes no detalhe registram automaticamente uma linha no Historico.
+- A criacao e a movimentacao de oportunidades no detalhe registram automaticamente uma linha no Historico.
+- Campos de Data e Data e Hora destacam discretamente o ícone de calendário.
+- Campos de Data e Hora vazios iniciam com a data atual às `09:00` quando o usuário entra no campo.
+- Endereco do prospect nao e obrigatorio neste momento do MVP.
 
 ## Versao exibida no topo
 
@@ -132,15 +233,12 @@ Essa informacao ajuda a confirmar qual pacote de mudancas esta sendo testado.
 
 Versao atual:
 
-- `2026-06-12 21:54:36`
+- `2026-06-14 18:59:34`
 
 ## Fluxos ainda nao implementados
 
 - Selecao de empresa/tenant quando o usuario participar de mais de uma empresa.
-- Cadastro de empresa/prospect.
-- Cadastro de contato.
-- Funil real.
-- Agenda/tarefas.
+- Tela dedicada de funil/board.
 - Importacao de planilha.
 - IA assistiva.
 - Relatorios de gestor.

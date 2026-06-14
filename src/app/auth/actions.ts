@@ -9,10 +9,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 const defaultStages = [
   "Visitantes",
   "Contatos",
-  "Qualificacao",
+  "Qualificação",
   "Oportunidades",
   "Proposta",
-  "Negociacao",
+  "Negociação",
   "Clientes",
   "Perdidos",
 ];
@@ -22,7 +22,38 @@ function encodeMessage(message: string) {
 }
 
 function getAuthConnectionErrorMessage() {
-  return "Nao foi possivel conectar ao servico de autenticacao. Tente novamente em instantes.";
+  return "Não foi possível conectar ao serviço de autenticação. Tente novamente em instantes.";
+}
+
+function getAuthErrorMessage(error?: { message?: string; code?: string } | null) {
+  const code = error?.code ?? "";
+  const message = error?.message ?? "";
+  const normalizedMessage = message.toLowerCase();
+
+  if (code === "email_not_confirmed" || normalizedMessage.includes("email not confirmed")) {
+    return "Este e-mail ainda não foi confirmado. Verifique sua caixa de entrada e spam antes de entrar.";
+  }
+
+  if (
+    code === "over_email_send_rate_limit" ||
+    normalizedMessage.includes("email rate limit")
+  ) {
+    return "O serviço de autenticação atingiu o limite de envio de e-mails. Aguarde alguns minutos e tente novamente.";
+  }
+
+  if (
+    code === "email_address_invalid" ||
+    normalizedMessage.includes("email address") ||
+    normalizedMessage.includes("invalid email")
+  ) {
+    return "Informe um e-mail válido para criar o acesso.";
+  }
+
+  if (code === "invalid_credentials") {
+    return "E-mail ou senha inválidos.";
+  }
+
+  return message || "Não foi possível concluir a autenticação. Tente novamente.";
 }
 
 export async function signInAction(formData: FormData) {
@@ -32,8 +63,8 @@ export async function signInAction(formData: FormData) {
   if (password.length < 8) {
     redirect(
       `/login?error=${encodeMessage(
-        "A senha deve ter no minimo 8 caracteres.",
-      )}`,
+        "A senha deve ter no mínimo 8 caracteres.",
+      )}&tab=sign-in`,
     );
   }
 
@@ -46,13 +77,17 @@ export async function signInAction(formData: FormData) {
       password,
     });
   } catch {
-    redirect(`/login?error=${encodeMessage(getAuthConnectionErrorMessage())}`);
+    redirect(
+      `/login?error=${encodeMessage(getAuthConnectionErrorMessage())}&tab=sign-in`,
+    );
   }
 
   const { data, error } = authResult;
 
   if (error || !data.user) {
-    redirect(`/login?error=${encodeMessage("E-mail ou senha invalidos.")}`);
+    redirect(
+      `/login?error=${encodeMessage(getAuthErrorMessage(error))}&tab=sign-in`,
+    );
   }
 
   redirect(await getDefaultRedirectPath(data.user));
@@ -66,8 +101,26 @@ export async function signUpAction(formData: FormData) {
   if (password.length < 8) {
     redirect(
       `/login?error=${encodeMessage(
-        "A senha deve ter no minimo 8 caracteres.",
-      )}`,
+        "A senha deve ter no mínimo 8 caracteres.",
+      )}&tab=sign-up`,
+    );
+  }
+
+  const existingAppUser = await prisma.user.findFirst({
+    where: {
+      email,
+      status: "ACTIVE",
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (existingAppUser) {
+    redirect(
+      `/login?message=${encodeMessage(
+        "Este e-mail já possui acesso. Entre com sua senha para continuar.",
+      )}&tab=sign-in`,
     );
   }
 
@@ -85,20 +138,32 @@ export async function signUpAction(formData: FormData) {
       },
     });
   } catch {
-    redirect(`/login?error=${encodeMessage(getAuthConnectionErrorMessage())}`);
+    redirect(
+      `/login?error=${encodeMessage(getAuthConnectionErrorMessage())}&tab=sign-up`,
+    );
   }
 
   const { data, error } = authResult;
 
   if (error) {
-    redirect(`/login?error=${encodeMessage(error.message)}`);
+    redirect(
+      `/login?error=${encodeMessage(getAuthErrorMessage(error))}&tab=sign-up`,
+    );
+  }
+
+  if (data.user && data.user.identities?.length === 0) {
+    redirect(
+      `/login?message=${encodeMessage(
+        "Este e-mail já possui acesso. Entre com sua senha para continuar.",
+      )}&tab=sign-in`,
+    );
   }
 
   if (!data.session || !data.user) {
     redirect(
       `/login?message=${encodeMessage(
         "Cadastro criado. Verifique seu e-mail antes de entrar.",
-      )}`,
+      )}&tab=sign-in`,
     );
   }
 
@@ -118,7 +183,7 @@ export async function createTenantAction(formData: FormData) {
   if (companyName.length < 2 || userName.length < 2) {
     redirect(
       `/onboarding?error=${encodeMessage(
-        "Informe o nome da empresa e seu nome.",
+        "Informe o Nome da Empresa e Seu Nome.",
       )}`,
     );
   }
@@ -164,7 +229,7 @@ export async function createTenantAction(formData: FormData) {
     const pipeline = await tx.pipeline.create({
       data: {
         tenantId: tenant.id,
-        name: "Funil comercial padrao",
+        name: "Funil Comercial Padrão",
         isDefault: true,
       },
     });
@@ -185,7 +250,7 @@ export async function createTenantAction(formData: FormData) {
         tenantId: tenant.id,
         ownerUserId: owner.id,
         type: "INTERNAL_TASK",
-        title: "Revisar configuracoes iniciais do xCRM",
+        title: "Revisar configurações iniciais do xCRM",
         description:
           "Primeira tarefa criada automaticamente para concluir o onboarding da empresa.",
       },

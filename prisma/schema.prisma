@@ -183,6 +183,7 @@ model Account {
   website      String?
   mainSupplier String?       @map("main_supplier")
   source       String?
+  notes        String?
   status       AccountStatus @default(PROSPECT)
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
@@ -211,6 +212,7 @@ model Contact {
   whatsapp     String?
   linkedinUrl  String?  @map("linkedin_url")
   instagramUrl String?  @map("instagram_url")
+  isPrimary    Boolean  @default(false) @map("is_primary")
   notes        String?
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")

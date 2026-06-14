@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { signInAction, signUpAction } from "@/app/auth/actions";
-import { PasswordField } from "@/components/password-field";
+import { LoginAccessTabs } from "@/components/login-access-tabs";
+import { LoginInfoPanel } from "@/components/login-info-panel";
 import { getDefaultRedirectPath } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -9,6 +9,7 @@ type LoginPageProps = {
   searchParams: Promise<{
     error?: string;
     message?: string;
+    tab?: string;
   }>;
 };
 
@@ -33,11 +34,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               xCRM
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-normal">
-              Entre para organizar sua operacao comercial
+              Entre para organizar sua operação comercial
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
               Acesso inicial com Supabase Auth. Depois do cadastro, o primeiro
-              usuario cria a empresa e assume o perfil owner do tenant.
+              usuário cria a empresa e assume o perfil owner do tenant.
             </p>
           </div>
 
@@ -46,7 +47,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               Multiempresa com isolamento por tenant.
             </div>
             <div className="rounded-md bg-surface-muted p-3">
-              Funil padrao criado no onboarding.
+              Funil Padrão criado no onboarding.
             </div>
             <div className="rounded-md bg-surface-muted p-3">
               RLS ativo nas tabelas operacionais.
@@ -55,77 +56,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </section>
 
         <section className="grid gap-4">
-          {(params.error || params.message) && (
-            <div
-              className={[
-                "rounded-md border px-4 py-3 text-sm",
-                params.error
-                  ? "border-danger text-danger"
-                  : "border-border text-muted",
-              ].join(" ")}
-            >
-              {params.error ?? params.message}
-            </div>
-          )}
-
-          <div className="rounded-md border border-border bg-surface p-5">
-            <h2 className="text-lg font-semibold">Entrar</h2>
-            <form action={signInAction} className="mt-4 grid gap-3">
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">E-mail</span>
-                <input
-                  required
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  className="h-10 rounded-md border border-border bg-background px-3 text-sm"
-                />
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">Senha</span>
-                <PasswordField
-                  name="password"
-                  autoComplete="current-password"
-                />
-              </label>
-              <button className="mt-2 h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
-                Entrar
-              </button>
-            </form>
-          </div>
-
-          <div className="rounded-md border border-border bg-surface p-5">
-            <h2 className="text-lg font-semibold">Criar acesso</h2>
-            <form action={signUpAction} className="mt-4 grid gap-3">
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">Nome</span>
-                <input
-                  required
-                  name="name"
-                  type="text"
-                  autoComplete="name"
-                  className="h-10 rounded-md border border-border bg-background px-3 text-sm"
-                />
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">E-mail</span>
-                <input
-                  required
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  className="h-10 rounded-md border border-border bg-background px-3 text-sm"
-                />
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">Senha</span>
-                <PasswordField name="password" autoComplete="new-password" />
-              </label>
-              <button className="mt-2 h-10 rounded-md border border-border px-4 text-sm font-medium">
-                Criar acesso
-              </button>
-            </form>
-          </div>
+          <LoginInfoPanel error={params.error} message={params.message} />
+          <LoginAccessTabs initialTab={params.tab} />
         </section>
       </div>
     </main>

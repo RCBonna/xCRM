@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-12 20:50:44 -03:00  
+Ultima modificacao: 2026-06-13 21:05:25 -03:00
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -151,7 +151,7 @@ Blocos modelados:
 
 - Tenants e usuarios.
 - Equipes e membros.
-- Empresas/prospects e contatos.
+- Empresas/Prospects e contatos.
 - Pipelines, etapas e oportunidades.
 - Auditoria de movimentacao de etapa.
 - Atividades e follow-ups.
@@ -308,3 +308,200 @@ Observacao:
 
 - A tabela `users` continua com unicidade por tenant/e-mail.
 - O onboarding atual cria uma linha `users` vinculada ao `auth.uid()` do Supabase para o tenant criado.
+
+## 2026-06-13 09:27:54 -03:00 - Acentuação de rótulos em Português-BR
+
+Status: Aplicada no banco remoto
+
+Migration:
+
+- Arquivo: `supabase/migrations/20260613122754_accent_portuguese_labels.sql`
+
+Objetivo:
+
+- Corrigir rótulos já gravados sem acento em dados criados pelo onboarding inicial.
+- Manter nomes de funil, etapas e tarefa inicial coerentes com Português-BR visível na interface.
+
+Comandos executados:
+
+```bash
+supabase db push --db-url [DIRECT_URL] --yes
+supabase migration list --db-url [DIRECT_URL]
+```
+
+SQL:
+
+```sql
+UPDATE "public"."pipeline_stages"
+SET "name" = 'Qualificação',
+    "updated_at" = now()
+WHERE "name" = 'Qualificacao';
+
+UPDATE "public"."pipeline_stages"
+SET "name" = 'Negociação',
+    "updated_at" = now()
+WHERE "name" = 'Negociacao';
+
+UPDATE "public"."pipelines"
+SET "name" = 'Funil comercial padrão',
+    "updated_at" = now()
+WHERE "name" = 'Funil comercial padrao';
+
+UPDATE "public"."activities"
+SET "title" = 'Revisar configurações iniciais do xCRM',
+    "updated_at" = now()
+WHERE "title" = 'Revisar configuracoes iniciais do xCRM';
+```
+
+Resultado verificado:
+
+- Migration local/remota sincronizada: `20260613122754`.
+- `public.pipelines`: `Funil comercial padrão`.
+- `public.pipeline_stages`: `Qualificação` e `Negociação`.
+- `public.activities`: `Revisar configurações iniciais do xCRM`.
+
+## 2026-06-13 14:11:21 -03:00 - Observação Comercial em accounts
+
+Status: Aplicada no banco remoto
+
+Migration:
+
+- Arquivo: `supabase/migrations/20260613141121_add_account_notes.sql`
+
+Objetivo:
+
+- Permitir que a tela de detalhe da Empresa/Prospect registre uma observação comercial livre.
+- Manter observações do cadastro principal vinculadas diretamente a `accounts`, separadas das notas de contatos e do histórico em `interactions`.
+
+Comandos executados:
+
+```bash
+npm run prisma:generate
+npm run prisma:validate
+supabase db push --db-url [DIRECT_URL] --yes
+```
+
+SQL aplicado:
+
+```sql
+ALTER TABLE "public"."accounts"
+ADD COLUMN IF NOT EXISTS "notes" text;
+```
+
+Observações:
+
+- A coluna é opcional e não exige backfill.
+- O schema Prisma foi atualizado com `Account.notes`.
+- A mudança não altera policies RLS existentes; a coluna segue o isolamento já aplicado à tabela `accounts`.
+
+## 2026-06-13 20:25:32 -03:00 - Capitalização de rótulos visíveis gravados
+
+Status: Aplicada no banco remoto
+
+Migration:
+
+- Arquivo: `supabase/migrations/20260613202532_title_case_visible_labels.sql`
+
+Objetivo:
+
+- Normalizar registros antigos já gravados com rótulos compostos em caixa baixa.
+- Alinhar eventos de histórico (`interactions.summary`) com a regra visual de capitalização em estilo título.
+- Substituir `Cadastro atualizado` por `Dados Atualizados`, deixando mais claro que se trata de evento de auditoria, não status cadastral.
+
+Comandos executados:
+
+```bash
+supabase db push --db-url [DIRECT_URL] --yes
+```
+
+SQL aplicado:
+
+```sql
+UPDATE "public"."interactions"
+SET "summary" = 'Dados Atualizados',
+    "body" = CASE
+      WHEN "body" = 'Dados básicos da Empresa/Prospect foram atualizados.'
+        THEN 'Dados Básicos da Empresa/Prospect foram atualizados.'
+      ELSE "body"
+    END
+WHERE "summary" = 'Cadastro atualizado';
+
+UPDATE "public"."interactions"
+SET "summary" = 'Prospect Criado',
+    "body" = CASE
+      WHEN "body" LIKE 'Cadastro inicial criado com contato principal:%'
+        THEN replace(
+          replace("body", 'Cadastro inicial', 'Cadastro Inicial'),
+          'contato principal',
+          'Contato Principal'
+        )
+      WHEN "body" = 'Cadastro inicial criado sem contato principal.'
+        THEN 'Cadastro Inicial criado sem Contato Principal.'
+      ELSE "body"
+    END
+WHERE "summary" = 'Prospect criado';
+
+UPDATE "public"."pipelines"
+SET "name" = 'Funil Comercial Padrão',
+    "updated_at" = now()
+WHERE "name" = 'Funil comercial padrão';
+```
+
+Observações:
+
+- `interactions` não possui coluna `updated_at`; por isso a migration altera apenas `summary` e `body` nessa tabela.
+- Não houve mudança estrutural de schema.
+
+## 2026-06-13 21:05:25 -03:00 - Contato Principal explícito
+
+Status: Aplicada no banco remoto
+
+Migration:
+
+- Arquivo: `supabase/migrations/20260613210800_add_primary_contact_flag.sql`
+
+Objetivo:
+
+- Permitir múltiplos contatos por Empresa/Prospect e marcar explicitamente qual é o Contato Principal.
+- Preservar contatos já existentes marcando o primeiro contato criado de cada Empresa/Prospect como principal.
+- Garantir no banco que uma Empresa/Prospect tenha no máximo um Contato Principal.
+
+Comandos executados:
+
+```bash
+npm run prisma:validate
+supabase db push --linked --yes
+npm run prisma:generate
+supabase migration list --linked
+```
+
+SQL aplicado:
+
+```sql
+alter table public.contacts
+add column if not exists is_primary boolean not null default false;
+
+with ranked_contacts as (
+  select
+    id,
+    row_number() over (
+      partition by tenant_id, account_id
+      order by created_at asc, id asc
+    ) as position
+  from public.contacts
+)
+update public.contacts as contacts
+set is_primary = ranked_contacts.position = 1
+from ranked_contacts
+where contacts.id = ranked_contacts.id;
+
+create unique index if not exists contacts_one_primary_per_account
+on public.contacts (tenant_id, account_id)
+where is_primary;
+```
+
+Observações:
+
+- O schema Prisma foi atualizado com `Contact.isPrimary`.
+- A regra de unicidade do Contato Principal é parcial e fica documentada na migration SQL.
+- A alteração não cria nova tabela; evolui o cadastro de contatos já existente.

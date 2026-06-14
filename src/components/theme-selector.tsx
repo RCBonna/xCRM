@@ -35,7 +35,7 @@ export function ThemeSelector() {
   }
 
   return (
-    <div className="inline-flex rounded-md border border-border bg-surface p-1">
+    <div className="inline-flex h-12 rounded-md border border-border bg-surface p-1">
       {themes.map((item) => {
         const Icon = item.icon;
         const isActive = item.value === theme;
@@ -48,7 +48,7 @@ export function ThemeSelector() {
             aria-pressed={isActive}
             onClick={() => updateTheme(item.value)}
             className={[
-              "inline-flex h-8 w-9 items-center justify-center rounded text-muted",
+              "inline-flex h-10 w-10 items-center justify-center rounded text-muted",
               isActive ? "bg-primary text-primary-foreground" : "",
             ].join(" ")}
           >

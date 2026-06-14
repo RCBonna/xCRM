@@ -1,7 +1,7 @@
 # Plano de Implementacao do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-12 18:19:01 -03:00  
+Ultima modificacao: 2026-06-13 20:25:32 -03:00  
 Status: Proposta inicial para validacao e evolucao diaria
 
 ## 1. Objetivo
@@ -208,7 +208,7 @@ Campos sugeridos:
 
 #### `pipeline_stages`
 
-Etapas do funil.
+Etapas do Funil.
 
 Campos sugeridos:
 

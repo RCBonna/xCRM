@@ -53,9 +53,9 @@ npm run prisma:generate
 npm run dev
 ```
 
-## Versao WIP
+## Versão WIP
 
-Durante o desenvolvimento, o app exibe no topo da tela uma versao no formato `AAAA-MM-DD hh:mm:ss`.
+Durante o desenvolvimento, o app exibe no topo da tela uma versão no formato `AAAA-MM-DD hh:mm:ss`.
 
 O valor atual fica em `src/lib/app-version.ts` e deve ser atualizado sempre que qualquer arquivo do sistema for alterado.
 
