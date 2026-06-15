@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 09:40:12 -03:00
+Ultima modificacao: 2026-06-15 11:26:09 -03:00
 
 ## 2026-06-12
 
@@ -202,6 +202,13 @@ Ultima modificacao: 2026-06-15 09:40:12 -03:00
 - Confirmado por teste local com `pg` que `DATABASE_URL` falha com o mesmo erro, enquanto `DIRECT_URL` conecta.
 - Ajustado o cliente Prisma para priorizar `POSTGRES_PRISMA_URL` em Vercel/produção antes de `DATABASE_URL`.
 - Atualizada versão WIP para `2026-06-15 09:40:12`.
+- Criada a issue `#22` para documentar a reincidência do erro de Server Components no domínio Vercel com sessão autenticada.
+- Confirmado que o erro ocorre em runtime, apesar do build Vercel concluir com sucesso.
+- Reconfiguradas as variáveis `POSTGRES_PRISMA_URL` e `DATABASE_URL` em Vercel `Production` para usar a conexão direta validada por `DIRECT_URL`, contornando temporariamente o pooler inválido.
+- Reaplicadas as mesmas variáveis para `Preview` na branch `main`.
+- Realizado novo deploy Production manual: `https://x-mejhhmy29-roberto-c-bonanomis-projects.vercel.app`, associado ao alias `https://x-crm-flax.vercel.app`.
+- Validados `/` e `/login` com HTTP 200, sem novo log de erro no deployment corrigido, e screenshot Playwright da tela de login.
+- Atualizada versão WIP para `2026-06-15 11:26:09`.
 
 ### Observacoes
 

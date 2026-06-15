@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 09:40:12 -03:00
+Ultima modificacao: 2026-06-15 11:26:09 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -148,6 +148,14 @@ do pooler retornava `(ENOTFOUND) tenant/user postgres.qeadwfyedxhswqcxyeuq not
 found`. Como a integracao Supabase/Vercel ja mantem `POSTGRES_PRISMA_URL`, o
 cliente Prisma passou a priorizar esta variavel no ambiente Vercel antes de
 usar `DATABASE_URL`.
+
+Na reincidencia do erro em runtime, foi confirmado que `POSTGRES_PRISMA_URL` nao
+estava configurada localmente e que `DATABASE_URL` ainda apontava para o pooler
+invalido. Como medida operacional durante o WIP, as variaveis
+`POSTGRES_PRISMA_URL` e `DATABASE_URL` foram reconfiguradas na Vercel
+`Production` para usar a mesma conexao direta validada em `DIRECT_URL`. Esta
+decisao deve ser revista quando a URL correta do pooler Supabase for recuperada
+ou recriada.
 
 ## Banco de dados
 
@@ -375,7 +383,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-15 09:40:12`
+- Valor: `2026-06-15 11:26:09`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`
