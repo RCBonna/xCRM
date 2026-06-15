@@ -40,13 +40,19 @@ function parseOptionalDate(value: FormDataEntryValue | null) {
 }
 
 function normalizeOptionalMoney(value: FormDataEntryValue | null) {
-  const text = normalizeOptionalText(value)?.replace(",", ".");
+  const text = normalizeOptionalText(value)?.replace(/[^\d,.-]/g, "");
 
   if (!text) {
     return null;
   }
 
-  const amount = Number(text);
+  const normalizedAmount = text.includes(",")
+    ? text.replace(/\./g, "").replace(",", ".")
+    : text.split(".").length > 2
+      ? text.replace(/\./g, "")
+      : text;
+  const amount = Number(normalizedAmount);
+
   return Number.isFinite(amount) && amount >= 0 ? amount.toFixed(2) : null;
 }
 

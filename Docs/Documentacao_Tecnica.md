@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 11:54:00 -03:00
+Ultima modificacao: 2026-06-15 12:43:36 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -55,6 +55,7 @@ Atualizar quando houver mudancas em:
 - `src/app/dashboard`: painel autenticado inicial.
 - `src/components/version-banner.tsx`: banner global de versao WIP.
 - `src/lib/app-version.ts`: valor unico da versao exibida no topo.
+- `src/components/currency-input.tsx`: Client Component para entrada monetaria em formato `R$` no padrao pt-BR.
 - `prisma/schema.prisma`: modelo de dados multi tenant.
 - `Docs`: documentacao viva do projeto.
 
@@ -331,9 +332,10 @@ Fluxo inicial implementado:
 36. `createAccountOpportunityAction` cria oportunidades vinculadas à Empresa/Prospect, com contato opcional, etapa do funil padrão, valor estimado e previsão de fechamento.
 37. `moveAccountOpportunityStageAction` move a oportunidade entre etapas do mesmo funil, atualiza o status para `OPEN`, `WON` ou `LOST` conforme a etapa e grava uma linha em `stage_movements`.
 38. A criação e movimentação de oportunidades também gravam `interactions` com os resumos `Oportunidade Criada` e `Oportunidade Movida`.
-39. O bloco `Contatos` usa um Client Component expansível para manter o primeiro contato visível e recolher contatos extras por padrão.
-40. Os campos `date` e `datetime-local` usam estilo global para destacar de forma discreta o indicador nativo de calendário com a cor primária do tema.
-41. `DateTimeLocalDefaults` é carregado no layout raiz e inicializa campos `datetime-local` vazios com a data atual às `09:00` quando o usuário foca/clica no campo.
+39. O campo `Valor Estimado` da `Nova Oportunidade` usa máscara monetária pt-BR ao sair do campo ou enviar o formulário, e a Server Action aceita valores como `R$ 1.000.000,00`, `1000000` e `1000000,50`.
+40. O bloco `Contatos` usa um Client Component expansível para manter o primeiro contato visível e recolher contatos extras por padrão.
+41. Os campos `date` e `datetime-local` usam estilo global para destacar de forma discreta o indicador nativo de calendário com a cor primária do tema.
+42. `DateTimeLocalDefaults` é carregado no layout raiz e inicializa campos `datetime-local` vazios com a data atual às `09:00` quando o usuário foca/clica no campo.
 42. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
 
 Validacoes atuais:
@@ -396,7 +398,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-15 11:54:00`
+- Valor: `2026-06-15 12:43:36`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

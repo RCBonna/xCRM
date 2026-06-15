@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 11:54:00 -03:00
+Ultima modificacao: 2026-06-15 12:43:36 -03:00
 
 ## 2026-06-12
 
@@ -222,6 +222,10 @@ Ultima modificacao: 2026-06-15 11:54:00 -03:00
 - Confirmado novo digest `4025481309` na aba real do Chrome após reload.
 - Ampliada a configuração SSL explícita para qualquer host Supabase (`*.supabase.co` e `*.supabase.com`), incluindo URLs de pooler, removendo parâmetros SSL da URL antes de criar o pool.
 - Atualizada versão WIP para `2026-06-15 11:54:00`.
+- Criada a issue `#24` para melhorar a clareza do campo `Valor Estimado` em `Nova Oportunidade`.
+- Adicionado componente `CurrencyInput` para formatar o valor em Real (`R$`) ao sair do campo ou enviar o formulário.
+- Ajustada a Server Action de criação de Oportunidade para aceitar valores mascarados em Português-BR, como `R$ 1.000.000,00`, além de números simples.
+- Atualizada versão WIP para `2026-06-15 12:43:36`.
 
 ### Observacoes
 

@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-14 18:59:34 -03:00
+Ultima modificacao: 2026-06-15 12:43:36 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -195,6 +195,7 @@ Na tela de detalhe da Empresa/Prospect, o usuario pode:
 - Identificar o Contato Principal pela faixa de ações do próprio contato.
 - Ver Oportunidades registradas para a Empresa/Prospect.
 - Criar uma Nova Oportunidade com Título, Contato opcional, Etapa, Valor Estimado e Previsão de Fechamento.
+- O campo Valor Estimado da Nova Oportunidade formata o valor em Real ao sair do campo ou enviar, por exemplo `1000000` vira `R$ 1.000.000,00`.
 - Mover uma Oportunidade para outra Etapa do Funil.
 - Ver o ultimo registro do Historico em formato compacto e expandir os demais registros quando necessario.
 - Ver Proximas Acoes pendentes.

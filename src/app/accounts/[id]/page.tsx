@@ -32,6 +32,7 @@ import { signOutAction } from "@/app/auth/actions";
 import { AccountCompletedActivitiesPanel } from "@/components/account-completed-activities-panel";
 import { AccountContactsPanel } from "@/components/account-contacts-panel";
 import { AccountHistoryPanel } from "@/components/account-history-panel";
+import { CurrencyInput } from "@/components/currency-input";
 import { DirtySubmitButton } from "@/components/dirty-submit-button";
 import { ThemeSelector } from "@/components/theme-selector";
 import { getAppUser } from "@/lib/auth";
@@ -727,11 +728,8 @@ export default async function AccountDetailPage({
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="grid min-w-0 gap-1 text-sm">
                       <span className="font-medium">Valor Estimado</span>
-                      <input
+                      <CurrencyInput
                         name="amountEstimated"
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="0,00"
                         className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
                       />
                     </label>
