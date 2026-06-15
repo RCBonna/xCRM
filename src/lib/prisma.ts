@@ -6,7 +6,11 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+  const shouldPreferPooledUrl =
+    process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
+  const connectionString = shouldPreferPooledUrl
+    ? process.env.DATABASE_URL ?? process.env.DIRECT_URL
+    : process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 
   if (!connectionString) {
     throw new Error("DIRECT_URL or DATABASE_URL is not configured.");

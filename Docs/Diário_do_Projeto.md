@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-14 18:59:34 -03:00
+Ultima modificacao: 2026-06-15 09:25:17 -03:00
 
 ## 2026-06-12
 
@@ -181,6 +181,22 @@ Ultima modificacao: 2026-06-14 18:59:34 -03:00
 - Aplicado `DirtySubmitButton` no formulário de dados básicos da Empresa/Prospect e nos formulários de edição de contatos.
 - Reforçado o destaque global do indicador nativo de calendário em campos `date` e `datetime-local`.
 - Atualizada versão WIP para `2026-06-14 18:59:34`.
+- Criada a issue `#20` para diagnosticar falha de deploy na Vercel por ausência de `DIRECT_URL` ou `DATABASE_URL`.
+- Documentadas no README e na documentação técnica as variáveis obrigatórias para deploy Vercel: `DIRECT_URL`, `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- Ajustado o cliente Prisma para preferir `DATABASE_URL` em Vercel/produção e manter `DIRECT_URL` como preferida no desenvolvimento local.
+- Atualizada versão WIP para `2026-06-14 19:24:02`.
+
+## 2026-06-15
+
+### Resumo do dia
+
+- Autenticada a Vercel CLI na conta `rcbonna`.
+- Vinculada a pasta local ao projeto Vercel `roberto-c-bonanomis-projects/x-crm`.
+- Configuradas na Vercel, a partir do `.env` local, as variáveis `DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` no ambiente `Production`.
+- Reaplicadas as mesmas variáveis para `Preview` na branch `main`.
+- Adicionado `.vercel` ao `.gitignore` para manter o vínculo local fora do repositório.
+- Validado `npm run build` localmente após a configuração.
+- Atualizada versão WIP para `2026-06-15 09:25:17`.
 
 ### Observacoes
 

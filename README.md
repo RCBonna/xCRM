@@ -63,6 +63,26 @@ Observacao local: `npm run dev` inicia o Next com `NODE_OPTIONS=--use-system-ca`
 
 O runtime Prisma prioriza `DIRECT_URL` quando configurada. No Supabase local/remoto deste projeto, essa conexao direta e a rota validada para consultas do app durante o WIP.
 
+## Deploy na Vercel
+
+Antes do primeiro deploy, configure em `Project Settings > Environment Variables`
+as variaveis usadas pelo Supabase e pelo Prisma:
+
+- `DATABASE_URL`: URL pooler do Supabase. Use como principal no runtime Vercel.
+- `DIRECT_URL`: URL direta do banco Supabase. Mantenha como fallback e para operacoes administrativas/migrations.
+- `NEXT_PUBLIC_SUPABASE_URL`: URL publica do projeto Supabase.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: chave publica/publishable do Supabase.
+
+As variaveis devem estar disponiveis no ambiente alvo do deploy
+(`Production`, `Preview` e/ou `Development`). Em Vercel/producao, o cliente
+Prisma prefere `DATABASE_URL` para usar o pooler. Sem `DATABASE_URL` ou
+`DIRECT_URL`, o build da Vercel falha ao importar rotas protegidas que usam
+Prisma, com erro semelhante a:
+
+```text
+Error: DIRECT_URL or DATABASE_URL is not configured.
+```
+
 ## Dados sensiveis
 
 Arquivos de prospeccao, planilhas com contatos, bases de clientes e outros dados reais nao devem ser versionados neste repositorio publico.
