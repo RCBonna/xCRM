@@ -31,10 +31,12 @@ import {
 import { signOutAction } from "@/app/auth/actions";
 import { AccountCompletedActivitiesPanel } from "@/components/account-completed-activities-panel";
 import { AccountContactsPanel } from "@/components/account-contacts-panel";
+import { AccountCustomerDataPanel } from "@/components/account-customer-data-panel";
 import { AccountHistoryPanel } from "@/components/account-history-panel";
 import { CurrencyInput } from "@/components/currency-input";
 import { DirtySubmitButton } from "@/components/dirty-submit-button";
 import { ThemeSelector } from "@/components/theme-selector";
+import { UppercaseInput } from "@/components/uppercase-input";
 import { getAppUser } from "@/lib/auth";
 import { BRAZILIAN_STATES } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
@@ -386,14 +388,7 @@ export default async function AccountDetailPage({
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-center md:justify-between">
           <div>
-            <Link
-              href="/accounts"
-              className="return-link-shimmer inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
-            >
-              <ArrowLeft size={16} aria-hidden />
-              Empresas/Prospects
-            </Link>
-            <p className="mt-4 text-sm font-medium uppercase tracking-[0.12em] text-muted">
+            <p className="text-sm font-medium uppercase tracking-[0.12em] text-muted">
               {appUser.tenant.name}
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">
@@ -429,20 +424,32 @@ export default async function AccountDetailPage({
           </div>
         </header>
 
-        {(feedback.error || feedback.message) && (
-          <div
-            className={[
-              "rounded-md border px-3 py-2 text-sm",
-              feedback.error
-                ? "border-danger text-danger"
-                : "border-border text-muted",
-            ].join(" ")}
+        <div className="grid gap-3 md:grid-cols-[auto_minmax(0,1fr)] md:items-center">
+          <Link
+            href="/accounts"
+            className="return-link-shimmer inline-flex h-10 w-fit items-center gap-2 rounded-md border border-border bg-surface px-3 text-sm font-medium text-muted transition-colors hover:border-primary hover:text-foreground"
           >
-            {feedback.error ?? feedback.message}
-          </div>
-        )}
+            <ArrowLeft size={16} aria-hidden />
+            Voltar para Empresas/Prospects
+          </Link>
 
-        <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
+          <div className="md:flex md:justify-end">
+            {(feedback.error || feedback.message) && (
+              <div
+                className={[
+                  "w-full rounded-md border px-3 py-2 text-sm md:max-w-xl",
+                  feedback.error
+                    ? "border-danger text-danger"
+                    : "border-border text-muted",
+                ].join(" ")}
+              >
+                {feedback.error ?? feedback.message}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <section className="grid gap-6 lg:grid-cols-2">
           <form
             action={updateAccountAction}
             className="rounded-md border border-border bg-surface"
@@ -456,16 +463,25 @@ export default async function AccountDetailPage({
             <div className="grid gap-4 p-4">
               <input type="hidden" name="accountId" value={account.id} />
               <label className="grid gap-1 text-sm">
-                <span className="font-medium">Empresa/Prospect</span>
-                <input
+                <span className="font-medium">Nome Fantasia/Empresa</span>
+                <UppercaseInput
                   required
                   name="accountName"
-                  type="text"
                   defaultValue={account.name}
                   autoComplete="organization"
                   className="h-10 rounded-md border border-border bg-background px-3 text-sm"
                 />
               </label>
+
+              <AccountCustomerDataPanel
+                legalName={account.legalName}
+                document={account.document}
+                postalCode={account.postalCode}
+                address={account.address}
+                addressNumber={account.addressNumber}
+                addressComplement={account.addressComplement}
+                district={account.district}
+              />
 
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_5.5rem]">
                 <label className="grid min-w-0 gap-1 text-sm">
@@ -839,7 +855,7 @@ export default async function AccountDetailPage({
           </aside>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
+        <section className="grid gap-6 lg:grid-cols-2">
           <AccountHistoryPanel interactions={historyInteractions} />
 
           <AccountCompletedActivitiesPanel activities={completedActivityItems} />

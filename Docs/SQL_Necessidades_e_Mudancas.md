@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-13 21:05:25 -03:00
+Ultima modificacao: 2026-06-15 17:01:38 -03:00
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -505,3 +505,57 @@ Observações:
 - O schema Prisma foi atualizado com `Contact.isPrimary`.
 - A regra de unicidade do Contato Principal é parcial e fica documentada na migration SQL.
 - A alteração não cria nova tabela; evolui o cadastro de contatos já existente.
+
+## 2026-06-15 16:43:51 -03:00 - Dados do Cliente e CNPJ alfanumerico
+
+Status: Aplicada no banco remoto
+
+Objetivo:
+
+- Iniciar o cadastro fiscal do Cliente.
+- Preparar o campo de CNPJ para o novo formato alfanumerico, mantendo a persistencia normalizada.
+- Separar campos essenciais de endereco do Cliente.
+
+Migration:
+
+- Arquivo: `supabase/migrations/20260615164630_add_customer_address_fields.sql`
+
+Mapeamento usado:
+
+- `public.accounts.name`: Nome Fantasia/Empresa.
+- `public.accounts.legal_name`: Razao Social.
+- `public.accounts.document`: CNPJ normalizado.
+- `public.accounts.postal_code`: CEP normalizado.
+- `public.accounts.address`: Endereco textual.
+- `public.accounts.address_number`: Numero.
+- `public.accounts.address_complement`: Complemento.
+- `public.accounts.district`: Bairro.
+
+Regras aplicadas no app:
+
+- Nome Fantasia/Empresa e Razao Social sao normalizados para maiusculas.
+- CNPJ aceita letras e numeros, salva apenas caracteres alfanumericos em maiusculas e remove `.`, `/`, `-` e espacos.
+- CNPJ precisa ter 14 posicoes; as 12 primeiras aceitam letras ou numeros e as 2 ultimas exigem numeros.
+- CEP salva apenas 8 digitos.
+- ViaCEP é usado no cliente para auxiliar o preenchimento de Endereco, Bairro, Cidade e UF.
+
+Comandos executados:
+
+```bash
+npx prisma format
+npm run prisma:generate
+supabase db push --linked --yes
+supabase migration list --linked
+npm run lint
+npm run build
+```
+
+SQL aplicado:
+
+```sql
+alter table public.accounts
+add column if not exists postal_code text,
+add column if not exists address_number text,
+add column if not exists address_complement text,
+add column if not exists district text;
+```

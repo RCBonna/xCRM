@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 12:55:30 -03:00
+Ultima modificacao: 2026-06-15 17:01:38 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -49,8 +49,11 @@ Atualizar quando houver mudancas em:
 - `src/components/login-info-panel.tsx`: painel de mensagens e textos rotativos da tela de acesso.
 - `src/components/account-history-panel.tsx`: painel expansivel do historico de Empresa/Prospect.
 - `src/components/account-contacts-panel.tsx`: painel expansivel de contatos no detalhe da Empresa/Prospect.
+- `src/components/account-customer-data-panel.tsx`: painel recolhível de Dados do Cliente, com CEP, endereço e busca via ViaCEP.
 - `src/components/datetime-local-defaults.tsx`: comportamento global para inicializar campos `datetime-local` vazios com data atual às 09:00 e normalizar horários para intervalos de 15 minutos.
 - `src/components/dirty-submit-button.tsx`: botão cliente que habilita `Salvar Alterações` apenas quando o formulário tem mudança real.
+- `src/components/cnpj-input.tsx`: Client Component para CNPJ alfanumérico com máscara visual, uppercase e 2 últimos caracteres numéricos.
+- `src/components/uppercase-input.tsx`: Client Component para entradas que devem ser digitadas e salvas em maiúsculas.
 - `src/app/onboarding`: criacao do primeiro tenant e usuario owner.
 - `src/app/dashboard`: painel autenticado inicial.
 - `src/components/version-banner.tsx`: banner global de versao WIP.
@@ -332,16 +335,28 @@ Fluxo inicial implementado:
 36. `createAccountOpportunityAction` cria oportunidades vinculadas à Empresa/Prospect, com contato opcional, etapa do funil padrão, valor estimado e previsão de fechamento.
 37. `moveAccountOpportunityStageAction` move a oportunidade entre etapas do mesmo funil, atualiza o status para `OPEN`, `WON` ou `LOST` conforme a etapa e grava uma linha em `stage_movements`.
 38. A criação e movimentação de oportunidades também gravam `interactions` com os resumos `Oportunidade Criada` e `Oportunidade Movida`.
-39. O campo `Valor Estimado` da `Nova Oportunidade` usa máscara monetária pt-BR ao sair do campo ou enviar o formulário, e a Server Action aceita valores como `R$ 1.000.000,00`, `1000000` e `1000000,50`.
-40. O bloco `Contatos` usa um Client Component expansível para manter o primeiro contato visível e recolher contatos extras por padrão.
-41. Os campos `date` e `datetime-local` usam estilo global para destacar de forma discreta o indicador nativo de calendário com a cor primária do tema.
-42. `DateTimeLocalDefaults` é carregado no layout raiz e inicializa campos `datetime-local` vazios com a data atual às `09:00` quando o usuário foca/clica no campo.
-43. Campos `datetime-local` operacionais usam `step` de 15 minutos e normalização cliente para manter minutos em `00`, `15`, `30` ou `45`.
-44. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
+39. A etapa da Oportunidade e o Status da Empresa/Prospect são conceitos separados, mas `createAccountOpportunityAction` e `moveAccountOpportunityStageAction` recalculam `accounts.status` após criar ou mover uma Oportunidade.
+40. A sincronização mantém `accounts.status = CUSTOMER` quando existe Oportunidade `WON`; usa `PROSPECT` quando existe Oportunidade `OPEN` e nenhuma `WON`; usa `LOST` quando existem apenas Oportunidades `LOST`; e não sobrescreve `ARCHIVED`.
+41. Alterações automáticas de `accounts.status` registram `interactions` com o resumo `Status Alterado`.
+42. O campo `Valor Estimado` da `Nova Oportunidade` usa máscara monetária pt-BR ao sair do campo ou enviar o formulário, e a Server Action aceita valores como `R$ 1.000.000,00`, `1000000` e `1000000,50`.
+43. O bloco `Contatos` usa um Client Component expansível para manter o primeiro contato visível e recolher contatos extras por padrão.
+44. Os campos `date` e `datetime-local` usam estilo global para destacar de forma discreta o indicador nativo de calendário com a cor primária do tema.
+45. `DateTimeLocalDefaults` é carregado no layout raiz e inicializa campos `datetime-local` vazios com a data atual às `09:00` quando o usuário foca/clica no campo.
+46. Campos `datetime-local` operacionais usam `step` de 15 minutos e normalização cliente para manter minutos em `00`, `15`, `30` ou `45`.
+47. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
+48. Telas de detalhe devem usar uma faixa de Navegação e Mensagens abaixo do cabeçalho: ação de retorno à esquerda e feedback do sistema à direita, empilhando em telas pequenas.
+49. O detalhe da Empresa/Prospect usa `accounts.name` como Nome Fantasia/Empresa, `accounts.legalName` como Razão Social, `accounts.document` como CNPJ, `accounts.postalCode` como CEP, `accounts.address` como Endereço, `accounts.addressNumber` como Número, `accounts.addressComplement` como Complemento e `accounts.district` como Bairro.
+50. `CnpjInput` mostra o documento no padrão `AA.AAA.AAA/AAAA-00`, mas `updateAccountAction` normaliza para letras maiúsculas e números sem pontuação antes de persistir.
+51. `AccountCustomerDataPanel` fica recolhido por padrão e consulta `https://viacep.com.br/ws/{CEP}/json/` para preencher Endereço, Bairro, Cidade e UF quando o CEP possui 8 dígitos.
 
 Validacoes atuais:
 
 - Nome da Empresa/Prospect obrigatorio.
+- Nome Fantasia/Empresa é normalizado para maiúsculas no cliente e no servidor.
+- Razão Social é opcional e normalizada para maiúsculas no cliente e no servidor.
+- CNPJ opcional precisa ter 14 posições; as 12 primeiras aceitam letras ou números e as 2 últimas exigem números.
+- CEP opcional precisa ter 8 dígitos e persiste sem hífen em `accounts.postalCode`.
+- Endereço, Número, Complemento e Bairro do Cliente são opcionais.
 - UF opcional, selecionada em lista fechada com as 27 siglas brasileiras e validada no servidor.
 - Site capturado como texto opcional para evitar validacao prematura de protocolo na entrada inicial.
 - Telefone do contato principal limitado a 15 caracteres no cliente e no servidor.
@@ -355,6 +370,7 @@ Validacoes atuais:
 - Criação de oportunidade exige título e etapa válida do funil padrão do mesmo tenant.
 - Contato vinculado à oportunidade, quando informado, precisa pertencer à mesma Empresa/Prospect.
 - Movimentação de oportunidade exige etapa válida dentro do mesmo funil da oportunidade.
+- Sincronização automática de Status da Empresa/Prospect não altera registros `ARCHIVED`.
 - Toda consulta de empresas/prospects aplica `tenantId` na camada de aplicacao.
 - Perfis operacionais tambem recebem filtro por `ownerUserId`.
 
@@ -363,6 +379,7 @@ Decisoes de cadastro:
 - O campo visual `Fornecedor/Atividade/Marca` continua persistindo em `accounts.mainSupplier` nesta etapa para evitar migration apenas por nomenclatura.
 - Campo de observacao comercial foi implementado no detalhe da Empresa/Prospect, nao no cadastro rapido inicial.
 - Endereco do prospect nao e necessario para o fluxo atual do MVP, embora o schema ja possua campo `address` para uso futuro.
+- A migration `20260615164630_add_customer_address_fields.sql` adiciona `postal_code`, `address_number`, `address_complement` e `district` em `public.accounts`.
 
 Arquivos principais:
 
@@ -399,7 +416,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-15 12:55:30`
+- Valor: `2026-06-15 17:01:38`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

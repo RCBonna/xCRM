@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 import { createAccountAction } from "@/app/accounts/actions";
 import { signOutAction } from "@/app/auth/actions";
 import { ThemeSelector } from "@/components/theme-selector";
+import { UppercaseInput } from "@/components/uppercase-input";
 import type { Prisma } from "@/generated/prisma/client";
 import { getAppUser } from "@/lib/auth";
 import { BRAZILIAN_STATES } from "@/lib/brazilian-states";
@@ -249,10 +250,9 @@ export default async function AccountsPage({
             <form action={createAccountAction} className="grid gap-4 p-4">
               <label className="grid gap-1 text-sm">
                 <span className="font-medium">Empresa/Prospect</span>
-                <input
+                <UppercaseInput
                   required
                   name="accountName"
-                  type="text"
                   autoComplete="organization"
                   className="h-10 rounded-md border border-border bg-background px-3 text-sm"
                 />

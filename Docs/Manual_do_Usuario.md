@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 12:55:30 -03:00
+Ultima modificacao: 2026-06-15 17:01:38 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -182,9 +182,15 @@ Na base comercial, o usuario pode:
 
 Na tela de detalhe da Empresa/Prospect, o usuario pode:
 
-- Voltar para a lista pelo link `Empresas/Prospects` no topo da tela.
+- Voltar para a lista pela faixa de navegação abaixo do cabeçalho, usando `Voltar para Empresas/Prospects`.
+- Ver mensagens de sucesso, aviso ou erro na mesma faixa, alinhadas à direita em telas maiores.
 - Ver Dados Basicos.
-- Editar Empresa/Prospect, cidade, UF, site, Fornecedor/Atividade/Marca, origem e Observacao Comercial.
+- Editar Nome Fantasia/Empresa, Dados do Cliente, cidade, UF, site, Fornecedor/Atividade/Marca, origem e Observacao Comercial.
+- Preencher Razão Social em maiúsculas.
+- Preencher CNPJ alfanumérico com máscara visual no padrão `AA.AAA.AAA/AAAA-00`; o sistema salva internamente apenas letras maiúsculas e números.
+- Abrir ou recolher o bloco `Dados do Cliente`, que fica recolhido por padrão para preservar foco do vendedor.
+- Preencher CEP, Endereço, Número, Complemento e Bairro.
+- Buscar endereço pelo CEP usando o botão `Buscar`; quando encontrado, o sistema preenche Endereço, Bairro, Cidade e UF.
 - Ver Contato Principal.
 - Ver Contatos cadastrados.
 - Abrir e recolher contatos adicionais quando houver mais de um contato cadastrado.
@@ -203,6 +209,38 @@ Na tela de detalhe da Empresa/Prospect, o usuario pode:
 - Concluir uma Acao pendente para move-la para Acoes Concluidas.
 - Ver a última Ação Concluída em formato compacto e expandir as demais quando necessário.
 
+## Etapas da Oportunidade e Status da Empresa/Prospect
+
+A Etapa da Oportunidade indica onde uma venda específica está no Funil. O Status da Empresa/Prospect indica a situação geral do cadastro na Base Comercial.
+
+No comportamento atual, mover uma Oportunidade altera o status da própria Oportunidade e pode alterar automaticamente o Status da Empresa/Prospect.
+
+Etapas atuais do Funil:
+
+- Visitantes: registro inicial ou primeiro sinal de interesse, ainda sem oportunidade comercial clara.
+- Contatos: já existe contato identificado ou tentativa real de abordagem.
+- Qualificação: etapa para validar necessidade, perfil, aderência e chance real de negócio.
+- Oportunidades: existe dor, interesse ou chance comercial mais clara.
+- Proposta: proposta, orçamento ou condição comercial em preparação ou enviada.
+- Negociação: etapa de ajustes de preço, prazo, escopo, condição ou decisão final.
+- Clientes: etapa de ganho; ao mover para esta etapa, a Oportunidade fica como Ganha.
+- Perdidos: etapa de perda; ao mover para esta etapa, a Oportunidade fica como Perdida.
+
+Impacto atual:
+
+- Etapas de Visitantes até Negociação mantêm a Oportunidade como Aberta.
+- A etapa Clientes muda a Oportunidade para Ganha.
+- A etapa Perdidos muda a Oportunidade para Perdida.
+- A movimentação da Oportunidade registra uma linha no Histórico da Empresa/Prospect.
+- Se existir pelo menos uma Oportunidade Ganha, a Empresa/Prospect passa automaticamente para Cliente.
+- Se não houver Oportunidade Ganha ou Aberta, mas houver Oportunidade Perdida, a Empresa/Prospect passa automaticamente para Perdido.
+- Se ainda houver Oportunidade Aberta e nenhuma Oportunidade Ganha, a Empresa/Prospect fica como Prospect.
+- Empresas/Prospects Arquivados não têm o Status alterado automaticamente por movimentação de Oportunidade.
+
+Registro no Histórico:
+
+- Toda alteração automática de Status registra uma linha no Histórico como `Status Alterado`.
+
 Regras atuais de visibilidade:
 
 - Owner, admin e gestor veem a base comercial do tenant.
@@ -218,6 +256,9 @@ Observacoes de uso:
 - A criacao, alteracao e troca de Contato Principal registram automaticamente uma linha no Historico.
 - A criacao e a conclusao de acoes no detalhe registram automaticamente uma linha no Historico.
 - A criacao e a movimentacao de oportunidades no detalhe registram automaticamente uma linha no Historico.
+- Nome Fantasia/Empresa e Razão Social são digitados e salvos em maiúsculas.
+- O CNPJ aceita letras e números, força maiúsculas, exige 14 posições e mantém os 2 últimos caracteres como números.
+- A busca por CEP usa o ViaCEP como apoio; se o serviço não responder ou o CEP não existir, o preenchimento manual continua disponível.
 - Campos de Data e Data e Hora destacam discretamente o ícone de calendário.
 - Campos de Data e Hora vazios iniciam com a data atual às `09:00` quando o usuário entra no campo.
 - Campos de Data e Hora usam intervalos de 15 minutos, mantendo os minutos em `00`, `15`, `30` ou `45`.
@@ -235,7 +276,7 @@ Essa informacao ajuda a confirmar qual pacote de mudancas esta sendo testado.
 
 Versao atual:
 
-- `2026-06-15 12:55:30`
+- `2026-06-15 17:01:38`
 
 ## Fluxos ainda nao implementados
 

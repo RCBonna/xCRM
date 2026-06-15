@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 12:55:30 -03:00
+Ultima modificacao: 2026-06-15 17:01:38 -03:00
 
 ## 2026-06-12
 
@@ -230,6 +230,31 @@ Ultima modificacao: 2026-06-15 12:55:30 -03:00
 - Adicionado `step` de 15 minutos nos campos `datetime-local` de criação de próxima ação.
 - Atualizado `DateTimeLocalDefaults` para manter o padrão inicial `09:00` e normalizar horários digitados para os minutos `00`, `15`, `30` ou `45`.
 - Atualizada versão WIP para `2026-06-15 12:55:30`.
+- Criada a issue `#26` para documentar as etapas da Oportunidade e a diferença para o Status da Empresa/Prospect.
+- Atualizado o Manual do Usuário com a explicação das etapas do Funil, impacto no status da Oportunidade e comportamento atual do cadastro da Empresa/Prospect.
+- Atualizada a Documentação Técnica para registrar que a movimentação do Funil ainda não altera automaticamente `accounts.status`.
+- Atualizada versão WIP para `2026-06-15 15:50:09`.
+- Criada a issue `#27` para automatizar o Status da Empresa/Prospect pelo resultado das Oportunidades.
+- Implementada sincronização automática do Status da Empresa/Prospect após criação ou movimentação de Oportunidade.
+- A Empresa/Prospect passa para `Cliente` quando há Oportunidade ganha, volta para `Prospect` quando há Oportunidade aberta sem ganho e passa para `Perdido` quando restam apenas Oportunidades perdidas.
+- Registros `Arquivados` não são alterados automaticamente por movimentação de Oportunidade.
+- Alterações automáticas de Status gravam Histórico como `Status Alterado`.
+- Atualizada versão WIP para `2026-06-15 15:56:06`.
+- Criada a issue `#28` para padronizar a faixa de Navegação e Mensagens nas telas de detalhe.
+- Movido o retorno `Voltar para Empresas/Prospects` para a faixa abaixo do cabeçalho no detalhe da Empresa/Prospect.
+- Padronizada a faixa com navegação à esquerda e mensagens do sistema à direita, empilhando em telas menores.
+- Atualizada versão WIP para `2026-06-15 16:29:39`.
+- Criada a issue `#29` para iniciar os Dados do Cliente com CNPJ alfanumérico.
+- Adicionado componente `CnpjInput` com máscara visual `AA.AAA.AAA/AAAA-00`, uppercase e restrição dos 2 últimos caracteres para números.
+- Adicionado componente `UppercaseInput` e aplicado em Nome Fantasia/Empresa e Razão Social.
+- Atualizada `updateAccountAction` para persistir Nome Fantasia/Empresa e Razão Social em maiúsculas, CNPJ sem pontuação e Endereço textual.
+- Documentada a decisão de usar `accounts.name`, `accounts.legal_name` e `accounts.document` neste primeiro corte, sem migration.
+- Atualizada versão WIP para `2026-06-15 16:43:51`.
+- Criada e aplicada a migration `20260615164630_add_customer_address_fields.sql` para adicionar CEP, Número, Complemento e Bairro em `accounts`.
+- Transformado `Dados do Cliente` em painel recolhível por padrão.
+- Adicionada busca de endereço por CEP via ViaCEP, preenchendo Endereço, Bairro, Cidade e UF quando encontrado.
+- Ajustadas as grades principais do detalhe para duas colunas iguais em desktop, alinhando Histórico e Ações Concluídas com os quadros superiores.
+- Atualizada versão WIP para `2026-06-15 17:01:38`.
 
 ### Observacoes
 

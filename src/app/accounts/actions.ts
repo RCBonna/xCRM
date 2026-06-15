@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import type {
+  AccountStatus,
+  OpportunityStatus,
+  Prisma,
+} from "@/generated/prisma/client";
 import { getAppUser } from "@/lib/auth";
 import { isBrazilianStateCode } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
@@ -15,6 +20,24 @@ function encodeMessage(message: string) {
 function normalizeOptionalText(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
   return text.length > 0 ? text : null;
+}
+
+function normalizeOptionalUppercase(value: FormDataEntryValue | null) {
+  return normalizeOptionalText(value)?.toLocaleUpperCase("pt-BR") ?? null;
+}
+
+function normalizeOptionalCnpj(value: FormDataEntryValue | null) {
+  const document = normalizeOptionalText(value)
+    ?.toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+
+  return document && document.length > 0 ? document : null;
+}
+
+function normalizeOptionalCep(value: FormDataEntryValue | null) {
+  const postalCode = normalizeOptionalText(value)?.replace(/\D/g, "");
+
+  return postalCode && postalCode.length > 0 ? postalCode : null;
 }
 
 function parseOptionalDateTime(value: FormDataEntryValue | null) {
@@ -56,6 +79,106 @@ function normalizeOptionalMoney(value: FormDataEntryValue | null) {
   return Number.isFinite(amount) && amount >= 0 ? amount.toFixed(2) : null;
 }
 
+const accountStatusLabels: Record<AccountStatus, string> = {
+  PROSPECT: "Prospect",
+  CUSTOMER: "Cliente",
+  LOST: "Perdido",
+  ARCHIVED: "Arquivado",
+};
+
+function getOpportunityStatusFromStage(stage: {
+  isWon: boolean;
+  isLost: boolean;
+}): OpportunityStatus {
+  if (stage.isWon) {
+    return "WON";
+  }
+
+  if (stage.isLost) {
+    return "LOST";
+  }
+
+  return "OPEN";
+}
+
+async function syncAccountStatusFromOpportunities({
+  tx,
+  tenantId,
+  accountId,
+  currentStatus,
+  userId,
+  opportunityId,
+}: {
+  tx: Prisma.TransactionClient;
+  tenantId: string;
+  accountId: string;
+  currentStatus: AccountStatus;
+  userId: string;
+  opportunityId?: string;
+}) {
+  if (currentStatus === "ARCHIVED") {
+    return;
+  }
+
+  const opportunityStatusCounts = await tx.opportunity.groupBy({
+    by: ["status"],
+    where: {
+      tenantId,
+      accountId,
+      status: {
+        in: ["OPEN", "WON", "LOST"],
+      },
+    },
+    _count: {
+      _all: true,
+    },
+  });
+
+  const hasWonOpportunity = opportunityStatusCounts.some(
+    (item) => item.status === "WON" && item._count._all > 0,
+  );
+  const hasOpenOpportunity = opportunityStatusCounts.some(
+    (item) => item.status === "OPEN" && item._count._all > 0,
+  );
+  const hasLostOpportunity = opportunityStatusCounts.some(
+    (item) => item.status === "LOST" && item._count._all > 0,
+  );
+
+  const nextStatus: AccountStatus = hasWonOpportunity
+    ? "CUSTOMER"
+    : hasOpenOpportunity
+      ? "PROSPECT"
+      : hasLostOpportunity
+        ? "LOST"
+        : "PROSPECT";
+
+  if (nextStatus === currentStatus) {
+    return;
+  }
+
+  await tx.account.update({
+    where: {
+      id: accountId,
+    },
+    data: {
+      status: nextStatus,
+    },
+  });
+
+  await tx.interaction.create({
+    data: {
+      tenantId,
+      accountId,
+      opportunityId,
+      userId,
+      channel: "MANUAL_NOTE",
+      direction: "INTERNAL",
+      summary: "Status Alterado",
+      body: `Status da Empresa/Prospect alterado de ${accountStatusLabels[currentStatus]} para ${accountStatusLabels[nextStatus]}.`,
+    },
+  });
+}
+
 function canManageTenantAccounts(role: string) {
   return ["OWNER", "ADMIN", "MANAGER"].includes(role);
 }
@@ -77,6 +200,7 @@ async function getVisibleAccount(
     select: {
       id: true,
       name: true,
+      status: true,
     },
   });
 }
@@ -101,7 +225,9 @@ export async function createAccountAction(formData: FormData) {
     redirect("/onboarding");
   }
 
-  const accountName = String(formData.get("accountName") ?? "").trim();
+  const accountName = String(formData.get("accountName") ?? "")
+    .trim()
+    .toLocaleUpperCase("pt-BR");
   const city = normalizeOptionalText(formData.get("city"));
   const state = normalizeOptionalText(formData.get("state"))?.toUpperCase();
   const website = normalizeOptionalText(formData.get("website"));
@@ -239,7 +365,18 @@ export async function updateAccountAction(formData: FormData) {
   }
 
   const accountId = String(formData.get("accountId") ?? "").trim();
-  const accountName = String(formData.get("accountName") ?? "").trim();
+  const accountName = String(formData.get("accountName") ?? "")
+    .trim()
+    .toLocaleUpperCase("pt-BR");
+  const legalName = normalizeOptionalUppercase(formData.get("legalName"));
+  const document = normalizeOptionalCnpj(formData.get("document"));
+  const postalCode = normalizeOptionalCep(formData.get("postalCode"));
+  const address = normalizeOptionalText(formData.get("address"));
+  const addressNumber = normalizeOptionalText(formData.get("addressNumber"));
+  const addressComplement = normalizeOptionalText(
+    formData.get("addressComplement"),
+  );
+  const district = normalizeOptionalText(formData.get("district"));
   const city = normalizeOptionalText(formData.get("city"));
   const state = normalizeOptionalText(formData.get("state"))?.toUpperCase();
   const website = normalizeOptionalText(formData.get("website"));
@@ -255,6 +392,30 @@ export async function updateAccountAction(formData: FormData) {
     redirect(
       `/accounts/${accountId}?error=${encodeMessage(
         "Informe o nome da Empresa/Prospect.",
+      )}`,
+    );
+  }
+
+  if (document && document.length !== 14) {
+    redirect(
+      `/accounts/${accountId}?error=${encodeMessage(
+        "Informe um CNPJ com 14 posições.",
+      )}`,
+    );
+  }
+
+  if (document && !/^[A-Z0-9]{12}\d{2}$/.test(document)) {
+    redirect(
+      `/accounts/${accountId}?error=${encodeMessage(
+        "O CNPJ deve ter letras ou números nas 12 primeiras posições e números nas 2 últimas.",
+      )}`,
+    );
+  }
+
+  if (postalCode && postalCode.length !== 8) {
+    redirect(
+      `/accounts/${accountId}?error=${encodeMessage(
+        "Informe um CEP com 8 dígitos.",
       )}`,
     );
   }
@@ -312,6 +473,13 @@ export async function updateAccountAction(formData: FormData) {
       },
       data: {
         name: accountName,
+        legalName,
+        document,
+        postalCode,
+        address,
+        addressNumber,
+        addressComplement,
+        district,
         city,
         state,
         website,
@@ -1022,6 +1190,7 @@ export async function createAccountOpportunityAction(formData: FormData) {
   }
 
   await prisma.$transaction(async (tx) => {
+    const opportunityStatus = getOpportunityStatusFromStage(stage);
     const opportunity = await tx.opportunity.create({
       data: {
         tenantId: appUser.tenantId,
@@ -1033,7 +1202,7 @@ export async function createAccountOpportunityAction(formData: FormData) {
         title,
         amountEstimated,
         expectedCloseDate,
-        status: stage.isWon ? "WON" : stage.isLost ? "LOST" : "OPEN",
+        status: opportunityStatus,
       },
     });
 
@@ -1059,6 +1228,15 @@ export async function createAccountOpportunityAction(formData: FormData) {
         summary: "Oportunidade Criada",
         body: `Oportunidade criada em ${stage.name}: ${title}.`,
       },
+    });
+
+    await syncAccountStatusFromOpportunities({
+      tx,
+      tenantId: appUser.tenantId,
+      accountId: account.id,
+      currentStatus: account.status,
+      userId: appUser.id,
+      opportunityId: opportunity.id,
     });
   });
 
@@ -1155,13 +1333,15 @@ export async function moveAccountOpportunityStageAction(formData: FormData) {
   }
 
   await prisma.$transaction(async (tx) => {
+    const opportunityStatus = getOpportunityStatusFromStage(nextStage);
+
     await tx.opportunity.update({
       where: {
         id: opportunity.id,
       },
       data: {
         stageId: nextStage.id,
-        status: nextStage.isWon ? "WON" : nextStage.isLost ? "LOST" : "OPEN",
+        status: opportunityStatus,
       },
     });
 
@@ -1187,6 +1367,15 @@ export async function moveAccountOpportunityStageAction(formData: FormData) {
         summary: "Oportunidade Movida",
         body: `Oportunidade ${opportunity.title} movida de ${opportunity.stage.name} para ${nextStage.name}.`,
       },
+    });
+
+    await syncAccountStatusFromOpportunities({
+      tx,
+      tenantId: appUser.tenantId,
+      accountId: account.id,
+      currentStatus: account.status,
+      userId: appUser.id,
+      opportunityId: opportunity.id,
     });
   });
 

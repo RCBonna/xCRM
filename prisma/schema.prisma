@@ -170,23 +170,27 @@ model TeamMember {
 }
 
 model Account {
-  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId     String        @map("tenant_id") @db.Uuid
-  ownerUserId  String?       @map("owner_user_id") @db.Uuid
-  name         String
-  legalName    String?       @map("legal_name")
-  document     String?
-  segment      String?
-  city         String?
-  state        String?
-  address      String?
-  website      String?
-  mainSupplier String?       @map("main_supplier")
-  source       String?
-  notes        String?
-  status       AccountStatus @default(PROSPECT)
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String        @map("tenant_id") @db.Uuid
+  ownerUserId       String?       @map("owner_user_id") @db.Uuid
+  name              String
+  legalName         String?       @map("legal_name")
+  document          String?
+  segment           String?
+  city              String?
+  state             String?
+  postalCode        String?       @map("postal_code")
+  address           String?
+  addressNumber     String?       @map("address_number")
+  addressComplement String?       @map("address_complement")
+  district          String?
+  website           String?
+  mainSupplier      String?       @map("main_supplier")
+  source            String?
+  notes             String?
+  status            AccountStatus @default(PROSPECT)
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
 
   tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   owner         User?         @relation("AccountOwner", fields: [ownerUserId], references: [id])
@@ -309,11 +313,11 @@ model StageMovement {
   changedAt       DateTime @default(now()) @map("changed_at")
   note            String?
 
-  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  opportunity     Opportunity    @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  fromStage       PipelineStage? @relation("StageMovementFrom", fields: [fromStageId], references: [id])
-  toStage         PipelineStage  @relation("StageMovementTo", fields: [toStageId], references: [id])
-  changedByUser   User           @relation("StageMovementChanger", fields: [changedByUserId], references: [id])
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  opportunity   Opportunity    @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  fromStage     PipelineStage? @relation("StageMovementFrom", fields: [fromStageId], references: [id])
+  toStage       PipelineStage  @relation("StageMovementTo", fields: [toStageId], references: [id])
+  changedByUser User           @relation("StageMovementChanger", fields: [changedByUserId], references: [id])
 
   @@index([tenantId, opportunityId])
   @@map("stage_movements")
@@ -391,17 +395,17 @@ model Attachment {
 }
 
 model AiJob {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId        String    @map("tenant_id") @db.Uuid
-  requestedByUserId String  @map("requested_by_user_id") @db.Uuid
-  jobType         String    @map("job_type")
-  status          JobStatus @default(QUEUED)
-  inputEntityType String?   @map("input_entity_type")
-  inputEntityId   String?   @map("input_entity_id") @db.Uuid
-  outputJson      Json?     @map("output_json")
-  errorMessage    String?   @map("error_message")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  completedAt     DateTime? @map("completed_at")
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  requestedByUserId String    @map("requested_by_user_id") @db.Uuid
+  jobType           String    @map("job_type")
+  status            JobStatus @default(QUEUED)
+  inputEntityType   String?   @map("input_entity_type")
+  inputEntityId     String?   @map("input_entity_id") @db.Uuid
+  outputJson        Json?     @map("output_json")
+  errorMessage      String?   @map("error_message")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  completedAt       DateTime? @map("completed_at")
 
   tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   requestedBy User   @relation("AiJobRequester", fields: [requestedByUserId], references: [id])
@@ -449,4 +453,3 @@ model ImportRow {
   @@index([tenantId, status])
   @@map("import_rows")
 }
-
