@@ -586,6 +586,102 @@ export async function createAccountActivityAction(formData: FormData) {
   );
 }
 
+export async function updateAccountActivityAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const appUser = await getAppUser(user);
+
+  if (!appUser) {
+    redirect("/onboarding");
+  }
+
+  const accountId = String(formData.get("accountId") ?? "").trim();
+  const activityId = String(formData.get("activityId") ?? "").trim();
+  const title = normalizeOptionalText(formData.get("activityTitle"));
+  const scheduledAt = parseOptionalDateTime(formData.get("activityScheduledAt"));
+
+  if (!accountId || !activityId) {
+    redirect("/accounts?error=Registro%20nao%20informado.");
+  }
+
+  if (!title) {
+    redirect(
+      `/accounts/${accountId}?error=${encodeMessage(
+        "Informe a descrição da Ação Pendente.",
+      )}`,
+    );
+  }
+
+  const account = await getVisibleAccount(accountId, appUser);
+
+  if (!account) {
+    redirect("/accounts?error=Empresa%2FProspect%20nao%20encontrada.");
+  }
+
+  const activity = await prisma.activity.findFirst({
+    where: {
+      id: activityId,
+      accountId: account.id,
+      tenantId: appUser.tenantId,
+      status: "PENDING",
+    },
+    select: {
+      id: true,
+      title: true,
+      scheduledAt: true,
+    },
+  });
+
+  if (!activity) {
+    redirect(
+      `/accounts/${account.id}?error=${encodeMessage(
+        "Ação pendente não encontrada.",
+      )}`,
+    );
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.activity.update({
+      where: {
+        id: activity.id,
+      },
+      data: {
+        title,
+        scheduledAt,
+      },
+    });
+
+    await tx.interaction.create({
+      data: {
+        tenantId: appUser.tenantId,
+        accountId: account.id,
+        userId: appUser.id,
+        channel: "MANUAL_NOTE",
+        direction: "INTERNAL",
+        summary: "Ação Atualizada",
+        body:
+          activity.title === title
+            ? `Data e Hora da Ação Pendente foram atualizadas: ${title}.`
+            : `Ação Pendente alterada de ${activity.title} para ${title}.`,
+      },
+    });
+  });
+
+  revalidatePath("/accounts");
+  revalidatePath(`/accounts/${account.id}`);
+  revalidatePath("/dashboard");
+  redirect(
+    `/accounts/${account.id}?message=${encodeMessage("Ação atualizada.")}`,
+  );
+}
+
 export async function completeAccountActivityAction(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -665,6 +761,84 @@ export async function completeAccountActivityAction(formData: FormData) {
   revalidatePath("/dashboard");
   redirect(
     `/accounts/${account.id}?message=${encodeMessage("Ação concluída.")}`,
+  );
+}
+
+export async function deleteAccountActivityAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const appUser = await getAppUser(user);
+
+  if (!appUser) {
+    redirect("/onboarding");
+  }
+
+  const accountId = String(formData.get("accountId") ?? "").trim();
+  const activityId = String(formData.get("activityId") ?? "").trim();
+
+  if (!accountId || !activityId) {
+    redirect("/accounts?error=Registro%20nao%20informado.");
+  }
+
+  const account = await getVisibleAccount(accountId, appUser);
+
+  if (!account) {
+    redirect("/accounts?error=Empresa%2FProspect%20nao%20encontrada.");
+  }
+
+  const activity = await prisma.activity.findFirst({
+    where: {
+      id: activityId,
+      accountId: account.id,
+      tenantId: appUser.tenantId,
+      status: "PENDING",
+    },
+    select: {
+      id: true,
+      title: true,
+    },
+  });
+
+  if (!activity) {
+    redirect(
+      `/accounts/${account.id}?error=${encodeMessage(
+        "Ação pendente não encontrada.",
+      )}`,
+    );
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.activity.delete({
+      where: {
+        id: activity.id,
+      },
+    });
+
+    await tx.interaction.create({
+      data: {
+        tenantId: appUser.tenantId,
+        accountId: account.id,
+        userId: appUser.id,
+        channel: "MANUAL_NOTE",
+        direction: "INTERNAL",
+        summary: "Ação Excluída",
+        body: `Ação pendente excluída: ${activity.title}.`,
+      },
+    });
+  });
+
+  revalidatePath("/accounts");
+  revalidatePath(`/accounts/${account.id}`);
+  revalidatePath("/dashboard");
+  redirect(
+    `/accounts/${account.id}?message=${encodeMessage("Ação excluída.")}`,
   );
 }
 

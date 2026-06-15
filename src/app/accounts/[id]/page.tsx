@@ -22,13 +22,16 @@ import {
   createAccountContactAction,
   createAccountActivityAction,
   createAccountOpportunityAction,
+  deleteAccountActivityAction,
   deleteAccountContactAction,
   moveAccountOpportunityStageAction,
   setPrimaryAccountContactAction,
   updateAccountContactAction,
+  updateAccountActivityAction,
   updateAccountAction,
 } from "@/app/accounts/actions";
 import { signOutAction } from "@/app/auth/actions";
+import { ActionDateTimeInput } from "@/components/action-date-time-input";
 import { AccountCompletedActivitiesPanel } from "@/components/account-completed-activities-panel";
 import { AccountContactsPanel } from "@/components/account-contacts-panel";
 import { AccountCustomerDataPanel } from "@/components/account-customer-data-panel";
@@ -55,6 +58,20 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
+
+function formatDateTimeLocalValue(date: Date | null) {
+  if (!date) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
 
 const accountStatusLabels: Record<string, string> = {
   PROSPECT: "Prospect",
@@ -788,17 +805,12 @@ export default async function AccountDetailPage({
                     pendingActivities.map((activity) => (
                       <div
                         key={activity.id}
-                        className="grid gap-3 px-4 py-3 text-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                        className="grid gap-3 px-4 py-4 text-sm"
                       >
-                        <div className="min-w-0">
-                          <p className="font-medium">{activity.title}</p>
-                          <p className="text-xs leading-5 text-muted">
-                            {activity.scheduledAt
-                              ? dateTimeFormatter.format(activity.scheduledAt)
-                              : "Sem data definida"}
-                          </p>
-                        </div>
-                        <form action={completeAccountActivityAction}>
+                        <form
+                          action={updateAccountActivityAction}
+                          className="grid gap-3"
+                        >
                           <input
                             type="hidden"
                             name="accountId"
@@ -809,14 +821,69 @@ export default async function AccountDetailPage({
                             name="activityId"
                             value={activity.id}
                           />
-                          <button
-                            aria-label={`Concluir Ação ${activity.title}`}
-                            className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-border px-3 text-xs font-medium text-muted transition-colors hover:border-primary hover:text-foreground sm:w-auto"
-                          >
-                            <Check size={14} aria-hidden />
-                            Concluir
-                          </button>
+                          <label className="grid gap-1">
+                            <span className="font-medium">Ação Pendente</span>
+                            <input
+                              required
+                              name="activityTitle"
+                              type="text"
+                              defaultValue={activity.title}
+                              className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+                            />
+                          </label>
+                          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                            <label className="grid gap-1">
+                              <span className="font-medium">Data e Hora</span>
+                              <ActionDateTimeInput
+                                name="activityScheduledAt"
+                                defaultValue={formatDateTimeLocalValue(
+                                  activity.scheduledAt,
+                                )}
+                              />
+                            </label>
+                            <DirtySubmitButton />
+                          </div>
                         </form>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <form action={completeAccountActivityAction}>
+                            <input
+                              type="hidden"
+                              name="accountId"
+                              value={account.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="activityId"
+                              value={activity.id}
+                            />
+                            <button
+                              aria-label={`Concluir Ação ${activity.title}`}
+                              className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-border px-3 text-xs font-medium text-muted transition-colors hover:border-primary hover:text-foreground"
+                            >
+                              <Check size={14} aria-hidden />
+                              Concluir
+                            </button>
+                          </form>
+                          <form action={deleteAccountActivityAction}>
+                            <input
+                              type="hidden"
+                              name="accountId"
+                              value={account.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="activityId"
+                              value={activity.id}
+                            />
+                            <button
+                              aria-label={`Excluir Ação ${activity.title}`}
+                              className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-danger px-3 text-xs font-medium text-danger transition-colors hover:bg-danger hover:text-danger-foreground"
+                            >
+                              <Trash2 size={14} aria-hidden />
+                              Excluir
+                            </button>
+                          </form>
+                        </div>
                       </div>
                     ))
                   )}
@@ -838,11 +905,8 @@ export default async function AccountDetailPage({
                   </label>
                   <label className="grid gap-1 text-sm">
                     <span className="font-medium">Data e Hora</span>
-                    <input
+                    <ActionDateTimeInput
                       name="nextActionScheduledAt"
-                      type="datetime-local"
-                      step={15 * 60}
-                      className="h-10 rounded-md border border-border bg-background px-3 text-sm"
                     />
                   </label>
                   <button className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">

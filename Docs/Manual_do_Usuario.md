@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 17:01:38 -03:00
+Ultima modificacao: 2026-06-15 18:33:16 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -206,7 +206,10 @@ Na tela de detalhe da Empresa/Prospect, o usuario pode:
 - Ver o ultimo registro do Historico em formato compacto e expandir os demais registros quando necessario.
 - Ver Proximas Acoes pendentes.
 - Criar uma Nova Acao pendente com descricao e Data e Hora opcionais.
+- Editar descricao, Data e Hora de uma Acao Pendente antes de concluir ou excluir.
+- Os minutos em Data e Hora de Ações ficam restritos a `00`, `15`, `30` e `45`.
 - Concluir uma Acao pendente para move-la para Acoes Concluidas.
+- Excluir uma Acao Pendente criada por engano.
 - Ver a última Ação Concluída em formato compacto e expandir as demais quando necessário.
 
 ## Etapas da Oportunidade e Status da Empresa/Prospect
@@ -254,7 +257,9 @@ Observacoes de uso:
 - O último contato restante de uma Empresa/Prospect não pode ser excluído.
 - O texto `Ultimo Historico` mostra o ultimo evento de auditoria do cadastro, como `Dados Atualizados` ou `Prospect Criado`; ele nao representa um status como incompleto ou nao atualizado.
 - A criacao, alteracao e troca de Contato Principal registram automaticamente uma linha no Historico.
-- A criacao e a conclusao de acoes no detalhe registram automaticamente uma linha no Historico.
+- A criacao, edicao, conclusao e exclusao de acoes no detalhe registram automaticamente uma linha no Historico.
+- A edicao de Acao Pendente registra `Ação Atualizada` no Historico.
+- A exclusao de Acao Pendente remove a atividade da lista operacional e registra `Ação Excluída` no Historico.
 - A criacao e a movimentacao de oportunidades no detalhe registram automaticamente uma linha no Historico.
 - Nome Fantasia/Empresa e Razão Social são digitados e salvos em maiúsculas.
 - O CNPJ aceita letras e números, força maiúsculas, exige 14 posições e mantém os 2 últimos caracteres como números.
@@ -276,7 +281,7 @@ Essa informacao ajuda a confirmar qual pacote de mudancas esta sendo testado.
 
 Versao atual:
 
-- `2026-06-15 17:01:38`
+- `2026-06-15 18:33:16`
 
 ## Fluxos ainda nao implementados
 

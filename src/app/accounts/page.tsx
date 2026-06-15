@@ -14,6 +14,7 @@ import { redirect } from "next/navigation";
 
 import { createAccountAction } from "@/app/accounts/actions";
 import { signOutAction } from "@/app/auth/actions";
+import { ActionDateTimeInput } from "@/components/action-date-time-input";
 import { ThemeSelector } from "@/components/theme-selector";
 import { UppercaseInput } from "@/components/uppercase-input";
 import type { Prisma } from "@/generated/prisma/client";
@@ -367,11 +368,9 @@ export default async function AccountsPage({
                   </label>
                   <label className="grid gap-1 text-sm">
                     <span className="font-medium">Data e Hora</span>
-                    <input
+                    <ActionDateTimeInput
                       name="nextActionScheduledAt"
-                      type="datetime-local"
-                      step={15 * 60}
-                      className="h-10 rounded-md border border-border bg-surface px-3 text-sm"
+                      className="[&_input]:bg-surface [&_select]:bg-surface"
                     />
                   </label>
                 </div>

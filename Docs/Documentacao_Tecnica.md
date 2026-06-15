@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 17:01:38 -03:00
+Ultima modificacao: 2026-06-15 18:33:16 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -40,7 +40,8 @@ Atualizar quando houver mudancas em:
 - `src/components`: componentes reutilizaveis de interface.
 - `src/lib`: clientes e utilitarios de infraestrutura.
 - `src/app/auth/actions.ts`: Server Actions de login, cadastro, logout e onboarding.
-- `src/app/accounts/actions.ts`: Server Actions para cadastro, edição, contatos, oportunidades, criação de ações e conclusão de ações de Empresa/Prospect.
+- `src/app/accounts/actions.ts`: Server Actions para cadastro, edição, contatos, oportunidades, criação, edição, conclusão e exclusão de ações de Empresa/Prospect.
+- `src/components/action-date-time-input.tsx`: controle de Data e Hora para Ações, com minutos restritos a `00`, `15`, `30` e `45`.
 - `src/app/accounts`: tela autenticada de empresas/prospects.
 - `src/app/accounts/[id]`: detalhe e edição básica de uma Empresa/Prospect.
 - `src/lib/brazilian-states.ts`: lista local de UFs brasileiras e helper de validacao.
@@ -319,35 +320,38 @@ Fluxo inicial implementado:
 20. Rotulos compostos visiveis seguem capitalizacao em estilo titulo, mantendo conectivos/preposicoes curtas em minusculo quando fizer sentido em Portugues-BR.
 21. Os itens do painel `Historico` usam espacamento compacto entre titulo, data/usuario e descricao.
 22. No detalhe da Empresa/Prospect, `createAccountActivityAction` cria uma nova atividade pendente do tipo `FOLLOW_UP` e registra uma `interaction` com resumo `Ação Criada`.
-23. No detalhe da Empresa/Prospect, `completeAccountActivityAction` conclui atividades pendentes, define `status` como `COMPLETED`, preenche `completedAt` e registra uma `interaction` com resumo `Ação Concluída`.
-24. A tela separa visualmente atividades `PENDING` em `Próximas Ações` e atividades `COMPLETED` em `Ações Concluídas`.
-25. `contacts.isPrimary` define o Contato Principal da Empresa/Prospect.
-26. A migration `20260613210800_add_primary_contact_flag.sql` faz backfill marcando o primeiro contato de cada Empresa/Prospect como principal.
-27. Um índice único parcial em `contacts` limita a um Contato Principal por Empresa/Prospect.
-28. No detalhe da Empresa/Prospect, `createAccountContactAction` cria novos contatos e registra `Contato Criado` no histórico.
-29. No detalhe da Empresa/Prospect, `updateAccountContactAction` atualiza dados do contato e registra `Contato Atualizado` no histórico.
-30. No detalhe da Empresa/Prospect, `setPrimaryAccountContactAction` troca o Contato Principal e registra `Contato Principal Alterado` no histórico.
-31. No detalhe da Empresa/Prospect, `deleteAccountContactAction` exclui contatos não principais, desvincula atividades/interações anteriores do contato removido e registra `Contato Excluído` no histórico da conta.
-32. O painel `Ações Concluídas` usa um Client Component expansível para exibir apenas a ação concluída mais recente por padrão.
-33. No bloco `Contatos`, o indicador `Principal` ocupa a mesma faixa de ações onde contatos secundários exibem `Tornar Principal` e `Excluir`.
-34. O painel `Contato Principal` usa layout compacto, agrupando Função/Cargo, e-mail e telefone em uma linha responsiva abaixo do nome.
-35. No detalhe da Empresa/Prospect, o bloco `Oportunidades` lista oportunidades existentes e permite criar uma nova oportunidade sem abrir uma tela separada.
-36. `createAccountOpportunityAction` cria oportunidades vinculadas à Empresa/Prospect, com contato opcional, etapa do funil padrão, valor estimado e previsão de fechamento.
-37. `moveAccountOpportunityStageAction` move a oportunidade entre etapas do mesmo funil, atualiza o status para `OPEN`, `WON` ou `LOST` conforme a etapa e grava uma linha em `stage_movements`.
-38. A criação e movimentação de oportunidades também gravam `interactions` com os resumos `Oportunidade Criada` e `Oportunidade Movida`.
-39. A etapa da Oportunidade e o Status da Empresa/Prospect são conceitos separados, mas `createAccountOpportunityAction` e `moveAccountOpportunityStageAction` recalculam `accounts.status` após criar ou mover uma Oportunidade.
-40. A sincronização mantém `accounts.status = CUSTOMER` quando existe Oportunidade `WON`; usa `PROSPECT` quando existe Oportunidade `OPEN` e nenhuma `WON`; usa `LOST` quando existem apenas Oportunidades `LOST`; e não sobrescreve `ARCHIVED`.
-41. Alterações automáticas de `accounts.status` registram `interactions` com o resumo `Status Alterado`.
-42. O campo `Valor Estimado` da `Nova Oportunidade` usa máscara monetária pt-BR ao sair do campo ou enviar o formulário, e a Server Action aceita valores como `R$ 1.000.000,00`, `1000000` e `1000000,50`.
-43. O bloco `Contatos` usa um Client Component expansível para manter o primeiro contato visível e recolher contatos extras por padrão.
-44. Os campos `date` e `datetime-local` usam estilo global para destacar de forma discreta o indicador nativo de calendário com a cor primária do tema.
-45. `DateTimeLocalDefaults` é carregado no layout raiz e inicializa campos `datetime-local` vazios com a data atual às `09:00` quando o usuário foca/clica no campo.
-46. Campos `datetime-local` operacionais usam `step` de 15 minutos e normalização cliente para manter minutos em `00`, `15`, `30` ou `45`.
-47. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
-48. Telas de detalhe devem usar uma faixa de Navegação e Mensagens abaixo do cabeçalho: ação de retorno à esquerda e feedback do sistema à direita, empilhando em telas pequenas.
-49. O detalhe da Empresa/Prospect usa `accounts.name` como Nome Fantasia/Empresa, `accounts.legalName` como Razão Social, `accounts.document` como CNPJ, `accounts.postalCode` como CEP, `accounts.address` como Endereço, `accounts.addressNumber` como Número, `accounts.addressComplement` como Complemento e `accounts.district` como Bairro.
-50. `CnpjInput` mostra o documento no padrão `AA.AAA.AAA/AAAA-00`, mas `updateAccountAction` normaliza para letras maiúsculas e números sem pontuação antes de persistir.
-51. `AccountCustomerDataPanel` fica recolhido por padrão e consulta `https://viacep.com.br/ws/{CEP}/json/` para preencher Endereço, Bairro, Cidade e UF quando o CEP possui 8 dígitos.
+23. No detalhe da Empresa/Prospect, `updateAccountActivityAction` edita descrição, Data e Hora de atividades pendentes da mesma Empresa/Prospect e tenant, e registra uma `interaction` com resumo `Ação Atualizada`.
+24. No detalhe da Empresa/Prospect, `completeAccountActivityAction` conclui atividades pendentes, define `status` como `COMPLETED`, preenche `completedAt` e registra uma `interaction` com resumo `Ação Concluída`.
+25. No detalhe da Empresa/Prospect, `deleteAccountActivityAction` exclui apenas atividades pendentes da mesma Empresa/Prospect e tenant, e registra uma `interaction` com resumo `Ação Excluída`.
+26. A tela separa visualmente atividades `PENDING` em `Próximas Ações` e atividades `COMPLETED` em `Ações Concluídas`.
+27. `contacts.isPrimary` define o Contato Principal da Empresa/Prospect.
+28. A migration `20260613210800_add_primary_contact_flag.sql` faz backfill marcando o primeiro contato de cada Empresa/Prospect como principal.
+29. Um índice único parcial em `contacts` limita a um Contato Principal por Empresa/Prospect.
+30. No detalhe da Empresa/Prospect, `createAccountContactAction` cria novos contatos e registra `Contato Criado` no histórico.
+31. No detalhe da Empresa/Prospect, `updateAccountContactAction` atualiza dados do contato e registra `Contato Atualizado` no histórico.
+32. No detalhe da Empresa/Prospect, `setPrimaryAccountContactAction` troca o Contato Principal e registra `Contato Principal Alterado` no histórico.
+33. No detalhe da Empresa/Prospect, `deleteAccountContactAction` exclui contatos não principais, desvincula atividades/interações anteriores do contato removido e registra `Contato Excluído` no histórico da conta.
+34. O painel `Ações Concluídas` usa um Client Component expansível para exibir apenas a ação concluída mais recente por padrão.
+35. No bloco `Contatos`, o indicador `Principal` ocupa a mesma faixa de ações onde contatos secundários exibem `Tornar Principal` e `Excluir`.
+36. O painel `Contato Principal` usa layout compacto, agrupando Função/Cargo, e-mail e telefone em uma linha responsiva abaixo do nome.
+37. No detalhe da Empresa/Prospect, o bloco `Oportunidades` lista oportunidades existentes e permite criar uma nova oportunidade sem abrir uma tela separada.
+38. `createAccountOpportunityAction` cria oportunidades vinculadas à Empresa/Prospect, com contato opcional, etapa do funil padrão, valor estimado e previsão de fechamento.
+39. `moveAccountOpportunityStageAction` move a oportunidade entre etapas do mesmo funil, atualiza o status para `OPEN`, `WON` ou `LOST` conforme a etapa e grava uma linha em `stage_movements`.
+40. A criação e movimentação de oportunidades também gravam `interactions` com os resumos `Oportunidade Criada` e `Oportunidade Movida`.
+41. A etapa da Oportunidade e o Status da Empresa/Prospect são conceitos separados, mas `createAccountOpportunityAction` e `moveAccountOpportunityStageAction` recalculam `accounts.status` após criar ou mover uma Oportunidade.
+42. A sincronização mantém `accounts.status = CUSTOMER` quando existe Oportunidade `WON`; usa `PROSPECT` quando existe Oportunidade `OPEN` e nenhuma `WON`; usa `LOST` quando existem apenas Oportunidades `LOST`; e não sobrescreve `ARCHIVED`.
+43. Alterações automáticas de `accounts.status` registram `interactions` com o resumo `Status Alterado`.
+44. O campo `Valor Estimado` da `Nova Oportunidade` usa máscara monetária pt-BR ao sair do campo ou enviar o formulário, e a Server Action aceita valores como `R$ 1.000.000,00`, `1000000` e `1000000,50`.
+45. O bloco `Contatos` usa um Client Component expansível para manter o primeiro contato visível e recolher contatos extras por padrão.
+46. Os campos `date` e `datetime-local` usam estilo global para destacar de forma discreta o indicador nativo de calendário com a cor primária do tema.
+47. `DateTimeLocalDefaults` é carregado no layout raiz e inicializa campos `datetime-local` vazios com a data atual às `09:00` quando o usuário foca/clica no campo.
+48. Campos `datetime-local` operacionais usam `step` de 15 minutos e normalização cliente para manter minutos em `00`, `15`, `30` ou `45`.
+49. Campos de Data e Hora de Ações usam `ActionDateTimeInput`, com data separada de Hora e Minuto, e Minuto restrito visualmente a `00`, `15`, `30` e `45`.
+50. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
+51. Telas de detalhe devem usar uma faixa de Navegação e Mensagens abaixo do cabeçalho: ação de retorno à esquerda e feedback do sistema à direita, empilhando em telas pequenas.
+52. O detalhe da Empresa/Prospect usa `accounts.name` como Nome Fantasia/Empresa, `accounts.legalName` como Razão Social, `accounts.document` como CNPJ, `accounts.postalCode` como CEP, `accounts.address` como Endereço, `accounts.addressNumber` como Número, `accounts.addressComplement` como Complemento e `accounts.district` como Bairro.
+53. `CnpjInput` mostra o documento no padrão `AA.AAA.AAA/AAAA-00`, mas `updateAccountAction` normaliza para letras maiúsculas e números sem pontuação antes de persistir.
+54. `AccountCustomerDataPanel` fica recolhido por padrão e consulta `https://viacep.com.br/ws/{CEP}/json/` para preencher Endereço, Bairro, Cidade e UF quando o CEP possui 8 dígitos.
 
 Validacoes atuais:
 
@@ -362,6 +366,8 @@ Validacoes atuais:
 - Telefone do contato principal limitado a 15 caracteres no cliente e no servidor.
 - Telefone dos contatos do detalhe limitado a 15 caracteres no cliente e no servidor.
 - Observacao comercial persistida em `accounts.notes`.
+- Edicao de Acao Pendente exige descricao preenchida, atividade pendente pertencente a mesma Empresa/Prospect e ao mesmo tenant.
+- Exclusao de Acao Pendente exige atividade pendente pertencente a mesma Empresa/Prospect e ao mesmo tenant.
 - Bloqueio de empresa/prospect com mesmo nome no mesmo tenant, usando comparacao case-insensitive.
 - Criação e edição de contato exigem nome com pelo menos 2 caracteres.
 - Exclusão de contato exige que exista mais de um contato e que o contato removido não seja o Contato Principal.
@@ -416,7 +422,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-15 17:01:38`
+- Valor: `2026-06-15 18:33:16`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

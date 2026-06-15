@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 17:01:38 -03:00
+Ultima modificacao: 2026-06-15 18:33:16 -03:00
 
 ## 2026-06-12
 
@@ -255,6 +255,18 @@ Ultima modificacao: 2026-06-15 17:01:38 -03:00
 - Adicionada busca de endereço por CEP via ViaCEP, preenchendo Endereço, Bairro, Cidade e UF quando encontrado.
 - Ajustadas as grades principais do detalhe para duas colunas iguais em desktop, alinhando Histórico e Ações Concluídas com os quadros superiores.
 - Atualizada versão WIP para `2026-06-15 17:01:38`.
+- Criada a issue `#31` para permitir excluir Ações Pendentes criadas por engano.
+- Adicionada exclusão de Ações Pendentes no detalhe da Empresa/Prospect.
+- A exclusão remove a atividade pendente e registra Histórico como `Ação Excluída`.
+- Atualizada versão WIP para `2026-06-15 17:39:44`.
+- Criada a issue `#32` para permitir editar Ações Pendentes antes de concluir ou excluir.
+- Adicionada edição inline de descrição, Data e Hora em Ações Pendentes.
+- A edição de Ação Pendente registra Histórico como `Ação Atualizada`.
+- Atualizada versão WIP para `2026-06-15 18:05:16`.
+- Criada a issue `#33` para corrigir o seletor de Data e Hora que ainda exibia minutos fora de `00`, `15`, `30` e `45`.
+- Adicionado `ActionDateTimeInput` para Ações, separando Data, Hora e Minuto e restringindo visualmente os minutos permitidos.
+- Aplicado o novo controle na criação de Próxima Ação da Base Comercial, na criação de Próxima Ação do detalhe e na edição de Ação Pendente.
+- Atualizada versão WIP para `2026-06-15 18:33:16`.
 
 ### Observacoes
 
