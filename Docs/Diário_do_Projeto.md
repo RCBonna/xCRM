@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 11:26:09 -03:00
+Ultima modificacao: 2026-06-15 11:43:34 -03:00
 
 ## 2026-06-12
 
@@ -209,6 +209,12 @@ Ultima modificacao: 2026-06-15 11:26:09 -03:00
 - Realizado novo deploy Production manual: `https://x-mejhhmy29-roberto-c-bonanomis-projects.vercel.app`, associado ao alias `https://x-crm-flax.vercel.app`.
 - Validados `/` e `/login` com HTTP 200, sem novo log de erro no deployment corrigido, e screenshot Playwright da tela de login.
 - Atualizada versão WIP para `2026-06-15 11:26:09`.
+- Criada a issue `#23` para investigar erro persistente no Chrome e no fluxo pós-validação de e-mail no Edge.
+- Analisado o export de logs `x-crm-log-export-2026-06-15T14-39-50.json`.
+- Identificado novo erro de runtime: `PrismaClientKnownRequestError P1011`, com `self-signed certificate in certificate chain`, ao abrir conexão TLS com o Supabase.
+- Confirmado por teste local com `pg` que `sslmode=require` falha, enquanto `sslmode=require&uselibpqcompat=true` conecta corretamente.
+- Ajustado o cliente Prisma para normalizar URLs diretas do Supabase (`db.*.supabase.co`) adicionando `sslmode=require` e `uselibpqcompat=true`.
+- Atualizada versão WIP para `2026-06-15 11:43:34`.
 
 ### Observacoes
 

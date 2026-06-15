@@ -8,7 +8,7 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient() {
   const shouldPreferPooledUrl =
     process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
-  const connectionString = shouldPreferPooledUrl
+  const rawConnectionString = shouldPreferPooledUrl
     ? process.env.POSTGRES_PRISMA_URL ??
       process.env.DATABASE_URL ??
       process.env.DIRECT_URL
@@ -16,15 +16,28 @@ function createPrismaClient() {
       process.env.POSTGRES_URL_NON_POOLING ??
       process.env.DATABASE_URL;
 
-  if (!connectionString) {
+  if (!rawConnectionString) {
     throw new Error(
       "POSTGRES_PRISMA_URL, DIRECT_URL or DATABASE_URL is not configured.",
     );
   }
 
+  const connectionString = normalizeConnectionString(rawConnectionString);
+
   return new PrismaClient({
     adapter: new PrismaPg({ connectionString }),
   });
+}
+
+function normalizeConnectionString(connectionString: string) {
+  const url = new URL(connectionString);
+
+  if (url.hostname.startsWith("db.") && url.hostname.endsWith(".supabase.co")) {
+    url.searchParams.set("sslmode", "require");
+    url.searchParams.set("uselibpqcompat", "true");
+  }
+
+  return url.toString();
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();

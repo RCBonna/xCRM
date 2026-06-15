@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 11:26:09 -03:00
+Ultima modificacao: 2026-06-15 11:43:34 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -156,6 +156,12 @@ invalido. Como medida operacional durante o WIP, as variaveis
 `Production` para usar a mesma conexao direta validada em `DIRECT_URL`. Esta
 decisao deve ser revista quando a URL correta do pooler Supabase for recuperada
 ou recriada.
+
+Outro erro observado no runtime Vercel foi `PrismaClientKnownRequestError P1011`
+com `self-signed certificate in certificate chain`. A causa foi a conexao direta
+Supabase usando SSL sem compatibilidade libpq. O cliente Prisma normaliza URLs
+diretas do Supabase (`db.*.supabase.co`) para incluir `sslmode=require` e
+`uselibpqcompat=true`, que foi o formato validado com `pg`.
 
 ## Banco de dados
 
@@ -383,7 +389,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-15 11:26:09`
+- Valor: `2026-06-15 11:43:34`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`
