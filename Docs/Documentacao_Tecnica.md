@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 12:43:36 -03:00
+Ultima modificacao: 2026-06-15 12:55:30 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -49,7 +49,7 @@ Atualizar quando houver mudancas em:
 - `src/components/login-info-panel.tsx`: painel de mensagens e textos rotativos da tela de acesso.
 - `src/components/account-history-panel.tsx`: painel expansivel do historico de Empresa/Prospect.
 - `src/components/account-contacts-panel.tsx`: painel expansivel de contatos no detalhe da Empresa/Prospect.
-- `src/components/datetime-local-defaults.tsx`: comportamento global para inicializar campos `datetime-local` vazios com data atual às 09:00.
+- `src/components/datetime-local-defaults.tsx`: comportamento global para inicializar campos `datetime-local` vazios com data atual às 09:00 e normalizar horários para intervalos de 15 minutos.
 - `src/components/dirty-submit-button.tsx`: botão cliente que habilita `Salvar Alterações` apenas quando o formulário tem mudança real.
 - `src/app/onboarding`: criacao do primeiro tenant e usuario owner.
 - `src/app/dashboard`: painel autenticado inicial.
@@ -336,7 +336,8 @@ Fluxo inicial implementado:
 40. O bloco `Contatos` usa um Client Component expansível para manter o primeiro contato visível e recolher contatos extras por padrão.
 41. Os campos `date` e `datetime-local` usam estilo global para destacar de forma discreta o indicador nativo de calendário com a cor primária do tema.
 42. `DateTimeLocalDefaults` é carregado no layout raiz e inicializa campos `datetime-local` vazios com a data atual às `09:00` quando o usuário foca/clica no campo.
-42. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
+43. Campos `datetime-local` operacionais usam `step` de 15 minutos e normalização cliente para manter minutos em `00`, `15`, `30` ou `45`.
+44. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
 
 Validacoes atuais:
 
@@ -398,7 +399,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-15 12:43:36`
+- Valor: `2026-06-15 12:55:30`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

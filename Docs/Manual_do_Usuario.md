@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 12:43:36 -03:00
+Ultima modificacao: 2026-06-15 12:55:30 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -220,6 +220,7 @@ Observacoes de uso:
 - A criacao e a movimentacao de oportunidades no detalhe registram automaticamente uma linha no Historico.
 - Campos de Data e Data e Hora destacam discretamente o ícone de calendário.
 - Campos de Data e Hora vazios iniciam com a data atual às `09:00` quando o usuário entra no campo.
+- Campos de Data e Hora usam intervalos de 15 minutos, mantendo os minutos em `00`, `15`, `30` ou `45`.
 - Endereco do prospect nao e obrigatorio neste momento do MVP.
 
 ## Versao exibida no topo
@@ -234,7 +235,7 @@ Essa informacao ajuda a confirmar qual pacote de mudancas esta sendo testado.
 
 Versao atual:
 
-- `2026-06-14 18:59:34`
+- `2026-06-15 12:55:30`
 
 ## Fluxos ainda nao implementados
 

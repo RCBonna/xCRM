@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 12:43:36 -03:00
+Ultima modificacao: 2026-06-15 12:55:30 -03:00
 
 ## 2026-06-12
 
@@ -226,6 +226,10 @@ Ultima modificacao: 2026-06-15 12:43:36 -03:00
 - Adicionado componente `CurrencyInput` para formatar o valor em Real (`R$`) ao sair do campo ou enviar o formulário.
 - Ajustada a Server Action de criação de Oportunidade para aceitar valores mascarados em Português-BR, como `R$ 1.000.000,00`, além de números simples.
 - Atualizada versão WIP para `2026-06-15 12:43:36`.
+- Criada a issue `#25` para limitar campos de `Data e Hora` a intervalos comerciais de 15 minutos.
+- Adicionado `step` de 15 minutos nos campos `datetime-local` de criação de próxima ação.
+- Atualizado `DateTimeLocalDefaults` para manter o padrão inicial `09:00` e normalizar horários digitados para os minutos `00`, `15`, `30` ou `45`.
+- Atualizada versão WIP para `2026-06-15 12:55:30`.
 
 ### Observacoes
 

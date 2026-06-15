@@ -825,6 +825,7 @@ export default async function AccountDetailPage({
                     <input
                       name="nextActionScheduledAt"
                       type="datetime-local"
+                      step={15 * 60}
                       className="h-10 rounded-md border border-border bg-background px-3 text-sm"
                     />
                   </label>
