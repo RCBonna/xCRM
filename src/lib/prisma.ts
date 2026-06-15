@@ -9,11 +9,17 @@ function createPrismaClient() {
   const shouldPreferPooledUrl =
     process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
   const connectionString = shouldPreferPooledUrl
-    ? process.env.DATABASE_URL ?? process.env.DIRECT_URL
-    : process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+    ? process.env.POSTGRES_PRISMA_URL ??
+      process.env.DATABASE_URL ??
+      process.env.DIRECT_URL
+    : process.env.DIRECT_URL ??
+      process.env.POSTGRES_URL_NON_POOLING ??
+      process.env.DATABASE_URL;
 
   if (!connectionString) {
-    throw new Error("DIRECT_URL or DATABASE_URL is not configured.");
+    throw new Error(
+      "POSTGRES_PRISMA_URL, DIRECT_URL or DATABASE_URL is not configured.",
+    );
   }
 
   return new PrismaClient({

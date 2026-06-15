@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 09:25:17 -03:00
+Ultima modificacao: 2026-06-15 09:40:12 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -112,6 +112,7 @@ do app. Configurar em `Project Settings > Environment Variables`:
 
 - `DATABASE_URL`: URL pooler do Supabase. E a variavel preferencial para o Prisma em Vercel/producao.
 - `DIRECT_URL`: URL direta do banco Supabase, mantida como fallback e para operacoes administrativas/migrations.
+- `POSTGRES_PRISMA_URL`: URL gerada pela integracao Supabase/Vercel para Prisma. Quando existir em Vercel/producao, o runtime usa esta variavel antes de `DATABASE_URL`.
 - `NEXT_PUBLIC_SUPABASE_URL`: URL publica do projeto Supabase.
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: chave publica/publishable do Supabase.
 
@@ -125,14 +126,15 @@ Erro conhecido quando `DIRECT_URL` e `DATABASE_URL` nao estao configuradas:
 
 ```text
 Error: Failed to collect configuration for /accounts/[id]
-[Cause]: Error: DIRECT_URL or DATABASE_URL is not configured.
+[Cause]: Error: POSTGRES_PRISMA_URL, DIRECT_URL or DATABASE_URL is not configured.
 Error: Failed to collect page data for /accounts/[id]
 ```
 
 A causa e que `src/lib/prisma.ts` cria o cliente Prisma a partir dessas
 variaveis ao importar rotas protegidas. Sem a URL de banco no ambiente Vercel,
 o build nao consegue concluir. Em Vercel/producao, o cliente Prisma prefere
-`DATABASE_URL`; em desenvolvimento local, prefere `DIRECT_URL`.
+`POSTGRES_PRISMA_URL`, depois `DATABASE_URL`; em desenvolvimento local, prefere
+`DIRECT_URL`.
 
 Em 2026-06-15, a pasta local foi vinculada ao projeto Vercel
 `roberto-c-bonanomis-projects/x-crm` pela Vercel CLI. As variaveis
@@ -140,6 +142,12 @@ Em 2026-06-15, a pasta local foi vinculada ao projeto Vercel
 `NEXT_PUBLIC_SUPABASE_ANON_KEY` foram reaplicadas no ambiente `Production` a
 partir do `.env` local. As mesmas variaveis tambem foram enviadas para
 `Preview` na branch `main`.
+
+Ainda em 2026-06-15, os logs de runtime da Vercel mostraram que a `DATABASE_URL`
+do pooler retornava `(ENOTFOUND) tenant/user postgres.qeadwfyedxhswqcxyeuq not
+found`. Como a integracao Supabase/Vercel ja mantem `POSTGRES_PRISMA_URL`, o
+cliente Prisma passou a priorizar esta variavel no ambiente Vercel antes de
+usar `DATABASE_URL`.
 
 ## Banco de dados
 
@@ -367,7 +375,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-15 09:25:17`
+- Valor: `2026-06-15 09:40:12`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

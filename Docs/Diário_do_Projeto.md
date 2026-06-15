@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 09:25:17 -03:00
+Ultima modificacao: 2026-06-15 09:40:12 -03:00
 
 ## 2026-06-12
 
@@ -197,6 +197,11 @@ Ultima modificacao: 2026-06-15 09:25:17 -03:00
 - Adicionado `.vercel` ao `.gitignore` para manter o vínculo local fora do repositório.
 - Validado `npm run build` localmente após a configuração.
 - Atualizada versão WIP para `2026-06-15 09:25:17`.
+- Criada a issue `#21` para investigar erro de runtime no domínio Vercel publicado.
+- Coletados logs server-side da Vercel indicando `DriverAdapterError: (ENOTFOUND) tenant/user postgres.qeadwfyedxhswqcxyeuq not found` ao acessar `/` e `/login`.
+- Confirmado por teste local com `pg` que `DATABASE_URL` falha com o mesmo erro, enquanto `DIRECT_URL` conecta.
+- Ajustado o cliente Prisma para priorizar `POSTGRES_PRISMA_URL` em Vercel/produção antes de `DATABASE_URL`.
+- Atualizada versão WIP para `2026-06-15 09:40:12`.
 
 ### Observacoes
 

@@ -70,17 +70,18 @@ as variaveis usadas pelo Supabase e pelo Prisma:
 
 - `DATABASE_URL`: URL pooler do Supabase. Use como principal no runtime Vercel.
 - `DIRECT_URL`: URL direta do banco Supabase. Mantenha como fallback e para operacoes administrativas/migrations.
+- `POSTGRES_PRISMA_URL`: URL gerada pela integração Supabase/Vercel para Prisma. Quando existir no ambiente Vercel, ela é a primeira opção do runtime.
 - `NEXT_PUBLIC_SUPABASE_URL`: URL publica do projeto Supabase.
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: chave publica/publishable do Supabase.
 
 As variaveis devem estar disponiveis no ambiente alvo do deploy
 (`Production`, `Preview` e/ou `Development`). Em Vercel/producao, o cliente
-Prisma prefere `DATABASE_URL` para usar o pooler. Sem `DATABASE_URL` ou
-`DIRECT_URL`, o build da Vercel falha ao importar rotas protegidas que usam
-Prisma, com erro semelhante a:
+Prisma prefere `POSTGRES_PRISMA_URL`, depois `DATABASE_URL`, para usar o pooler.
+Sem uma URL de banco configurada, o build da Vercel falha ao importar rotas
+protegidas que usam Prisma, com erro semelhante a:
 
 ```text
-Error: DIRECT_URL or DATABASE_URL is not configured.
+Error: POSTGRES_PRISMA_URL, DIRECT_URL or DATABASE_URL is not configured.
 ```
 
 ## Dados sensiveis
