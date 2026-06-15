@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 11:49:14 -03:00
+Ultima modificacao: 2026-06-15 11:54:00 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -165,9 +165,10 @@ diretas do Supabase (`db.*.supabase.co`) para incluir `sslmode=require` e
 
 Como o adapter Prisma continuou tratando `sslmode=require` como verificacao
 estrita no runtime Vercel, a implementacao passou a configurar o `pg` por
-`PoolConfig`: para URLs diretas Supabase (`db.*.supabase.co`), remove parametros
-SSL da URL e usa `ssl.rejectUnauthorized=false`. Esta configuracao deve ser
-revisada quando o projeto voltar para uma URL pooler valida.
+`PoolConfig`: para hosts Supabase (`*.supabase.co` e `*.supabase.com`), remove
+parametros SSL da URL e usa `ssl.rejectUnauthorized=false`. Esta configuracao
+deve ser revisada quando o projeto voltar para uma URL pooler valida com cadeia
+TLS aceita pelo runtime.
 
 ## Banco de dados
 
@@ -395,7 +396,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-15 11:49:14`
+- Valor: `2026-06-15 11:54:00`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

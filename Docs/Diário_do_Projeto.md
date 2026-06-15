@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 11:49:14 -03:00
+Ultima modificacao: 2026-06-15 11:54:00 -03:00
 
 ## 2026-06-12
 
@@ -219,6 +219,9 @@ Ultima modificacao: 2026-06-15 11:49:14 -03:00
 - Confirmado nos logs Vercel que o adapter Prisma ainda tratava o SSL como `verify-full`, mantendo `P1011`.
 - Ajustado o cliente Prisma para usar `pg.PoolConfig` com `ssl.rejectUnauthorized=false` quando a URL for direta do Supabase (`db.*.supabase.co`), removendo os parâmetros SSL da URL antes de criar o pool.
 - Atualizada versão WIP para `2026-06-15 11:49:14`.
+- Confirmado novo digest `4025481309` na aba real do Chrome após reload.
+- Ampliada a configuração SSL explícita para qualquer host Supabase (`*.supabase.co` e `*.supabase.com`), incluindo URLs de pooler, removendo parâmetros SSL da URL antes de criar o pool.
+- Atualizada versão WIP para `2026-06-15 11:54:00`.
 
 ### Observacoes
 

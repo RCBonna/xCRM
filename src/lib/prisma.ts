@@ -31,7 +31,7 @@ function createPrismaClient() {
 function createPgConfig(connectionString: string): PoolConfig {
   const url = new URL(connectionString);
 
-  if (url.hostname.startsWith("db.") && url.hostname.endsWith(".supabase.co")) {
+  if (isSupabaseHost(url.hostname)) {
     url.searchParams.delete("sslmode");
     url.searchParams.delete("uselibpqcompat");
 
@@ -44,6 +44,10 @@ function createPgConfig(connectionString: string): PoolConfig {
   }
 
   return { connectionString };
+}
+
+function isSupabaseHost(hostname: string) {
+  return hostname.endsWith(".supabase.co") || hostname.endsWith(".supabase.com");
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
