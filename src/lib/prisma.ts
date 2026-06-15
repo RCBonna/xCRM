@@ -1,5 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
+import type { PoolConfig } from "pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
@@ -22,22 +23,27 @@ function createPrismaClient() {
     );
   }
 
-  const connectionString = normalizeConnectionString(rawConnectionString);
-
   return new PrismaClient({
-    adapter: new PrismaPg({ connectionString }),
+    adapter: new PrismaPg(createPgConfig(rawConnectionString)),
   });
 }
 
-function normalizeConnectionString(connectionString: string) {
+function createPgConfig(connectionString: string): PoolConfig {
   const url = new URL(connectionString);
 
   if (url.hostname.startsWith("db.") && url.hostname.endsWith(".supabase.co")) {
-    url.searchParams.set("sslmode", "require");
-    url.searchParams.set("uselibpqcompat", "true");
+    url.searchParams.delete("sslmode");
+    url.searchParams.delete("uselibpqcompat");
+
+    return {
+      connectionString: url.toString(),
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    };
   }
 
-  return url.toString();
+  return { connectionString };
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();

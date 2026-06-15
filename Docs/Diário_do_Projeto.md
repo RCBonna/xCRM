@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 11:43:34 -03:00
+Ultima modificacao: 2026-06-15 11:49:14 -03:00
 
 ## 2026-06-12
 
@@ -215,6 +215,10 @@ Ultima modificacao: 2026-06-15 11:43:34 -03:00
 - Confirmado por teste local com `pg` que `sslmode=require` falha, enquanto `sslmode=require&uselibpqcompat=true` conecta corretamente.
 - Ajustado o cliente Prisma para normalizar URLs diretas do Supabase (`db.*.supabase.co`) adicionando `sslmode=require` e `uselibpqcompat=true`.
 - Atualizada versão WIP para `2026-06-15 11:43:34`.
+- Reproduzido o erro na aba real do Chrome usando o domínio `https://x-crm-flax.vercel.app/`, com digest `2161801053`.
+- Confirmado nos logs Vercel que o adapter Prisma ainda tratava o SSL como `verify-full`, mantendo `P1011`.
+- Ajustado o cliente Prisma para usar `pg.PoolConfig` com `ssl.rejectUnauthorized=false` quando a URL for direta do Supabase (`db.*.supabase.co`), removendo os parâmetros SSL da URL antes de criar o pool.
+- Atualizada versão WIP para `2026-06-15 11:49:14`.
 
 ### Observacoes
 

@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 11:43:34 -03:00
+Ultima modificacao: 2026-06-15 11:49:14 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -162,6 +162,12 @@ com `self-signed certificate in certificate chain`. A causa foi a conexao direta
 Supabase usando SSL sem compatibilidade libpq. O cliente Prisma normaliza URLs
 diretas do Supabase (`db.*.supabase.co`) para incluir `sslmode=require` e
 `uselibpqcompat=true`, que foi o formato validado com `pg`.
+
+Como o adapter Prisma continuou tratando `sslmode=require` como verificacao
+estrita no runtime Vercel, a implementacao passou a configurar o `pg` por
+`PoolConfig`: para URLs diretas Supabase (`db.*.supabase.co`), remove parametros
+SSL da URL e usa `ssl.rejectUnauthorized=false`. Esta configuracao deve ser
+revisada quando o projeto voltar para uma URL pooler valida.
 
 ## Banco de dados
 
@@ -389,7 +395,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-15 11:43:34`
+- Valor: `2026-06-15 11:49:14`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`
