@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 18:33:16 -03:00
+Ultima modificacao: 2026-06-15 21:26:28 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -140,6 +140,26 @@ Ele mostra:
 No cabecalho do dashboard, o bloco do usuario logado, o seletor de temas e o botao de sair usam a mesma altura visual.
 
 O dashboard possui um atalho `Abrir Empresas/Prospects`.
+
+O menu de engrenagem no cabecalho concentra Configurações e Preferências. Todos
+os perfis podem alterar o tema por esse menu. Para usuarios Owner/Admin, o menu
+tambem mostra `Configurações da Empresa`.
+
+## Configurações da Empresa
+
+A tela `/settings/company` permite que Owner/Admin atualize os dados
+institucionais do tenant:
+
+- Nome da Empresa.
+- Razão Social.
+- CNPJ.
+- Segmento.
+- Plano.
+
+Nome da Empresa e Razão Social são digitados e salvos em maiúsculas. O CNPJ usa
+máscara visual e é salvo sem pontuação, mantendo apenas letras e números.
+
+As alterações registram uma linha de auditoria como `Empresa Atualizada`.
 
 ## Empresas/Prospects
 
@@ -281,7 +301,7 @@ Essa informacao ajuda a confirmar qual pacote de mudancas esta sendo testado.
 
 Versao atual:
 
-- `2026-06-15 18:33:16`
+- `2026-06-15 21:26:28`
 
 ## Fluxos ainda nao implementados
 

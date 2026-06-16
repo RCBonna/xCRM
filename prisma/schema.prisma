@@ -82,6 +82,7 @@ model Tenant {
   name      String
   legalName String?      @map("legal_name")
   document  String?
+  segment   String?
   status    RecordStatus @default(ACTIVE)
   plan      String?
   createdAt DateTime     @default(now()) @map("created_at")

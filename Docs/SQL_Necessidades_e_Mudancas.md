@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 17:01:38 -03:00
+Ultima modificacao: 2026-06-15 19:10:00 -03:00
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -558,4 +558,46 @@ add column if not exists postal_code text,
 add column if not exists address_number text,
 add column if not exists address_complement text,
 add column if not exists district text;
+```
+
+## 2026-06-15 19:10:00 -03:00 - Segmento do tenant para Configurações da Empresa
+
+Status: Aplicada no banco remoto
+
+Objetivo:
+
+- Permitir que Owner/Admin cadastre o Segmento da Empresa nas Configurações da Empresa.
+- Separar dados institucionais do tenant dos dados comerciais de Empresas/Prospects.
+- Preparar o tenant para preferências, dashboards por perfil e regras comerciais futuras.
+
+Migration:
+
+- Arquivo: `prisma/20260615191000_add_tenant_segment.sql`
+
+Mapeamento usado:
+
+- `public.tenants.name`: Nome da Empresa exibido no cabeçalho.
+- `public.tenants.legal_name`: Razão Social da empresa do tenant.
+- `public.tenants.document`: CNPJ normalizado da empresa do tenant.
+- `public.tenants.segment`: Segmento administrativo do tenant.
+- `public.tenants.plan`: Plano administrativo atual.
+
+Comandos executados:
+
+```bash
+npm run prisma:validate
+npm run prisma:generate
+node -e "<aplicacao via pg usando DIRECT_URL e ssl.rejectUnauthorized=false>"
+```
+
+Observação operacional:
+
+- `npx prisma db execute --file prisma/20260615191000_add_tenant_segment.sql` tentou usar `DATABASE_URL` via pooler e falhou com o erro conhecido de resolução do tenant/user.
+- A aplicação efetiva foi feita via `pg` usando `DIRECT_URL` do `.env` e `ssl.rejectUnauthorized=false`, sem exposição de credenciais no log.
+
+SQL aplicado:
+
+```sql
+alter table public.tenants
+add column if not exists segment text;
 ```

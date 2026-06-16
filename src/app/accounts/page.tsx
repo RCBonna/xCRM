@@ -15,7 +15,7 @@ import { redirect } from "next/navigation";
 import { createAccountAction } from "@/app/accounts/actions";
 import { signOutAction } from "@/app/auth/actions";
 import { ActionDateTimeInput } from "@/components/action-date-time-input";
-import { ThemeSelector } from "@/components/theme-selector";
+import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { UppercaseInput } from "@/components/uppercase-input";
 import type { Prisma } from "@/generated/prisma/client";
 import { getAppUser } from "@/lib/auth";
@@ -62,6 +62,10 @@ function getStatusFilter(value?: string) {
 
 function canSeeTenantAccounts(role: string) {
   return ["OWNER", "ADMIN", "MANAGER"].includes(role);
+}
+
+function canManageCompanySettings(role: string) {
+  return ["OWNER", "ADMIN"].includes(role);
 }
 
 type AccountsPageProps = {
@@ -176,6 +180,7 @@ export default async function AccountsPage({
   const userEmail = appUser.email || user.email || "E-mail não informado";
   const userRole = appUser.role.toLowerCase();
   const hasActiveFilters = Boolean(searchQuery || selectedStatus);
+  const canOpenCompanySettings = canManageCompanySettings(appUser.role);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -213,7 +218,9 @@ export default async function AccountsPage({
             >
               Dashboard
             </Link>
-            <ThemeSelector />
+            <AppSettingsMenu
+              canManageCompanySettings={canOpenCompanySettings}
+            />
             <form action={signOutAction}>
               <button className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium">
                 <LogOut size={16} aria-hidden />

@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 18:33:16 -03:00
+Ultima modificacao: 2026-06-15 21:26:28 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -41,6 +41,9 @@ Atualizar quando houver mudancas em:
 - `src/lib`: clientes e utilitarios de infraestrutura.
 - `src/app/auth/actions.ts`: Server Actions de login, cadastro, logout e onboarding.
 - `src/app/accounts/actions.ts`: Server Actions para cadastro, edição, contatos, oportunidades, criação, edição, conclusão e exclusão de ações de Empresa/Prospect.
+- `src/app/settings/company`: tela de Configurações da Empresa restrita a Owner/Admin.
+- `src/app/settings/company/actions.ts`: Server Action para atualização dos dados institucionais do tenant.
+- `src/components/app-settings-menu.tsx`: menu de Configurações no cabeçalho, com seleção de tema para todos os perfis e acesso a Configurações da Empresa para Owner/Admin.
 - `src/components/action-date-time-input.tsx`: controle de Data e Hora para Ações, com minutos restritos a `00`, `15`, `30` e `45`.
 - `src/app/accounts`: tela autenticada de empresas/prospects.
 - `src/app/accounts/[id]`: detalhe e edição básica de uma Empresa/Prospect.
@@ -347,11 +350,14 @@ Fluxo inicial implementado:
 47. `DateTimeLocalDefaults` é carregado no layout raiz e inicializa campos `datetime-local` vazios com a data atual às `09:00` quando o usuário foca/clica no campo.
 48. Campos `datetime-local` operacionais usam `step` de 15 minutos e normalização cliente para manter minutos em `00`, `15`, `30` ou `45`.
 49. Campos de Data e Hora de Ações usam `ActionDateTimeInput`, com data separada de Hora e Minuto, e Minuto restrito visualmente a `00`, `15`, `30` e `45`.
-50. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
-51. Telas de detalhe devem usar uma faixa de Navegação e Mensagens abaixo do cabeçalho: ação de retorno à esquerda e feedback do sistema à direita, empilhando em telas pequenas.
-52. O detalhe da Empresa/Prospect usa `accounts.name` como Nome Fantasia/Empresa, `accounts.legalName` como Razão Social, `accounts.document` como CNPJ, `accounts.postalCode` como CEP, `accounts.address` como Endereço, `accounts.addressNumber` como Número, `accounts.addressComplement` como Complemento e `accounts.district` como Bairro.
-53. `CnpjInput` mostra o documento no padrão `AA.AAA.AAA/AAAA-00`, mas `updateAccountAction` normaliza para letras maiúsculas e números sem pontuação antes de persistir.
-54. `AccountCustomerDataPanel` fica recolhido por padrão e consulta `https://viacep.com.br/ws/{CEP}/json/` para preencher Endereço, Bairro, Cidade e UF quando o CEP possui 8 dígitos.
+50. `/settings/company` permite que Owner/Admin atualize `tenants.name`, `tenants.legalName`, `tenants.document`, `tenants.segment` e `tenants.plan`.
+51. `updateCompanySettingsAction` normaliza Nome da Empresa e Razão Social para maiúsculas, CNPJ para alfanumérico sem pontuação e registra `interaction` com resumo `Empresa Atualizada`.
+52. `AppSettingsMenu` substitui o seletor de tema isolado no cabeçalho: tema fica disponível para todos, e Configurações da Empresa aparece apenas para Owner/Admin.
+53. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
+54. Telas de detalhe devem usar uma faixa de Navegação e Mensagens abaixo do cabeçalho: ação de retorno à esquerda e feedback do sistema à direita, empilhando em telas pequenas.
+55. O detalhe da Empresa/Prospect usa `accounts.name` como Nome Fantasia/Empresa, `accounts.legalName` como Razão Social, `accounts.document` como CNPJ, `accounts.postalCode` como CEP, `accounts.address` como Endereço, `accounts.addressNumber` como Número, `accounts.addressComplement` como Complemento e `accounts.district` como Bairro.
+56. `CnpjInput` mostra o documento no padrão `AA.AAA.AAA/AAAA-00`, mas `updateAccountAction` normaliza para letras maiúsculas e números sem pontuação antes de persistir.
+57. `AccountCustomerDataPanel` fica recolhido por padrão e consulta `https://viacep.com.br/ws/{CEP}/json/` para preencher Endereço, Bairro, Cidade e UF quando o CEP possui 8 dígitos.
 
 Validacoes atuais:
 
@@ -359,6 +365,8 @@ Validacoes atuais:
 - Nome Fantasia/Empresa é normalizado para maiúsculas no cliente e no servidor.
 - Razão Social é opcional e normalizada para maiúsculas no cliente e no servidor.
 - CNPJ opcional precisa ter 14 posições; as 12 primeiras aceitam letras ou números e as 2 últimas exigem números.
+- Em Configurações da Empresa, Owner/Admin pode editar Nome da Empresa, Razão Social, CNPJ, Segmento e Plano do tenant.
+- Configurações da Empresa exigem Nome da Empresa com pelo menos 2 caracteres e CNPJ com 14 posições quando preenchido.
 - CEP opcional precisa ter 8 dígitos e persiste sem hífen em `accounts.postalCode`.
 - Endereço, Número, Complemento e Bairro do Cliente são opcionais.
 - UF opcional, selecionada em lista fechada com as 27 siglas brasileiras e validada no servidor.
@@ -422,7 +430,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-15 18:33:16`
+- Valor: `2026-06-15 21:26:28`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

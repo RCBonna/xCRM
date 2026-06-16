@@ -12,7 +12,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/app/auth/actions";
-import { ThemeSelector } from "@/components/theme-selector";
+import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { getAppUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -23,6 +23,10 @@ const nextActions = [
   "Distribuir prospects para vendedores.",
   "Começar a registrar contatos e follow-ups.",
 ];
+
+function canManageCompanySettings(role: string) {
+  return ["OWNER", "ADMIN"].includes(role);
+}
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -88,6 +92,7 @@ export default async function DashboardPage() {
   const userIdentity = appUser.name || user.email || "Usuario autenticado";
   const userEmail = appUser.email || user.email || "E-mail não informado";
   const userRole = appUser.role.toLowerCase();
+  const canOpenCompanySettings = canManageCompanySettings(appUser.role);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -119,7 +124,9 @@ export default async function DashboardPage() {
                 </p>
               </div>
             </div>
-            <ThemeSelector />
+            <AppSettingsMenu
+              canManageCompanySettings={canOpenCompanySettings}
+            />
             <form action={signOutAction}>
               <button className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium">
                 <LogOut size={16} aria-hidden />

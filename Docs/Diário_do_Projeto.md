@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 18:33:16 -03:00
+Ultima modificacao: 2026-06-15 21:26:28 -03:00
 
 ## 2026-06-12
 
@@ -267,6 +267,16 @@ Ultima modificacao: 2026-06-15 18:33:16 -03:00
 - Adicionado `ActionDateTimeInput` para Ações, separando Data, Hora e Minuto e restringindo visualmente os minutos permitidos.
 - Aplicado o novo controle na criação de Próxima Ação da Base Comercial, na criação de Próxima Ação do detalhe e na edição de Ação Pendente.
 - Atualizada versão WIP para `2026-06-15 18:33:16`.
+- Fechada a issue `#32` após validação do usuário.
+- Iniciada a issue `#34` para Configurações da Empresa pelo Owner.
+- Adicionada tela `/settings/company` para Owner/Admin atualizar Nome da Empresa, Razão Social, CNPJ, Segmento e Plano.
+- Criada e aplicada a migration `prisma/20260615191000_add_tenant_segment.sql` para adicionar `segment` em `tenants`.
+- Alterações em Configurações da Empresa registram auditoria como `Empresa Atualizada`.
+- Atualizada versão WIP para `2026-06-15 19:10:00`.
+- Substituído o seletor de temas isolado por um menu de engrenagem no cabeçalho.
+- O menu de Configurações mantém alteração de tema para todos os perfis e mostra Configurações da Empresa apenas para Owner/Admin.
+- Removido o atalho `Abrir Configurações da Empresa` do painel `Próximas Ações` do Dashboard, centralizando essa navegação no menu de Configurações.
+- Atualizada versão WIP para `2026-06-15 21:26:28`.
 
 ### Observacoes
 

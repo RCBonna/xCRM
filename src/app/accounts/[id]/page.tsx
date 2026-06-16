@@ -32,13 +32,13 @@ import {
 } from "@/app/accounts/actions";
 import { signOutAction } from "@/app/auth/actions";
 import { ActionDateTimeInput } from "@/components/action-date-time-input";
+import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { AccountCompletedActivitiesPanel } from "@/components/account-completed-activities-panel";
 import { AccountContactsPanel } from "@/components/account-contacts-panel";
 import { AccountCustomerDataPanel } from "@/components/account-customer-data-panel";
 import { AccountHistoryPanel } from "@/components/account-history-panel";
 import { CurrencyInput } from "@/components/currency-input";
 import { DirtySubmitButton } from "@/components/dirty-submit-button";
-import { ThemeSelector } from "@/components/theme-selector";
 import { UppercaseInput } from "@/components/uppercase-input";
 import { getAppUser } from "@/lib/auth";
 import { BRAZILIAN_STATES } from "@/lib/brazilian-states";
@@ -112,6 +112,10 @@ function formatInteractionSummary(summary?: string | null) {
 
 function canSeeTenantAccounts(role: string) {
   return ["OWNER", "ADMIN", "MANAGER"].includes(role);
+}
+
+function canManageCompanySettings(role: string) {
+  return ["OWNER", "ADMIN"].includes(role);
 }
 
 type AccountDetailPageProps = {
@@ -231,6 +235,7 @@ export default async function AccountDetailPage({
   const userIdentity = appUser.name || user.email || "Usuário autenticado";
   const userEmail = appUser.email || user.email || "E-mail não informado";
   const userRole = appUser.role.toLowerCase();
+  const canOpenCompanySettings = canManageCompanySettings(appUser.role);
   const primaryContact =
     account.contacts.find((contact) => contact.isPrimary) ?? account.contacts[0];
   const pendingActivities = account.activities.filter(
@@ -431,7 +436,9 @@ export default async function AccountDetailPage({
                 </p>
               </div>
             </div>
-            <ThemeSelector />
+            <AppSettingsMenu
+              canManageCompanySettings={canOpenCompanySettings}
+            />
             <form action={signOutAction}>
               <button className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium">
                 <LogOut size={16} aria-hidden />
