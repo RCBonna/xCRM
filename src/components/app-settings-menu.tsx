@@ -1,6 +1,15 @@
 "use client";
 
-import { Building2, Monitor, Moon, Paintbrush, Settings, Sun } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  Building2,
+  Monitor,
+  Moon,
+  Paintbrush,
+  Settings,
+  Sun,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -114,6 +123,26 @@ export function AppSettingsMenu({
               >
                 <Building2 size={16} className="text-primary" aria-hidden />
                 Configurações da Empresa
+              </Link>
+              <Link
+                href="/accounts"
+                onClick={() => setIsOpen(false)}
+                className="mt-1 flex h-10 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
+              >
+                <BriefcaseBusiness
+                  size={16}
+                  className="text-primary"
+                  aria-hidden
+                />
+                Cadastro Prospects/Clientes
+              </Link>
+              <Link
+                href="/settings/team"
+                onClick={() => setIsOpen(false)}
+                className="mt-1 flex h-10 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
+              >
+                <UsersRound size={16} className="text-primary" aria-hidden />
+                Equipes e Usuários
               </Link>
             </div>
           ) : null}

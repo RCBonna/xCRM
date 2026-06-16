@@ -12,6 +12,7 @@ import { getAppUser } from "@/lib/auth";
 import { isBrazilianStateCode } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAccountVisibilityWhere } from "@/lib/visibility";
 
 function encodeMessage(message: string) {
   return encodeURIComponent(message);
@@ -179,10 +180,6 @@ async function syncAccountStatusFromOpportunities({
   });
 }
 
-function canManageTenantAccounts(role: string) {
-  return ["OWNER", "ADMIN", "MANAGER"].includes(role);
-}
-
 async function getVisibleAccount(
   accountId: string,
   appUser: Awaited<ReturnType<typeof getAppUser>>,
@@ -191,11 +188,13 @@ async function getVisibleAccount(
     return null;
   }
 
+  const visibilityWhere = await getAccountVisibilityWhere(appUser);
+
   return prisma.account.findFirst({
     where: {
       id: accountId,
       tenantId: appUser.tenantId,
-      ...(canManageTenantAccounts(appUser.role) ? {} : { ownerUserId: appUser.id }),
+      ...visibilityWhere,
     },
     select: {
       id: true,
@@ -426,11 +425,12 @@ export async function updateAccountAction(formData: FormData) {
     );
   }
 
+  const visibilityWhere = await getAccountVisibilityWhere(appUser);
   const account = await prisma.account.findFirst({
     where: {
       id: accountId,
       tenantId: appUser.tenantId,
-      ...(canManageTenantAccounts(appUser.role) ? {} : { ownerUserId: appUser.id }),
+      ...visibilityWhere,
     },
     select: {
       id: true,

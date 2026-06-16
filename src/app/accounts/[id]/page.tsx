@@ -44,6 +44,7 @@ import { getAppUser } from "@/lib/auth";
 import { BRAZILIAN_STATES } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAccountVisibilityWhere } from "@/lib/visibility";
 
 const dateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
@@ -110,10 +111,6 @@ function formatInteractionSummary(summary?: string | null) {
   return interactionSummaryLabels[summary] ?? summary;
 }
 
-function canSeeTenantAccounts(role: string) {
-  return ["OWNER", "ADMIN", "MANAGER"].includes(role);
-}
-
 function canManageCompanySettings(role: string) {
   return ["OWNER", "ADMIN"].includes(role);
 }
@@ -149,12 +146,13 @@ export default async function AccountDetailPage({
 
   const { id } = await params;
   const feedback = await searchParams;
+  const visibilityWhere = await getAccountVisibilityWhere(appUser);
   const [account, defaultPipeline] = await Promise.all([
     prisma.account.findFirst({
       where: {
         id,
         tenantId: appUser.tenantId,
-        ...(canSeeTenantAccounts(appUser.role) ? {} : { ownerUserId: appUser.id }),
+        ...visibilityWhere,
       },
       include: {
         contacts: {

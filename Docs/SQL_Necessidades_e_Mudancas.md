@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 19:10:00 -03:00
+Ultima modificacao: 2026-06-16 20:27:44 -03:00
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -600,4 +600,45 @@ SQL aplicado:
 ```sql
 alter table public.tenants
 add column if not exists segment text;
+```
+
+## 2026-06-16 19:31:38 -03:00 - Status de Equipes
+
+Status: Aplicada no banco remoto
+
+Objetivo:
+
+- Permitir que Owner/Admin torne Equipes inativas sem excluir dados.
+- Impedir que Equipes inativas sejam usadas como destino de novos vínculos.
+- Bloquear a inativação quando a Equipe ainda possui Líder ativo ou Usuários ativos vinculados.
+
+Migration:
+
+- Arquivo: `prisma/20260616193138_add_team_status.sql`
+
+Mapeamento usado:
+
+- `public.teams.status`: status operacional da Equipe usando o enum `RecordStatus`.
+
+Comandos executados:
+
+```bash
+npx prisma generate
+npx prisma db execute --file prisma/20260616193138_add_team_status.sql
+node -e "<aplicacao via pg usando DIRECT_URL e ssl.rejectUnauthorized=false>"
+npx prisma validate
+npm run lint
+npm run build
+```
+
+Observação operacional:
+
+- `npx prisma db execute --file prisma/20260616193138_add_team_status.sql` tentou usar `DATABASE_URL` via pooler e falhou com o erro conhecido de resolução do tenant/user.
+- A aplicação efetiva foi feita via `pg` usando `DIRECT_URL` do `.env` e `ssl.rejectUnauthorized=false`, sem exposição de credenciais no log.
+
+SQL aplicado:
+
+```sql
+alter table teams
+add column if not exists status "RecordStatus" not null default 'ACTIVE';
 ```

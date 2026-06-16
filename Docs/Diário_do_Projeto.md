@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-15 21:26:28 -03:00
+Ultima modificacao: 2026-06-16 20:27:44 -03:00
 
 ## 2026-06-12
 
@@ -277,6 +277,34 @@ Ultima modificacao: 2026-06-15 21:26:28 -03:00
 - O menu de Configurações mantém alteração de tema para todos os perfis e mostra Configurações da Empresa apenas para Owner/Admin.
 - Removido o atalho `Abrir Configurações da Empresa` do painel `Próximas Ações` do Dashboard, centralizando essa navegação no menu de Configurações.
 - Atualizada versão WIP para `2026-06-15 21:26:28`.
+- Iniciada a issue `#36` para convites e hierarquia Owner, Líder e Vendedor.
+- Adicionada tela `/settings/team` para Owner/Admin gerenciar Equipes e Usuários.
+- Implementado primeiro corte de pré-cadastro de Líder/Vendedor sem envio automático de e-mail.
+- Adicionada vinculação de usuários a equipes usando `team_members`.
+- Ajustada visibilidade de carteira: Owner/Admin veem tenant, Líder vê própria carteira e membros das equipes que lidera, Vendedor vê própria carteira.
+- Atualizada versão WIP para `2026-06-15 21:38:13`.
+- Criada a issue `#38` para documentar o erro local em que `/settings/team` retornou 404.
+- Adicionado o atalho `Cadastro Prospects/Clientes` no menu de Configurações, logo abaixo de `Configurações da Empresa`.
+- Renomeado o botão do Dashboard de `Abrir Empresas/Prospects` para `Cadastro Prospects/Clientes`.
+- Validado que `/settings/team` deixou de retornar 404 após reiniciar o dev server; sem sessão ativa, a rota redireciona corretamente para `/login`.
+- Fechada a issue `#38` após validação local.
+- Atualizada versão WIP para `2026-06-16 18:47:49`.
+- Criada a issue `#39` para redesenhar `/settings/team` com resumo de Equipes e abas operacionais.
+- Adicionada migration `prisma/20260616193138_add_team_status.sql` para incluir `status` em `teams`.
+- Redesenhada a tela `Equipes e Usuários` com resumo em largura total e abas `Cadastro de Usuários`, `Cadastro de Equipes`, `Líder da Equipe` e `Usuários da Equipe`.
+- Adicionadas ações para editar/inativar Usuários, editar/inativar Equipes, alterar Líder e remover vínculo de Usuário da Equipe.
+- Implementada regra que bloqueia inativar Equipe quando existe Líder ativo ou Usuários ativos vinculados.
+- Atualizada versão WIP para `2026-06-16 19:31:38`.
+- Registrado na issue `#39` o ajuste da aba `Cadastro de Usuários` para seguir o padrão de seleção e edição usado na Base Comercial.
+- Ajustada a aba `Cadastro de Usuários` com formulário único à esquerda e lista selecionável à direita.
+- Adicionado campo `Status` no cadastro/edição de Usuário, com criação padrão como `Ativo`.
+- Adicionado `Log de Equipes e Usuários` abaixo das abas, usando registros de auditoria em `Interaction`.
+- Atualizada versão WIP para `2026-06-16 20:05:22`.
+- Registrado na issue `#39` o ajuste da aba `Cadastro de Equipes` para seguir o mesmo padrão da aba de Usuários.
+- Ajustada a aba `Cadastro de Equipes` com formulário único à esquerda, lista selecionável à direita e campo `Status`.
+- `createTeamAction` e `updateTeamAction` passam a salvar o status enviado pelo formulário.
+- Mantida a regra de bloqueio ao tentar salvar Equipe como `Inativa` quando existe Líder ativo ou Usuários ativos vinculados.
+- Atualizada versão WIP para `2026-06-16 20:27:44`.
 
 ### Observacoes
 

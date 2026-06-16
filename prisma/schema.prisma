@@ -139,12 +139,13 @@ model User {
 }
 
 model Team {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId      String   @map("tenant_id") @db.Uuid
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String       @map("tenant_id") @db.Uuid
   name          String
-  managerUserId String?  @map("manager_user_id") @db.Uuid
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  managerUserId String?      @map("manager_user_id") @db.Uuid
+  status        RecordStatus @default(ACTIVE)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
 
   tenant  Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   manager User?        @relation("TeamManager", fields: [managerUserId], references: [id])

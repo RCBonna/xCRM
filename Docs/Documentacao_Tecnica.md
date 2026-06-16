@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 21:26:28 -03:00
+Ultima modificacao: 2026-06-16 20:27:44 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -43,7 +43,12 @@ Atualizar quando houver mudancas em:
 - `src/app/accounts/actions.ts`: Server Actions para cadastro, edição, contatos, oportunidades, criação, edição, conclusão e exclusão de ações de Empresa/Prospect.
 - `src/app/settings/company`: tela de Configurações da Empresa restrita a Owner/Admin.
 - `src/app/settings/company/actions.ts`: Server Action para atualização dos dados institucionais do tenant.
-- `src/components/app-settings-menu.tsx`: menu de Configurações no cabeçalho, com seleção de tema para todos os perfis e acesso a Configurações da Empresa para Owner/Admin.
+- `src/app/settings/team`: tela de Equipes e Usuários restrita a Owner/Admin.
+- `src/app/settings/team/actions.ts`: Server Actions para criar/editar/inativar equipes, pré-cadastrar/editar/inativar usuários, alterar líder e vincular/remover usuários de equipes.
+- `src/components/app-settings-menu.tsx`: menu de Configurações no cabeçalho, com seleção de tema para todos os perfis e acesso a Configurações da Empresa, Cadastro Prospects/Clientes e Equipes e Usuários para Owner/Admin.
+- `src/components/team-users-tab.tsx`: Client Component da aba Cadastro de Usuários, com seleção na lista e formulário único para criar ou editar usuário.
+- `src/components/team-teams-tab.tsx`: Client Component da aba Cadastro de Equipes, com seleção na lista e formulário único para criar ou editar equipe.
+- `src/lib/visibility.ts`: regras de visibilidade de carteira por perfil e equipe.
 - `src/components/action-date-time-input.tsx`: controle de Data e Hora para Ações, com minutos restritos a `00`, `15`, `30` e `45`.
 - `src/app/accounts`: tela autenticada de empresas/prospects.
 - `src/app/accounts/[id]`: detalhe e edição básica de uma Empresa/Prospect.
@@ -310,7 +315,7 @@ Fluxo inicial implementado:
 7. O cabecalho da tela mostra a sessao atual com nome, e-mail e perfil do usuario.
 8. A consulta aceita busca textual em empresa, cidade, UF, site, fornecedor principal, origem e dados do primeiro contato.
 9. A consulta aceita filtro por status: prospect, cliente, perdido e arquivado.
-10. A visibilidade inicial por perfil em `/accounts` permite que owner/admin/manager vejam a base do tenant; demais perfis veem apenas registros com `ownerUserId` igual ao proprio usuario.
+10. A visibilidade em `/accounts` usa `getAccountVisibilityWhere`: Owner/Admin veem a base do tenant, Líder vê a própria carteira e membros das equipes que lidera, e demais perfis veem apenas registros com `ownerUserId` igual ao proprio usuario.
 11. Ao cadastrar empresa/prospect, `createAccountAction` grava uma `interaction` automatica com canal `MANUAL_NOTE`, direcao `INTERNAL`, usuario logado e entidade criada.
 12. O formulario permite informar uma proxima acao opcional; quando preenchida, a action cria uma `activity` pendente do tipo `FOLLOW_UP`, vinculada a empresa/prospect e ao contato principal quando existir.
 13. A base comercial mostra o ultimo historico e a proxima atividade pendente de cada empresa/prospect.
@@ -352,12 +357,18 @@ Fluxo inicial implementado:
 49. Campos de Data e Hora de Ações usam `ActionDateTimeInput`, com data separada de Hora e Minuto, e Minuto restrito visualmente a `00`, `15`, `30` e `45`.
 50. `/settings/company` permite que Owner/Admin atualize `tenants.name`, `tenants.legalName`, `tenants.document`, `tenants.segment` e `tenants.plan`.
 51. `updateCompanySettingsAction` normaliza Nome da Empresa e Razão Social para maiúsculas, CNPJ para alfanumérico sem pontuação e registra `interaction` com resumo `Empresa Atualizada`.
-52. `AppSettingsMenu` substitui o seletor de tema isolado no cabeçalho: tema fica disponível para todos, e Configurações da Empresa aparece apenas para Owner/Admin.
-53. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
-54. Telas de detalhe devem usar uma faixa de Navegação e Mensagens abaixo do cabeçalho: ação de retorno à esquerda e feedback do sistema à direita, empilhando em telas pequenas.
-55. O detalhe da Empresa/Prospect usa `accounts.name` como Nome Fantasia/Empresa, `accounts.legalName` como Razão Social, `accounts.document` como CNPJ, `accounts.postalCode` como CEP, `accounts.address` como Endereço, `accounts.addressNumber` como Número, `accounts.addressComplement` como Complemento e `accounts.district` como Bairro.
-56. `CnpjInput` mostra o documento no padrão `AA.AAA.AAA/AAAA-00`, mas `updateAccountAction` normaliza para letras maiúsculas e números sem pontuação antes de persistir.
-57. `AccountCustomerDataPanel` fica recolhido por padrão e consulta `https://viacep.com.br/ws/{CEP}/json/` para preencher Endereço, Bairro, Cidade e UF quando o CEP possui 8 dígitos.
+52. `AppSettingsMenu` substitui o seletor de tema isolado no cabeçalho: tema fica disponível para todos, e Configurações da Empresa/Equipes e Usuários aparecem apenas para Owner/Admin.
+53. `/settings/team` usa `teams`, `team_members` e `users` para organizar Líderes e Vendedores no tenant em uma tela com resumo de Equipes e abas operacionais.
+54. `createTeamUserAction` cria Líder/Vendedor/Assistente com status enviado pelo formulário; o padrão da interface é `ACTIVE`.
+55. `teams.status` usa `RecordStatus` para permitir Equipes ativas e inativas; Equipes inativas não aparecem como destino de novos vínculos.
+56. `inactivateTeamAction` bloqueia a inativação quando a Equipe tem Líder ativo ou Usuários ativos vinculados.
+57. A aba `Cadastro de Usuários` usa um formulário único à esquerda e uma lista selecionável à direita; ao selecionar um Usuário, o formulário alterna para edição e envia `updateTeamUserAction`.
+58. A aba `Cadastro de Equipes` usa um formulário único à esquerda e uma lista selecionável à direita; ao selecionar uma Equipe, o formulário alterna para edição e envia `updateTeamAction`.
+59. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
+60. Telas de detalhe devem usar uma faixa de Navegação e Mensagens abaixo do cabeçalho: ação de retorno à esquerda e feedback do sistema à direita, empilhando em telas pequenas.
+61. O detalhe da Empresa/Prospect usa `accounts.name` como Nome Fantasia/Empresa, `accounts.legalName` como Razão Social, `accounts.document` como CNPJ, `accounts.postalCode` como CEP, `accounts.address` como Endereço, `accounts.addressNumber` como Número, `accounts.addressComplement` como Complemento e `accounts.district` como Bairro.
+62. `CnpjInput` mostra o documento no padrão `AA.AAA.AAA/AAAA-00`, mas `updateAccountAction` normaliza para letras maiúsculas e números sem pontuação antes de persistir.
+63. `AccountCustomerDataPanel` fica recolhido por padrão e consulta `https://viacep.com.br/ws/{CEP}/json/` para preencher Endereço, Bairro, Cidade e UF quando o CEP possui 8 dígitos.
 
 Validacoes atuais:
 
@@ -367,6 +378,10 @@ Validacoes atuais:
 - CNPJ opcional precisa ter 14 posições; as 12 primeiras aceitam letras ou números e as 2 últimas exigem números.
 - Em Configurações da Empresa, Owner/Admin pode editar Nome da Empresa, Razão Social, CNPJ, Segmento e Plano do tenant.
 - Configurações da Empresa exigem Nome da Empresa com pelo menos 2 caracteres e CNPJ com 14 posições quando preenchido.
+- Em Equipes e Usuários, Owner/Admin pode criar/editar Equipe com Status, criar/editar Usuário com Status, alterar Líder e vincular/remover Usuário de Equipe.
+- Cadastro de usuário exige Nome, E-mail válido, Perfil permitido (`MANAGER`, `SELLER` ou `ASSISTANT`) e Status (`ACTIVE` ou `INACTIVE`).
+- Vinculação de equipe exige Equipe ativa e Usuário pertencentes ao mesmo tenant.
+- Inativação de Equipe exige que não exista Líder ativo nem Usuários ativos vinculados.
 - CEP opcional precisa ter 8 dígitos e persiste sem hífen em `accounts.postalCode`.
 - Endereço, Número, Complemento e Bairro do Cliente são opcionais.
 - UF opcional, selecionada em lista fechada com as 27 siglas brasileiras e validada no servidor.
@@ -386,6 +401,7 @@ Validacoes atuais:
 - Movimentação de oportunidade exige etapa válida dentro do mesmo funil da oportunidade.
 - Sincronização automática de Status da Empresa/Prospect não altera registros `ARCHIVED`.
 - Toda consulta de empresas/prospects aplica `tenantId` na camada de aplicacao.
+- Líder recebe filtro por `ownerUserId` próprio e por membros das equipes que lidera.
 - Perfis operacionais tambem recebem filtro por `ownerUserId`.
 
 Decisoes de cadastro:
@@ -430,7 +446,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-15 21:26:28`
+- Valor: `2026-06-16 20:27:44`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

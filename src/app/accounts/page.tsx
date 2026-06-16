@@ -22,6 +22,7 @@ import { getAppUser } from "@/lib/auth";
 import { BRAZILIAN_STATES } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAccountVisibilityWhere } from "@/lib/visibility";
 
 const accountStatusOptions = [
   { value: "", label: "Todos" },
@@ -60,10 +61,6 @@ function getStatusFilter(value?: string) {
   return accountStatusOptions.find((option) => option.value === value)?.value;
 }
 
-function canSeeTenantAccounts(role: string) {
-  return ["OWNER", "ADMIN", "MANAGER"].includes(role);
-}
-
 function canManageCompanySettings(role: string) {
   return ["OWNER", "ADMIN"].includes(role);
 }
@@ -98,10 +95,7 @@ export default async function AccountsPage({
   const params = await searchParams;
   const searchQuery = String(params.q ?? "").trim();
   const selectedStatus = getStatusFilter(params.status);
-  const roleCanSeeTenantAccounts = canSeeTenantAccounts(appUser.role);
-  const visibilityWhere: Prisma.AccountWhereInput = roleCanSeeTenantAccounts
-    ? {}
-    : { ownerUserId: appUser.id };
+  const visibilityWhere = await getAccountVisibilityWhere(appUser);
   const accountsWhere: Prisma.AccountWhereInput = {
     tenantId: appUser.tenantId,
     ...visibilityWhere,

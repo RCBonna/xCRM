@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-15 21:26:28 -03:00
+Ultima modificacao: 2026-06-16 20:27:44 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -139,11 +139,12 @@ Ele mostra:
 
 No cabecalho do dashboard, o bloco do usuario logado, o seletor de temas e o botao de sair usam a mesma altura visual.
 
-O dashboard possui um atalho `Abrir Empresas/Prospects`.
+O dashboard possui um atalho `Cadastro Prospects/Clientes`.
 
 O menu de engrenagem no cabecalho concentra Configurações e Preferências. Todos
 os perfis podem alterar o tema por esse menu. Para usuarios Owner/Admin, o menu
-tambem mostra `Configurações da Empresa`.
+tambem mostra `Configurações da Empresa`, `Cadastro Prospects/Clientes` e
+`Equipes e Usuários`.
 
 ## Configurações da Empresa
 
@@ -160,6 +161,36 @@ Nome da Empresa e Razão Social são digitados e salvos em maiúsculas. O CNPJ u
 máscara visual e é salvo sem pontuação, mantendo apenas letras e números.
 
 As alterações registram uma linha de auditoria como `Empresa Atualizada`.
+
+## Equipes e Usuários
+
+A tela `/settings/team` fica disponível no menu de engrenagem para Owner/Admin.
+
+Ela permite:
+
+- Ver o resumo das Equipes em largura total, com Líder, Usuários vinculados e status.
+- Usar a aba `Cadastro de Usuários` para criar Usuários ativos ou inativos, selecionar um Usuário existente na lista e carregar seus dados no formulário para edição.
+- Usar a aba `Cadastro de Equipes` para criar Equipes ativas ou inativas, selecionar uma Equipe existente na lista e carregar seus dados no formulário para edição.
+- Usar a aba `Líder da Equipe` para definir ou trocar o Líder de uma Equipe ativa.
+- Usar a aba `Usuários da Equipe` para vincular ou remover Usuários de uma Equipe ativa.
+
+Perfis usados neste corte:
+
+- Líder: acompanha a própria carteira e a carteira dos membros das equipes que lidera.
+- Vendedor: acompanha a própria carteira, ações e oportunidades.
+
+Importante:
+
+- Neste primeiro corte, o botão `Pré-cadastrar Usuário` ainda não envia e-mail automaticamente.
+- O campo `Status` define se o usuário fica `Ativo` ou `Inativo`.
+- Ao selecionar um Usuário na lista, o botão do formulário muda de `Criar Usuário` para `Salvar Usuário`.
+- Ao selecionar uma Equipe na lista, o botão do formulário muda de `Criar Equipe` para `Salvar Equipe`.
+- O bloco `Log de Equipes e Usuários` mostra as alterações administrativas recentes registradas no sistema.
+- O convite real por e-mail e o aceite pelo usuário serão ativados em um próximo corte do fluxo.
+- Uma Equipe só pode ser tornada `Inativa` quando não possui Usuários ativos vinculados e não possui Líder ativo.
+- Owner/Admin continuam vendo toda a base do tenant.
+- Líder passa a ver a própria carteira e a carteira dos usuários vinculados às equipes que lidera.
+- Vendedor continua vendo apenas a própria carteira.
 
 ## Empresas/Prospects
 
@@ -266,8 +297,9 @@ Registro no Histórico:
 
 Regras atuais de visibilidade:
 
-- Owner, admin e gestor veem a base comercial do tenant.
-- Perfis operacionais veem apenas registros sob sua responsabilidade.
+- Owner/Admin veem toda a base comercial do tenant.
+- Líder vê a própria carteira e a carteira dos usuários vinculados às equipes que lidera.
+- Vendedor e demais perfis operacionais veem apenas registros sob sua responsabilidade.
 
 Observacoes de uso:
 
@@ -301,7 +333,8 @@ Essa informacao ajuda a confirmar qual pacote de mudancas esta sendo testado.
 
 Versao atual:
 
-- `2026-06-15 21:26:28`
+- `2026-06-15 21:38:13`
+- `2026-06-16 19:31:38`
 
 ## Fluxos ainda nao implementados
 
