@@ -18,7 +18,7 @@ import { ActionDateTimeInput } from "@/components/action-date-time-input";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { UppercaseInput } from "@/components/uppercase-input";
 import type { Prisma } from "@/generated/prisma/client";
-import { getAppUser } from "@/lib/auth";
+import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { BRAZILIAN_STATES } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -90,6 +90,12 @@ export default async function AccountsPage({
 
   if (!appUser) {
     redirect("/onboarding");
+  }
+
+  const suspendedRedirectPath = redirectPathForTenantStatus(appUser);
+
+  if (suspendedRedirectPath) {
+    redirect(suspendedRedirectPath);
   }
 
   const params = await searchParams;

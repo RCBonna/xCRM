@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-16 20:27:44 -03:00
+Ultima modificacao: 2026-06-18 18:31:46 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -139,9 +139,9 @@ Ele mostra:
 
 No cabecalho do dashboard, o bloco do usuario logado, o seletor de temas e o botao de sair usam a mesma altura visual.
 
-O dashboard possui um atalho `Cadastro Prospects/Clientes`.
+O dashboard concentra o acesso a cadastros e configurações no menu superior.
 
-O menu de engrenagem no cabecalho concentra Configurações e Preferências. Todos
+O menu superior concentra Configurações e Preferências. Todos
 os perfis podem alterar o tema por esse menu. Para usuarios Owner/Admin, o menu
 tambem mostra `Configurações da Empresa`, `Cadastro Prospects/Clientes` e
 `Equipes e Usuários`.
@@ -171,7 +171,7 @@ Ela permite:
 - Ver o resumo das Equipes em largura total, com Líder, Usuários vinculados e status.
 - Usar a aba `Cadastro de Usuários` para criar Usuários ativos ou inativos, selecionar um Usuário existente na lista e carregar seus dados no formulário para edição.
 - Usar a aba `Cadastro de Equipes` para criar Equipes ativas ou inativas, selecionar uma Equipe existente na lista e carregar seus dados no formulário para edição.
-- Usar a aba `Líder da Equipe` para definir ou trocar o Líder de uma Equipe ativa.
+- Usar a aba `Líder da Equipe` para selecionar uma Equipe ativa na lista e definir, trocar ou remover o Líder no formulário.
 - Usar a aba `Usuários da Equipe` para vincular ou remover Usuários de uma Equipe ativa.
 
 Perfis usados neste corte:
@@ -185,7 +185,8 @@ Importante:
 - O campo `Status` define se o usuário fica `Ativo` ou `Inativo`.
 - Ao selecionar um Usuário na lista, o botão do formulário muda de `Criar Usuário` para `Salvar Usuário`.
 - Ao selecionar uma Equipe na lista, o botão do formulário muda de `Criar Equipe` para `Salvar Equipe`.
-- O bloco `Log de Equipes e Usuários` mostra as alterações administrativas recentes registradas no sistema.
+- Na aba `Líder da Equipe`, o botão `Salvar Líder` fica indisponível até que uma Equipe seja selecionada.
+- O bloco `Log de Equipes e Usuários` inicia recolhido e pode ser aberto para consultar as alterações administrativas recentes registradas no sistema.
 - O convite real por e-mail e o aceite pelo usuário serão ativados em um próximo corte do fluxo.
 - Uma Equipe só pode ser tornada `Inativa` quando não possui Usuários ativos vinculados e não possui Líder ativo.
 - Owner/Admin continuam vendo toda a base do tenant.
@@ -301,6 +302,28 @@ Regras atuais de visibilidade:
 - Líder vê a própria carteira e a carteira dos usuários vinculados às equipes que lidera.
 - Vendedor e demais perfis operacionais veem apenas registros sob sua responsabilidade.
 
+## Platform Admin e Suspensão de Acesso
+
+O `Platform Admin` é o perfil administrativo da plataforma xCRM. Ele não atua dentro da carteira comercial de uma empresa; sua função é acompanhar clientes xCRM e controlar o acesso do tenant quando necessário.
+
+Na tela `/platform`, o `Platform Admin` pode:
+
+- Ver os clientes xCRM cadastrados.
+- Ver resumo de tenants totais, ativos e suspensos.
+- Ver contadores de usuários, prospects e contatos por tenant.
+- Suspender um tenant informando um motivo.
+- Reativar um tenant suspenso.
+- Ver mensagens da plataforma, incluindo tentativas de login em tenant suspenso.
+- Marcar mensagens como lidas.
+
+Quando um tenant está suspenso:
+
+- O Owner consegue entrar, mas vê uma mensagem de bloqueio com os canais do SAC da plataforma.
+- Os canais exibidos são `(47) 99922-8490` e `ScientiamConsultoria@outlook.com`.
+- Usuários que não são Owner recebem orientação para procurar a gerência ou o responsável pela empresa.
+- O acesso ao Dashboard, Base Comercial e Configurações fica bloqueado enquanto o tenant permanecer suspenso.
+- Cada login em tenant suspenso gera uma mensagem para o `Platform Admin`.
+
 Observacoes de uso:
 
 - A Observacao Comercial fica disponivel na tela de detalhe da Empresa/Prospect.
@@ -335,6 +358,8 @@ Versao atual:
 
 - `2026-06-15 21:38:13`
 - `2026-06-16 19:31:38`
+- `2026-06-18 19:22:16`
+- `2026-06-18 20:37:14`
 
 ## Fluxos ainda nao implementados
 

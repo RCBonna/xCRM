@@ -1,9 +1,7 @@
 import {
   ArrowLeft,
-  History,
   LogOut,
   Plus,
-  ShieldCheck,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -11,15 +9,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import {
-  assignTeamManagerAction,
   assignTeamMemberAction,
   removeTeamMemberAction,
 } from "@/app/settings/team/actions";
 import { signOutAction } from "@/app/auth/actions";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
+import { TeamAuditLogPanel } from "@/components/team-audit-log-panel";
+import { TeamLeadersTab } from "@/components/team-leaders-tab";
 import { TeamTeamsTab } from "@/components/team-teams-tab";
 import { TeamUsersTab } from "@/components/team-users-tab";
-import { getAppUser } from "@/lib/auth";
+import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -83,6 +82,12 @@ export default async function TeamSettingsPage({
 
   if (!appUser) {
     redirect("/onboarding");
+  }
+
+  const suspendedRedirectPath = redirectPathForTenantStatus(appUser);
+
+  if (suspendedRedirectPath) {
+    redirect(suspendedRedirectPath);
   }
 
   if (!canManageTeamSettings(appUser.role)) {
@@ -171,9 +176,6 @@ export default async function TeamSettingsPage({
   const userRole = appUser.role.toLowerCase();
   const inputClass =
     "h-10 rounded-md border border-border bg-background px-3 text-sm";
-  const mutedButtonClass =
-    "inline-flex h-10 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium text-muted transition-colors hover:border-primary hover:text-foreground";
-
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
@@ -353,52 +355,27 @@ export default async function TeamSettingsPage({
           ) : null}
 
           {currentTab === "leaders" ? (
-            <div className="grid gap-4 p-4">
-              <p className="text-sm leading-6 text-muted">
-                Selecione uma Equipe ativa e defina ou altere seu Líder.
-              </p>
-              <div className="divide-y divide-border rounded-md border border-border">
-                {activeTeams.map((team) => (
-                  <form
-                    key={team.id}
-                    action={assignTeamManagerAction}
-                    className="grid gap-3 p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)_auto]"
-                  >
-                    <input type="hidden" name="teamId" value={team.id} />
-                    <div>
-                      <p className="text-sm font-semibold">{team.name}</p>
-                      <p className="text-xs leading-5 text-muted">
-                        Líder atual: {team.manager?.name ?? "Sem líder"}
-                      </p>
-                    </div>
-                    <label className="grid gap-1 text-sm">
-                      <span className="font-medium">Líder</span>
-                      <select
-                        name="managerUserId"
-                        defaultValue={team.managerUserId ?? ""}
-                        className={inputClass}
-                      >
-                        <option value="">Sem líder</option>
-                        {managers.map((manager) => (
-                          <option key={manager.id} value={manager.id}>
-                            {manager.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <button className={mutedButtonClass}>
-                      <ShieldCheck size={15} aria-hidden />
-                      Salvar
-                    </button>
-                  </form>
-                ))}
-                {activeTeams.length === 0 ? (
-                  <p className="p-4 text-sm text-muted">
-                    Nenhuma equipe ativa disponível.
-                  </p>
-                ) : null}
-              </div>
-            </div>
+            <TeamLeadersTab
+              teams={activeTeams.map((team) => {
+                const activeMemberCount = team.members.filter(
+                  (member) => member.user.status === "ACTIVE",
+                ).length;
+
+                return {
+                  id: team.id,
+                  name: team.name,
+                  status: team.status,
+                  managerUserId: team.managerUserId,
+                  managerName: team.manager?.name ?? null,
+                  memberCount: team.members.length,
+                  activeMemberCount,
+                };
+              })}
+              managers={managers.map((manager) => ({
+                id: manager.id,
+                name: manager.name,
+              }))}
+            />
           ) : null}
 
           {currentTab === "members" ? (
@@ -489,38 +466,15 @@ export default async function TeamSettingsPage({
           ) : null}
         </section>
 
-        <section className="rounded-md border border-border bg-surface">
-          <div className="border-b border-border px-4 py-3">
-            <h2 className="flex items-center gap-2 text-base font-semibold">
-              <History size={18} className="text-primary" aria-hidden />
-              Log de Equipes e Usuários
-            </h2>
-          </div>
-          <div className="divide-y divide-border">
-            {auditLogs.length === 0 ? (
-              <p className="px-4 py-4 text-sm text-muted">
-                Nenhum registro administrativo encontrado.
-              </p>
-            ) : (
-              auditLogs.map((log) => (
-                <article key={log.id} className="grid gap-1 px-4 py-3 text-sm">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold">
-                      {log.summary ?? "Registro Administrativo"}
-                    </p>
-                    <span className="text-xs text-muted">
-                      {dateTimeFormatter.format(log.occurredAt)}
-                      {log.user?.name ? ` - ${log.user.name}` : ""}
-                    </span>
-                  </div>
-                  {log.body ? (
-                    <p className="leading-6 text-muted">{log.body}</p>
-                  ) : null}
-                </article>
-              ))
-            )}
-          </div>
-        </section>
+        <TeamAuditLogPanel
+          logs={auditLogs.map((log) => ({
+            id: log.id,
+            summary: log.summary ?? "Registro Administrativo",
+            details: log.body,
+            occurredAt: dateTimeFormatter.format(log.occurredAt),
+            userName: log.user?.name ?? null,
+          }))}
+        />
       </div>
     </main>
   );

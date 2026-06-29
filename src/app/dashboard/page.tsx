@@ -8,12 +8,11 @@ import {
   UserRound,
   UsersRound,
 } from "lucide-react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/app/auth/actions";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
-import { getAppUser } from "@/lib/auth";
+import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -42,6 +41,12 @@ export default async function DashboardPage() {
 
   if (!appUser) {
     redirect("/onboarding");
+  }
+
+  const suspendedRedirectPath = redirectPathForTenantStatus(appUser);
+
+  if (suspendedRedirectPath) {
+    redirect(suspendedRedirectPath);
   }
 
   const [accountCount, contactCount, activityCount, stages] = await Promise.all([
@@ -218,14 +223,6 @@ export default async function DashboardPage() {
                 </li>
               ))}
             </ol>
-            <div className="border-t border-border p-4">
-              <Link
-                href="/accounts"
-                className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
-              >
-                Cadastro Prospects/Clientes
-              </Link>
-            </div>
           </aside>
         </section>
       </div>

@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-16 20:27:44 -03:00
+Ultima modificacao: 2026-06-28 11:30:18 -03:00
 
 ## 2026-06-12
 
@@ -305,6 +305,31 @@ Ultima modificacao: 2026-06-16 20:27:44 -03:00
 - `createTeamAction` e `updateTeamAction` passam a salvar o status enviado pelo formulário.
 - Mantida a regra de bloqueio ao tentar salvar Equipe como `Inativa` quando existe Líder ativo ou Usuários ativos vinculados.
 - Atualizada versão WIP para `2026-06-16 20:27:44`.
+- Registrado na issue `#39` o ajuste para recolher o `Log de Equipes e Usuários` e melhorar o alinhamento visual da aba `Cadastro de Equipes`.
+- Criado componente `TeamAuditLogPanel`, com exibir/recolher e estado inicial recolhido.
+- Ajustada a lista de `Equipes Cadastradas` para uma grade mais estável, com colunas de Equipe, Líder, Ativos e Status.
+- Atualizada versão WIP para `2026-06-18 16:30:49`.
+- Registrado na issue `#39` o ajuste de UX da aba `Líder da Equipe`.
+- Criado componente `TeamLeadersTab`, com formulário único à esquerda e lista de Equipes ativas à direita.
+- A aba `Líder da Equipe` agora carrega a equipe selecionada no formulário, permite escolher `Sem líder` e mantém `Salvar Líder` desabilitado até haver seleção.
+- Atualizada versão WIP para `2026-06-18 18:18:28`.
+- Removido o botão `Cadastro Prospects/Clientes` do card `Próximas Ações` do Dashboard, mantendo esse acesso centralizado no menu superior.
+- Alterado o botão do menu superior de engrenagem para ícone de menu/hambúrguer, pois ele concentra navegação, preferências e configurações.
+- Atualizada versão WIP para `2026-06-18 18:31:46`.
+- Criada a issue `#40` para implementar `Platform Admin`, suspensão de tenant e notificações da plataforma.
+- Adicionado status `SUSPENDED` em `RecordStatus` para suspender o acesso operacional de um tenant sem excluir dados.
+- Criadas as tabelas `platform_admins` e `notifications` para administração da plataforma e mensageria discreta.
+- Adicionada rota `/platform` para `Platform Admin` listar clientes xCRM, suspender/reativar tenants e acompanhar mensagens.
+- Adicionada rota `/tenant-suspended` para bloquear tenants suspensos; Owner recebe canais do SAC e demais usuários são orientados a procurar a gerência.
+- O login em tenant suspenso registra notificação para todos os `Platform Admins` ativos, preparando a base para notificações futuras no dashboard.
+- Atualizada versão WIP para `2026-06-18 19:22:16`.
+- Ajustada a UX da tela `/platform`, reorganizando clientes xCRM com resumo de tenants, status em destaque, métricas em blocos e ação de suspensão/reativação separada.
+- Atualizada versão WIP para `2026-06-18 20:37:14`.
+- Criada a issue `#41` para documentar a falha de autenticação Postgres do Supabase no ambiente local.
+- Validado que o Supabase Auth está acessível, com `/auth/v1/settings` retornando HTTP 200.
+- Identificado que `DATABASE_URL` e `DIRECT_URL` falham no Postgres com `password authentication failed for user "postgres"`.
+- Registrado em `Docs/SQL_Necessidades_e_Mudancas.md` que a correção depende de connection string/senha atualizada do painel Supabase e ajuste do `.env`.
+- Atualizada versão WIP para `2026-06-28 11:30:18`.
 
 ### Observacoes
 

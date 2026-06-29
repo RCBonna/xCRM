@@ -90,7 +90,7 @@ export async function signInAction(formData: FormData) {
     );
   }
 
-  redirect(await getDefaultRedirectPath(data.user));
+  redirect(await getDefaultRedirectPath(data.user, { recordSuspendedAccess: true }));
 }
 
 export async function signUpAction(formData: FormData) {

@@ -7,7 +7,7 @@ import { updateCompanySettingsAction } from "@/app/settings/company/actions";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { CnpjInput } from "@/components/cnpj-input";
 import { UppercaseInput } from "@/components/uppercase-input";
-import { getAppUser } from "@/lib/auth";
+import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function canManageCompanySettings(role: string) {
@@ -37,6 +37,12 @@ export default async function CompanySettingsPage({
 
   if (!appUser) {
     redirect("/onboarding");
+  }
+
+  const suspendedRedirectPath = redirectPathForTenantStatus(appUser);
+
+  if (suspendedRedirectPath) {
+    redirect(suspendedRedirectPath);
   }
 
   if (!canManageCompanySettings(appUser.role)) {

@@ -3,10 +3,10 @@
 import {
   BriefcaseBusiness,
   Building2,
+  Menu,
   Monitor,
   Moon,
   Paintbrush,
-  Settings,
   Sun,
   UsersRound,
 } from "lucide-react";
@@ -75,12 +75,12 @@ export function AppSettingsMenu({
       <button
         type="button"
         aria-expanded={isOpen}
-        aria-label="Abrir Configurações"
-        title="Configurações"
+        aria-label="Abrir Menu"
+        title="Menu"
         onClick={() => setIsOpen((current) => !current)}
         className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-border bg-surface text-muted transition-colors hover:border-primary hover:text-foreground"
       >
-        <Settings size={18} aria-hidden />
+        <Menu size={20} aria-hidden />
       </button>
 
       {isOpen ? (

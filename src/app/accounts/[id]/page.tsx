@@ -40,7 +40,7 @@ import { AccountHistoryPanel } from "@/components/account-history-panel";
 import { CurrencyInput } from "@/components/currency-input";
 import { DirtySubmitButton } from "@/components/dirty-submit-button";
 import { UppercaseInput } from "@/components/uppercase-input";
-import { getAppUser } from "@/lib/auth";
+import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { BRAZILIAN_STATES } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -142,6 +142,12 @@ export default async function AccountDetailPage({
 
   if (!appUser) {
     redirect("/onboarding");
+  }
+
+  const suspendedRedirectPath = redirectPathForTenantStatus(appUser);
+
+  if (suspendedRedirectPath) {
+    redirect(suspendedRedirectPath);
   }
 
   const { id } = await params;

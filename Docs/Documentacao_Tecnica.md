@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-16 20:27:44 -03:00
+Ultima modificacao: 2026-06-18 18:31:46 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -45,9 +45,11 @@ Atualizar quando houver mudancas em:
 - `src/app/settings/company/actions.ts`: Server Action para atualização dos dados institucionais do tenant.
 - `src/app/settings/team`: tela de Equipes e Usuários restrita a Owner/Admin.
 - `src/app/settings/team/actions.ts`: Server Actions para criar/editar/inativar equipes, pré-cadastrar/editar/inativar usuários, alterar líder e vincular/remover usuários de equipes.
-- `src/components/app-settings-menu.tsx`: menu de Configurações no cabeçalho, com seleção de tema para todos os perfis e acesso a Configurações da Empresa, Cadastro Prospects/Clientes e Equipes e Usuários para Owner/Admin.
+- `src/components/app-settings-menu.tsx`: menu superior no cabeçalho, com seleção de tema para todos os perfis e acesso a Configurações da Empresa, Cadastro Prospects/Clientes e Equipes e Usuários para Owner/Admin.
 - `src/components/team-users-tab.tsx`: Client Component da aba Cadastro de Usuários, com seleção na lista e formulário único para criar ou editar usuário.
 - `src/components/team-teams-tab.tsx`: Client Component da aba Cadastro de Equipes, com seleção na lista e formulário único para criar ou editar equipe.
+- `src/components/team-leaders-tab.tsx`: Client Component da aba Líder da Equipe, com seleção de Equipe ativa e formulário único para alterar `managerUserId`.
+- `src/components/team-audit-log-panel.tsx`: Client Component para exibir/recolher o Log de Equipes e Usuários, iniciando recolhido.
 - `src/lib/visibility.ts`: regras de visibilidade de carteira por perfil e equipe.
 - `src/components/action-date-time-input.tsx`: controle de Data e Hora para Ações, com minutos restritos a `00`, `15`, `30` e `45`.
 - `src/app/accounts`: tela autenticada de empresas/prospects.
@@ -357,18 +359,26 @@ Fluxo inicial implementado:
 49. Campos de Data e Hora de Ações usam `ActionDateTimeInput`, com data separada de Hora e Minuto, e Minuto restrito visualmente a `00`, `15`, `30` e `45`.
 50. `/settings/company` permite que Owner/Admin atualize `tenants.name`, `tenants.legalName`, `tenants.document`, `tenants.segment` e `tenants.plan`.
 51. `updateCompanySettingsAction` normaliza Nome da Empresa e Razão Social para maiúsculas, CNPJ para alfanumérico sem pontuação e registra `interaction` com resumo `Empresa Atualizada`.
-52. `AppSettingsMenu` substitui o seletor de tema isolado no cabeçalho: tema fica disponível para todos, e Configurações da Empresa/Equipes e Usuários aparecem apenas para Owner/Admin.
+52. `AppSettingsMenu` substitui o seletor de tema isolado no cabeçalho: tema fica disponível para todos, e Configurações da Empresa, Cadastro Prospects/Clientes e Equipes e Usuários aparecem apenas para Owner/Admin.
 53. `/settings/team` usa `teams`, `team_members` e `users` para organizar Líderes e Vendedores no tenant em uma tela com resumo de Equipes e abas operacionais.
 54. `createTeamUserAction` cria Líder/Vendedor/Assistente com status enviado pelo formulário; o padrão da interface é `ACTIVE`.
 55. `teams.status` usa `RecordStatus` para permitir Equipes ativas e inativas; Equipes inativas não aparecem como destino de novos vínculos.
 56. `inactivateTeamAction` bloqueia a inativação quando a Equipe tem Líder ativo ou Usuários ativos vinculados.
 57. A aba `Cadastro de Usuários` usa um formulário único à esquerda e uma lista selecionável à direita; ao selecionar um Usuário, o formulário alterna para edição e envia `updateTeamUserAction`.
 58. A aba `Cadastro de Equipes` usa um formulário único à esquerda e uma lista selecionável à direita; ao selecionar uma Equipe, o formulário alterna para edição e envia `updateTeamAction`.
-59. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
-60. Telas de detalhe devem usar uma faixa de Navegação e Mensagens abaixo do cabeçalho: ação de retorno à esquerda e feedback do sistema à direita, empilhando em telas pequenas.
-61. O detalhe da Empresa/Prospect usa `accounts.name` como Nome Fantasia/Empresa, `accounts.legalName` como Razão Social, `accounts.document` como CNPJ, `accounts.postalCode` como CEP, `accounts.address` como Endereço, `accounts.addressNumber` como Número, `accounts.addressComplement` como Complemento e `accounts.district` como Bairro.
-62. `CnpjInput` mostra o documento no padrão `AA.AAA.AAA/AAAA-00`, mas `updateAccountAction` normaliza para letras maiúsculas e números sem pontuação antes de persistir.
-63. `AccountCustomerDataPanel` fica recolhido por padrão e consulta `https://viacep.com.br/ws/{CEP}/json/` para preencher Endereço, Bairro, Cidade e UF quando o CEP possui 8 dígitos.
+59. A aba `Líder da Equipe` usa um formulário único à esquerda e lista somente Equipes ativas à direita; ao selecionar uma Equipe, o formulário envia `assignTeamManagerAction`.
+60. O `Log de Equipes e Usuários` usa painel recolhível e inicia fechado para reduzir ruído visual na tela.
+61. `DirtySubmitButton` compara o estado inicial do formulário com o estado atual via `FormData` e mantém `Salvar Alterações` desabilitado quando não há alteração.
+62. Telas de detalhe devem usar uma faixa de Navegação e Mensagens abaixo do cabeçalho: ação de retorno à esquerda e feedback do sistema à direita, empilhando em telas pequenas.
+63. O detalhe da Empresa/Prospect usa `accounts.name` como Nome Fantasia/Empresa, `accounts.legalName` como Razão Social, `accounts.document` como CNPJ, `accounts.postalCode` como CEP, `accounts.address` como Endereço, `accounts.addressNumber` como Número, `accounts.addressComplement` como Complemento e `accounts.district` como Bairro.
+64. `CnpjInput` mostra o documento no padrão `AA.AAA.AAA/AAAA-00`, mas `updateAccountAction` normaliza para letras maiúsculas e números sem pontuação antes de persistir.
+65. `AccountCustomerDataPanel` fica recolhido por padrão e consulta `https://viacep.com.br/ws/{CEP}/json/` para preencher Endereço, Bairro, Cidade e UF quando o CEP possui 8 dígitos.
+66. `PlatformAdmin` é um usuário administrativo global, fora do tenant operacional, vinculado ao Supabase Auth por `platform_admins.auth_user_id`.
+67. `Notification` registra mensagens internas para usuários do tenant ou para `Platform Admin`; o primeiro uso é notificar login em tenant suspenso.
+68. `RecordStatus.SUSPENDED` em `tenants.status` bloqueia as rotas operacionais e redireciona usuários para `/tenant-suspended`.
+69. `/platform` permite ao `Platform Admin` listar tenants, suspender/reativar acesso e marcar notificações como lidas.
+70. `/tenant-suspended` exibe mensagem distinta para Owner e usuários operacionais: Owner recebe canais do SAC, demais usuários devem procurar a gerência.
+71. A lista de clientes em `/platform` exibe resumo total/ativos/suspensos, status por tenant, contadores de Usuários, Prospects e Contatos, e ação de suspensão ou reativação em bloco separado.
 
 Validacoes atuais:
 
@@ -379,6 +389,10 @@ Validacoes atuais:
 - Em Configurações da Empresa, Owner/Admin pode editar Nome da Empresa, Razão Social, CNPJ, Segmento e Plano do tenant.
 - Configurações da Empresa exigem Nome da Empresa com pelo menos 2 caracteres e CNPJ com 14 posições quando preenchido.
 - Em Equipes e Usuários, Owner/Admin pode criar/editar Equipe com Status, criar/editar Usuário com Status, alterar Líder e vincular/remover Usuário de Equipe.
+- Platform Admin ativo é redirecionado para `/platform` após login.
+- Usuário ativo em tenant suspenso é redirecionado para `/tenant-suspended` e não acessa Dashboard, Base Comercial ou Configurações.
+- Login em tenant suspenso cria notificação `TENANT_SUSPENDED_LOGIN` para cada Platform Admin ativo.
+- Suspender tenant cria notificação `TENANT_SUSPENDED`; reativar cria `TENANT_REACTIVATED`.
 - Cadastro de usuário exige Nome, E-mail válido, Perfil permitido (`MANAGER`, `SELLER` ou `ASSISTANT`) e Status (`ACTIVE` ou `INACTIVE`).
 - Vinculação de equipe exige Equipe ativa e Usuário pertencentes ao mesmo tenant.
 - Inativação de Equipe exige que não exista Líder ativo nem Usuários ativos vinculados.
@@ -419,6 +433,9 @@ Arquivos principais:
 - `src/app/auth/actions.ts`
 - `src/app/login/page.tsx`
 - `src/app/onboarding/page.tsx`
+- `src/app/platform/page.tsx`
+- `src/app/platform/actions.ts`
+- `src/app/tenant-suspended/page.tsx`
 - `src/app/dashboard/page.tsx`
 - `src/app/accounts/page.tsx`
 - `src/app/accounts/[id]/page.tsx`
@@ -435,6 +452,8 @@ Observacoes de seguranca:
 - Senhas exigem minimo de 8 caracteres no fluxo atual.
 - Recuperacao de senha e politica forte foram registradas para implementacao posterior na issue `#11`.
 - Chamadas de login/cadastro tratam falhas de conexao com mensagem amigavel, sem expor `fetch failed` cru ao usuario.
+- Platform Admin não depende de vínculo com tenant comum e deve ser provisionado de forma controlada em `platform_admins`.
+- Tenants suspensos preservam dados, mas bloqueiam a navegação operacional por checagem de status nas páginas principais.
 
 ## Versao WIP no topo
 
@@ -446,7 +465,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-16 20:27:44`
+- Valor: `2026-06-18 20:37:14`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

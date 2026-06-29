@@ -832,11 +832,23 @@ Limites a parametrizar por tenant:
 - Quantidade de requisicoes de IA por periodo.
 - Recursos habilitados por plano.
 
+### Administração da plataforma
+
+O SaaS passa a prever um perfil global `Platform Admin`, separado dos usuários do tenant. Esse perfil gerencia clientes xCRM, pode suspender ou reativar tenants e acompanha mensagens internas da plataforma.
+
+Diretriz inicial:
+
+- Tenant suspenso mantém dados preservados, mas bloqueia o acesso operacional.
+- Owner de tenant suspenso recebe orientação para contato com SAC da plataforma.
+- Usuários operacionais de tenant suspenso devem procurar a gerência da própria empresa.
+- Notificações da plataforma começam com eventos de suspensão e login em tenant suspenso, mas a estrutura deve ser reaproveitada futuramente para avisos a vendedores, líderes e owners.
+
 Pendencias:
 
 - Definir nomes comerciais dos planos.
 - Definir limites numericos de usuarios, IA e armazenamento.
 - Definir politica de excedentes.
+- Definir política comercial e operacional para suspensão, reativação e comunicação com clientes.
 - Definir estrutura de GitHub Issues quando o repositorio for inicializado.
 
 ## 12. Proximos passos sugeridos

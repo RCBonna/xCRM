@@ -1,84 +1,85 @@
 "use client";
 
-import { Plus, RotateCcw, Save, UsersRound } from "lucide-react";
+import { RotateCcw, Save, ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import {
-  createTeamAction,
-  updateTeamAction,
-} from "@/app/settings/team/actions";
+import { assignTeamManagerAction } from "@/app/settings/team/actions";
 
-type Team = {
+type TeamLeaderTeam = {
   id: string;
   name: string;
   status: string;
+  managerUserId: string | null;
   managerName: string | null;
   memberCount: number;
   activeMemberCount: number;
 };
 
-type TeamTeamsTabProps = {
-  teams: Team[];
+type TeamLeaderManager = {
+  id: string;
+  name: string;
+};
+
+type TeamLeadersTabProps = {
+  teams: TeamLeaderTeam[];
+  managers: TeamLeaderManager[];
 };
 
 const statusLabels: Record<string, string> = {
-  ACTIVE: "Ativo",
-  INACTIVE: "Inativo",
-  ARCHIVED: "Arquivado",
+  ACTIVE: "Ativa",
+  INACTIVE: "Inativa",
+  ARCHIVED: "Arquivada",
 };
 
 const inputClass =
   "h-10 rounded-md border border-border bg-background px-3 text-sm";
 
-const emptyTeam = {
-  id: "",
-  name: "",
-  status: "ACTIVE",
+const emptyLeaderForm = {
+  teamId: "",
+  teamName: "",
+  managerUserId: "",
 };
 
-export function TeamTeamsTab({ teams }: TeamTeamsTabProps) {
+export function TeamLeadersTab({ teams, managers }: TeamLeadersTabProps) {
   const [selectedTeamId, setSelectedTeamId] = useState("");
-  const [formState, setFormState] = useState(emptyTeam);
+  const [formState, setFormState] = useState(emptyLeaderForm);
   const selectedTeam = useMemo(
     () => teams.find((team) => team.id === selectedTeamId),
     [selectedTeamId, teams],
   );
-  const isEditing = Boolean(selectedTeamId);
+  const hasSelection = Boolean(selectedTeamId);
 
-  function selectTeam(team: Team) {
+  function selectTeam(team: TeamLeaderTeam) {
     setSelectedTeamId(team.id);
     setFormState({
-      id: team.id,
-      name: team.name,
-      status: team.status,
+      teamId: team.id,
+      teamName: team.name,
+      managerUserId: team.managerUserId ?? "",
     });
   }
 
   function clearForm() {
     setSelectedTeamId("");
-    setFormState(emptyTeam);
+    setFormState(emptyLeaderForm);
   }
 
   return (
     <div className="grid gap-6 p-4 xl:grid-cols-[24rem_minmax(0,1fr)]">
-      <form
-        action={isEditing ? updateTeamAction : createTeamAction}
-        className="grid content-start gap-3"
-      >
-        <input type="hidden" name="teamId" value={formState.id} />
+      <form action={assignTeamManagerAction} className="grid content-start gap-3">
+        <input type="hidden" name="teamId" value={formState.teamId} />
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="flex items-center gap-2 text-base font-semibold">
-              <Plus size={18} className="text-primary" aria-hidden />
-              {isEditing ? "Editar Equipe" : "Nova Equipe"}
+              <ShieldCheck size={18} className="text-primary" aria-hidden />
+              Líder da Equipe
             </h2>
             <p className="mt-1 text-sm leading-6 text-muted">
-              {isEditing
-                ? "Altere os dados selecionados e salve."
-                : "Cadastre a equipe e defina seu status operacional."}
+              {hasSelection
+                ? "Altere o líder da equipe selecionada."
+                : "Selecione uma equipe na lista para alterar o líder."}
             </p>
           </div>
-          {isEditing ? (
+          {hasSelection ? (
             <button
               type="button"
               onClick={clearForm}
@@ -91,57 +92,64 @@ export function TeamTeamsTab({ teams }: TeamTeamsTabProps) {
         </div>
 
         <label className="grid gap-1 text-sm">
-          <span className="font-medium">Nome da Equipe</span>
+          <span className="font-medium">Equipe</span>
           <input
-            name="teamName"
-            required
-            value={formState.name}
-            onChange={(event) =>
-              setFormState((current) => ({
-                ...current,
-                name: event.target.value,
-              }))
-            }
-            className={inputClass}
+            readOnly
+            value={formState.teamName}
+            placeholder="Selecione uma equipe"
+            className={`${inputClass} text-muted`}
           />
         </label>
         <label className="grid gap-1 text-sm">
-          <span className="font-medium">Status</span>
+          <span className="font-medium">Líder</span>
           <select
-            name="status"
-            value={formState.status}
+            name="managerUserId"
+            disabled={!hasSelection}
+            value={formState.managerUserId}
             onChange={(event) =>
               setFormState((current) => ({
                 ...current,
-                status: event.target.value,
+                managerUserId: event.target.value,
               }))
             }
             className={inputClass}
           >
-            <option value="ACTIVE">Ativa</option>
-            <option value="INACTIVE">Inativa</option>
+            <option value="">Sem líder</option>
+            {managers.map((manager) => (
+              <option key={manager.id} value={manager.id}>
+                {manager.name}
+              </option>
+            ))}
           </select>
         </label>
-        <button className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
-          {isEditing ? <Save size={15} aria-hidden /> : <Plus size={15} aria-hidden />}
-          {isEditing ? "Salvar Equipe" : "Criar Equipe"}
+        <button
+          disabled={!hasSelection}
+          className={[
+            "inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium",
+            hasSelection
+              ? "bg-primary text-primary-foreground"
+              : "cursor-not-allowed border border-border text-muted",
+          ].join(" ")}
+        >
+          <Save size={15} aria-hidden />
+          Salvar Líder
         </button>
       </form>
 
       <div className="rounded-md border border-border">
         <div className="border-b border-border px-3 py-3">
           <h2 className="flex items-center gap-2 text-base font-semibold">
-            <UsersRound size={18} className="text-primary" aria-hidden />
-            Equipes Cadastradas
+            <ShieldCheck size={18} className="text-primary" aria-hidden />
+            Equipes Ativas
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Selecione uma Equipe para carregar os dados no cadastro.
+            Selecione uma equipe para carregar o líder no formulário.
           </p>
         </div>
         <div className="divide-y divide-border">
           {teams.length === 0 ? (
             <p className="px-3 py-4 text-sm text-muted">
-              Nenhuma Equipe cadastrada.
+              Nenhuma equipe ativa disponível.
             </p>
           ) : (
             teams.map((team) => {
@@ -153,7 +161,7 @@ export function TeamTeamsTab({ teams }: TeamTeamsTabProps) {
                   type="button"
                   onClick={() => selectTeam(team)}
                   className={[
-                    "grid w-full gap-3 px-3 py-3 text-left transition-colors hover:bg-surface-muted md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_7rem_5rem] md:items-center",
+                    "grid w-full gap-3 px-3 py-3 text-left transition-colors hover:bg-surface-muted md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_7rem_5rem] md:items-center",
                     isSelected ? "bg-surface-muted" : "",
                   ].join(" ")}
                 >
@@ -164,7 +172,7 @@ export function TeamTeamsTab({ teams }: TeamTeamsTabProps) {
                     </p>
                   </div>
                   <p className="truncate text-xs leading-5 text-muted">
-                    Líder: {team.managerName ?? "Sem líder definido"}
+                    Líder: {team.managerName ?? "Sem líder"}
                   </p>
                   <p className="hidden text-xs text-muted md:block">
                     {team.activeMemberCount}/{team.memberCount} ativo(s)

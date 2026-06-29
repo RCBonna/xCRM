@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-16 20:27:44 -03:00
+Ultima modificacao: 2026-06-28 11:30:18 -03:00
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -10,6 +10,39 @@ Status: Documento unico para registrar necessidades, decisoes, migrations e coma
 - Cada bloco deve manter data/hora, objetivo, status e comandos relacionados.
 - Como o app esta em desenvolvimento, migrations podem ser aplicadas no banco quando necessario.
 - Comandos SQL devem ficar em blocos versionados, mesmo quando ainda forem apenas proposta.
+
+## 2026-06-28 11:30:18 -03:00 - Diagnostico de autenticacao Postgres Supabase
+
+Status: Bloqueado por credencial de banco invalida ou desatualizada no ambiente local
+
+Objetivo:
+
+- Investigar falha reportada no Supabase sem expor segredos do arquivo `.env`.
+- Separar o estado do Supabase Auth do estado da conexao SQL/Postgres.
+- Registrar proximos passos antes de aplicar migrations ou alteracoes de banco.
+
+Resultado dos testes:
+
+- Supabase Auth respondeu corretamente no endpoint `/auth/v1/settings` com HTTP 200.
+- A conexao Postgres via `DATABASE_URL` falhou com `password authentication failed for user "postgres"`.
+- A conexao Postgres via `DIRECT_URL` falhou com `password authentication failed for user "postgres"`.
+- As duas URLs apontam para o projeto Supabase `qeadwfyedxhswqcxyeuq`.
+- A senha configurada nas duas URLs e igual, mas deve ser conferida ou rotacionada no painel Supabase.
+- O `.env` atual esta com `DATABASE_URL` no host direto `db...:5432` e `DIRECT_URL` no pooler `:6543`, enquanto o `.env.example` documenta `DATABASE_URL` como pooler e `DIRECT_URL` como direta.
+
+Comandos de validacao executados:
+
+```powershell
+npm run prisma:validate
+npm run build
+```
+
+Proximos passos:
+
+- Obter no painel Supabase a connection string atualizada do banco.
+- Garantir que caracteres especiais da senha estejam URL-encoded nas strings de conexao.
+- Ajustar o `.env` para manter `DATABASE_URL` como pooler e `DIRECT_URL` como conexao direta, conforme `.env.example`.
+- Retestar a conexao Postgres e, depois disso, aplicar/verificar migrations pendentes.
 
 ## 2026-06-12 17:13:16 -03:00 - Necessidade inicial de modelo SQL multi tenant
 
@@ -641,4 +674,92 @@ SQL aplicado:
 ```sql
 alter table teams
 add column if not exists status "RecordStatus" not null default 'ACTIVE';
+```
+
+## 2026-06-18 19:22:16 -03:00 - Platform Admin, Tenant Suspenso e Notificações
+
+Status: Aplicada no banco remoto
+
+Objetivo:
+
+- Permitir que um usuário `Platform Admin` gerencie clientes xCRM fora do contexto de um tenant comum.
+- Permitir suspender o acesso operacional de um tenant usando `RecordStatus.SUSPENDED`.
+- Registrar mensagens/notificações para o `Platform Admin`, incluindo login em tenant suspenso.
+- Preparar a mesma estrutura de notificações para usos futuros, como avisos para vendedores.
+
+Migration:
+
+- Arquivo: `prisma/20260618192000_platform_admin_notifications.sql`
+
+Mapeamento usado:
+
+- `public.tenants.status = 'SUSPENDED'`: tenant suspenso pela plataforma.
+- `public.platform_admins`: usuários administrativos da plataforma, vinculados ao `auth.users.id` do Supabase em `auth_user_id`.
+- `public.notifications`: mensagens internas por destinatário, podendo apontar para usuário do tenant ou para `Platform Admin`.
+
+Comandos executados:
+
+```bash
+npx prisma validate
+npx prisma generate
+node -e "<aplicacao via pg usando DIRECT_URL e ssl.rejectUnauthorized=false>"
+npm run lint
+npm run build
+```
+
+SQL aplicado:
+
+```sql
+alter type "RecordStatus" add value if not exists 'SUSPENDED';
+
+create table if not exists platform_admins (
+  id uuid primary key default gen_random_uuid(),
+  auth_user_id uuid not null unique,
+  name text not null,
+  email text not null unique,
+  status "RecordStatus" not null default 'ACTIVE',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists platform_admins_status_idx
+on platform_admins (status);
+
+create table if not exists notifications (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id uuid references tenants(id) on delete cascade,
+  recipient_user_id uuid references users(id) on delete cascade,
+  recipient_platform_admin_id uuid references platform_admins(id) on delete cascade,
+  actor_user_id uuid references users(id) on delete set null,
+  type text not null,
+  title text not null,
+  body text,
+  metadata jsonb,
+  read_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists notifications_tenant_created_at_idx
+on notifications (tenant_id, created_at);
+
+create index if not exists notifications_recipient_user_read_created_idx
+on notifications (recipient_user_id, read_at, created_at);
+
+create index if not exists notifications_recipient_platform_admin_read_created_idx
+on notifications (recipient_platform_admin_id, read_at, created_at);
+```
+
+Observação operacional:
+
+- O primeiro `Platform Admin` deve ser criado por SQL controlado, vinculando `platform_admins.auth_user_id` ao ID do usuário no Supabase Auth.
+- Exemplo seguro de cadastro inicial:
+
+```sql
+insert into platform_admins (auth_user_id, name, email)
+values ('<auth.users.id>', '<nome>', '<email>')
+on conflict (email) do update
+set name = excluded.name,
+    auth_user_id = excluded.auth_user_id,
+    status = 'ACTIVE',
+    updated_at = now();
 ```
