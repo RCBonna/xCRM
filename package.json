@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS=--use-system-ca next dev",
+    "dev": "cross-env NODE_OPTIONS=--use-system-ca next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -20,7 +20,8 @@
     "next": "16.2.9",
     "pg": "^8.21.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "read-excel-file": "^9.2.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-18 18:31:46 -03:00
+Ultima modificacao: 2026-06-30 13:08:42 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -34,6 +34,18 @@ Atualizar quando houver mudancas em:
 - PWA como primeiro alvo mobile.
 - IA assistiva simples e contextual no MVP.
 
+## Design System e Interacao
+
+- `src/app/globals.css` define feedback global para `button` e links com classe arredondada.
+- `src/app/globals.css` define tokens globais de campos (`--field` e `--field-autofill`) para manter inputs coerentes com cada tema.
+- Hover: borda e sombra ficam mais claras para indicar que o elemento e clicavel.
+- Active: o elemento recebe deslocamento discreto para baixo e escala leve, simulando clique/pressao.
+- Focus visivel: teclado recebe outline com cor de foco do tema.
+- Disabled: botoes desabilitados nao aplicam deslocamento nem sombra de clique.
+- Inputs, selects e textareas usam fundo de campo por tema, hover/focus padronizados e sobrescrita de `:-webkit-autofill`.
+- No tema claro os campos usam fundo claro; no tema escuro usam fundo escuro para evitar contraste excessivo com os paineis.
+- A regra respeita `prefers-reduced-motion`, removendo transicoes e transformacoes quando o usuario prefere menos movimento.
+
 ## Estrutura inicial
 
 - `src/app`: rotas e telas do App Router.
@@ -54,6 +66,12 @@ Atualizar quando houver mudancas em:
 - `src/components/action-date-time-input.tsx`: controle de Data e Hora para Ações, com minutos restritos a `00`, `15`, `30` e `45`.
 - `src/app/accounts`: tela autenticada de empresas/prospects.
 - `src/app/accounts/[id]`: detalhe e edição básica de uma Empresa/Prospect.
+- `src/app/imports`: tela Owner-only de carga temporaria de planilhas, revisao por linha e importacao individual para tabelas definitivas.
+- `src/app/imports/actions.ts`: Server Actions para iniciar carga, salvar/aprovar/rejeitar/importar linha e descartar carga.
+- `src/lib/imports/settings.ts`: leitura de parametros de importacao a partir de `config/import-settings.json`.
+- `src/lib/imports/spreadsheet.ts`: listagem da pasta parametrizada, leitura de `.xlsx` com `read-excel-file` e leitura de `.csv` com parser local simples.
+- `src/lib/imports/normalizer.ts`: normalizacao heuristica inicial para separar Empresa, Contato, Historico e Proxima Acao.
+- `config/import-settings.json`: parametro local da pasta de importacao e extensoes permitidas.
 - `src/lib/brazilian-states.ts`: lista local de UFs brasileiras e helper de validacao.
 - `src/app/login`: tela de login e criacao de acesso.
 - `src/components/login-access-tabs.tsx`: abas de acesso para entrar ou criar acesso.
@@ -64,6 +82,7 @@ Atualizar quando houver mudancas em:
 - `src/components/datetime-local-defaults.tsx`: comportamento global para inicializar campos `datetime-local` vazios com data atual às 09:00 e normalizar horários para intervalos de 15 minutos.
 - `src/components/dirty-submit-button.tsx`: botão cliente que habilita `Salvar Alterações` apenas quando o formulário tem mudança real.
 - `src/components/cnpj-input.tsx`: Client Component para CNPJ alfanumérico com máscara visual, uppercase e 2 últimos caracteres numéricos.
+- `src/components/import-status-filter.tsx`: Client Component do filtro de status da fila de importacao, com menu controlado, fechamento apos selecao e estado de processamento durante navegacao.
 - `src/components/uppercase-input.tsx`: Client Component para entradas que devem ser digitadas e salvas em maiúsculas.
 - `src/app/onboarding`: criacao do primeiro tenant e usuario owner.
 - `src/app/dashboard`: painel autenticado inicial.
@@ -93,8 +112,8 @@ Projeto Supabase remoto atual:
 
 Variaveis esperadas:
 
-- `DATABASE_URL`: URL pooler Supabase, mantida para compatibilidade e usos futuros.
-- `DIRECT_URL`: URL direta Supabase usada pelo Prisma no runtime local e para migrations/operacoes administrativas.
+- `DATABASE_URL`: URL do pooler transacional Supabase, porta `6543`, com `pgbouncer=true`.
+- `DIRECT_URL`: URL do pooler de sessao Supabase, porta `5432`, sem `pgbouncer=true`, usada pelo Prisma no runtime local e para migrations/operacoes administrativas.
 - `NEXT_PUBLIC_SUPABASE_URL`: URL publica do projeto Supabase.
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: chave publica/publishable do Supabase.
 
@@ -116,9 +135,11 @@ npm run prisma:validate
 npm run dev
 ```
 
-O script `npm run dev` usa `cross-env NODE_OPTIONS=--use-system-ca next dev` para evitar erro local de certificado ao chamar Supabase Auth no Windows/Node.
+O script `npm run dev` usa `cross-env NODE_OPTIONS=--use-system-ca next dev --webpack` para evitar erro local de certificado ao chamar Supabase Auth no Windows/Node e para desativar Turbopack no ambiente local enquanto houver instabilidade de cache/build dentro da pasta sincronizada pelo OneDrive.
 
 O cliente Prisma em `src/lib/prisma.ts` prioriza `DIRECT_URL` quando ela esta configurada. Esse padrao evita falhas observadas no pooler durante o fluxo de login/onboarding no ambiente local.
+
+Em 2026-06-29, o `.env` local foi corrigido para remover a combinacao invalida de porta `5432` com `pgbouncer=true`. O padrao local atual e `DATABASE_URL` no pooler transacional `:6543` e `DIRECT_URL` no pooler de sessao `:5432`.
 
 ## Deploy Vercel
 
@@ -439,6 +460,8 @@ Arquivos principais:
 - `src/app/dashboard/page.tsx`
 - `src/app/accounts/page.tsx`
 - `src/app/accounts/[id]/page.tsx`
+- `src/app/imports/page.tsx`
+- `src/app/imports/actions.ts`
 - `src/app/accounts/actions.ts`
 - `src/components/account-history-panel.tsx`
 - `src/lib/brazilian-states.ts`
@@ -454,6 +477,24 @@ Observacoes de seguranca:
 - Chamadas de login/cadastro tratam falhas de conexao com mensagem amigavel, sem expor `fetch failed` cru ao usuario.
 - Platform Admin não depende de vínculo com tenant comum e deve ser provisionado de forma controlada em `platform_admins`.
 - Tenants suspensos preservam dados, mas bloqueiam a navegação operacional por checagem de status nas páginas principais.
+- Importacao de planilhas e restrita ao perfil Owner.
+- A tela `/imports` nao permite iniciar nova carga enquanto existir carga temporaria ativa no tenant.
+- Linhas importadas para a base definitiva passam por Server Action e gravam sempre com `tenantId` e `ownerUserId` do Owner autenticado.
+- A normalizacao por heuristica/IA assistida nunca grava diretamente nas tabelas definitivas; o Owner precisa revisar e importar a linha.
+- Depois de alterar enums usados pelo Prisma Client, como `JobStatus`, executar `npm run prisma:generate` e reiniciar o dev server local para evitar runtime com client antigo em memoria.
+- O leitor de planilhas detecta a linha de cabecalho por termos esperados como Empresa, Contato, Cidade, UF, E-mail e Fone, permitindo arquivos com linhas introdutorias antes da tabela.
+- Rejeitar ou importar uma linha temporaria redireciona para a proxima linha ainda pendente/aprovada da mesma carga.
+- Descartar carga temporaria exige confirmacao em modal antes de enviar a Server Action.
+- O painel de revisao de `/imports` usa `key={selectedRow.id}` para remontar campos controlados/clientes ao selecionar outra linha.
+- O CNPJ na revisao temporaria usa `CnpjInput`, mantendo a mascara visual `AA.AAA.AAA/AAAA-00`.
+- A tela `/imports` organiza a revisao como bancada de triagem: faixa superior com origem e metricas, fila esquerda compacta, ficha principal por linha e dados originais recolhiveis.
+- A barra de acoes da linha fica fixa no rodape do painel de revisao para manter salvar/aprovar/importar/rejeitar sempre acessiveis.
+- A fila esquerda de `/imports` possui filtro por status via querystring `status`, acionado por um botao com icone de filtro e menu suspenso no topo do card da carga.
+- Os links das linhas em `/imports` preservam `status` ao navegar entre registros filtrados.
+- Filtros de importacao sem registros exibem estado vazio e nao retornam automaticamente para a lista completa.
+- Quando `legalName` nao vem da planilha, a revisao temporaria usa `company.name` como fallback para Razão Social.
+- A grade da ficha de revisao usa breakpoint `lg`, maior espacamento horizontal e inputs `w-full` para evitar estouro lateral de campos compactos.
+- Linhas com status `IMPORTED` desabilitam as acoes de salvar, aprovar, importar e rejeitar na ficha temporaria.
 
 ## Versao WIP no topo
 
@@ -465,7 +506,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-18 20:37:14`
+- Valor: `2026-06-30 13:08:42`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

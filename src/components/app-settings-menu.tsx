@@ -3,6 +3,7 @@
 import {
   BriefcaseBusiness,
   Building2,
+  DatabaseZap,
   Menu,
   Monitor,
   Moon,
@@ -25,10 +26,12 @@ type ThemeValue = (typeof themes)[number]["value"];
 
 type AppSettingsMenuProps = {
   canManageCompanySettings?: boolean;
+  canImportData?: boolean;
 };
 
 export function AppSettingsMenu({
   canManageCompanySettings = false,
+  canImportData = false,
 }: AppSettingsMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -144,6 +147,20 @@ export function AppSettingsMenu({
                 <UsersRound size={16} className="text-primary" aria-hidden />
                 Equipes e Usuários
               </Link>
+              {canImportData ? (
+                <Link
+                  href="/imports"
+                  onClick={() => setIsOpen(false)}
+                  className="mt-1 flex h-10 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
+                >
+                  <DatabaseZap
+                    size={16}
+                    className="text-primary"
+                    aria-hidden
+                  />
+                  Importação de Dados
+                </Link>
+              ) : null}
             </div>
           ) : null}
         </div>

@@ -174,6 +174,7 @@ export default async function TeamSettingsPage({
   const userIdentity = appUser.name || user.email || "Usuário autenticado";
   const userEmail = appUser.email || user.email || "E-mail não informado";
   const userRole = appUser.role.toLowerCase();
+  const canImportData = appUser.role === "OWNER";
   const inputClass =
     "h-10 rounded-md border border-border bg-background px-3 text-sm";
   return (
@@ -206,7 +207,10 @@ export default async function TeamSettingsPage({
                 </p>
               </div>
             </div>
-            <AppSettingsMenu canManageCompanySettings />
+            <AppSettingsMenu
+              canManageCompanySettings
+              canImportData={canImportData}
+            />
             <form action={signOutAction}>
               <button className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium">
                 <LogOut size={16} aria-hidden />

@@ -1,10 +1,415 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Tenant {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  legalName      String?         @map("legal_name")
+  document       String?
+  status         RecordStatus    @default(ACTIVE)
+  plan           String?
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  segment        String?
+  accounts       Account[]
+  activities     Activity[]
+  aiJobs         AiJob[]
+  attachments    Attachment[]
+  contacts       Contact[]
+  importRows     ImportRow[]
+  imports        ImportBatch[]
+  interactions   Interaction[]
+  notifications  Notification[]
+  opportunities  Opportunity[]
+  stages         PipelineStage[]
+  pipelines      Pipeline[]
+  stageMovements StageMovement[]
+  teamMembers    TeamMember[]
+  teams          Team[]
+  users          User[]
+
+  @@map("tenants")
+}
+
+model PlatformAdmin {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authUserId    String         @unique @map("auth_user_id") @db.Uuid
+  name          String
+  email         String         @unique
+  status        RecordStatus   @default(ACTIVE)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  notifications Notification[] @relation("NotificationRecipientPlatformAdmin")
+
+  @@index([status])
+  @@map("platform_admins")
+}
+
+model User {
+  id                    String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String          @map("tenant_id") @db.Uuid
+  authUserId            String?         @map("auth_user_id") @db.Uuid
+  name                  String
+  email                 String
+  phone                 String?
+  role                  UserRole
+  status                RecordStatus    @default(ACTIVE)
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+  ownedAccounts         Account[]       @relation("AccountOwner")
+  ownedActivities       Activity[]      @relation("ActivityOwner")
+  requestedAiJobs       AiJob[]         @relation("AiJobRequester")
+  uploadedAttachments   Attachment[]    @relation("AttachmentUploader")
+  ownedContacts         Contact[]       @relation("ContactOwner")
+  uploadedImports       ImportBatch[]   @relation("ImportUploader")
+  interactions          Interaction[]
+  createdNotifications  Notification[]  @relation("NotificationActorUser")
+  receivedNotifications Notification[]  @relation("NotificationRecipientUser")
+  ownedOpportunities    Opportunity[]   @relation("OpportunityOwner")
+  changedStageMovements StageMovement[] @relation("StageMovementChanger")
+  teamMemberships       TeamMember[]
+  managedTeams          Team[]          @relation("TeamManager")
+  tenant                Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([authUserId])
+  @@index([tenantId, role])
+  @@map("users")
+}
+
+model Notification {
+  id                       String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId                 String?        @map("tenant_id") @db.Uuid
+  recipientUserId          String?        @map("recipient_user_id") @db.Uuid
+  recipientPlatformAdminId String?        @map("recipient_platform_admin_id") @db.Uuid
+  actorUserId              String?        @map("actor_user_id") @db.Uuid
+  type                     String
+  title                    String
+  body                     String?
+  metadata                 Json?
+  readAt                   DateTime?      @map("read_at") @db.Timestamptz(6)
+  createdAt                DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  actorUser                User?          @relation("NotificationActorUser", fields: [actorUserId], references: [id], onUpdate: NoAction)
+  recipientPlatformAdmin   PlatformAdmin? @relation("NotificationRecipientPlatformAdmin", fields: [recipientPlatformAdminId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  recipientUser            User?          @relation("NotificationRecipientUser", fields: [recipientUserId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tenant                   Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([recipientPlatformAdminId, readAt, createdAt], map: "notifications_recipient_platform_admin_read_created_idx")
+  @@index([recipientUserId, readAt, createdAt], map: "notifications_recipient_user_read_created_idx")
+  @@index([tenantId, createdAt], map: "notifications_tenant_created_at_idx")
+  @@map("notifications")
+}
+
+model Team {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String       @map("tenant_id") @db.Uuid
+  name          String
+  managerUserId String?      @map("manager_user_id") @db.Uuid
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  status        RecordStatus @default(ACTIVE)
+  members       TeamMember[]
+  manager       User?        @relation("TeamManager", fields: [managerUserId], references: [id])
+  tenant        Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+  @@map("teams")
+}
+
+model TeamMember {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  teamId    String   @map("team_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([tenantId, userId])
+  @@map("team_members")
+}
+
+model Account {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String        @map("tenant_id") @db.Uuid
+  ownerUserId       String?       @map("owner_user_id") @db.Uuid
+  name              String
+  legalName         String?       @map("legal_name")
+  document          String?
+  segment           String?
+  city              String?
+  state             String?
+  address           String?
+  website           String?
+  mainSupplier      String?       @map("main_supplier")
+  source            String?
+  status            AccountStatus @default(PROSPECT)
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  notes             String?
+  postalCode        String?       @map("postal_code")
+  addressNumber     String?       @map("address_number")
+  addressComplement String?       @map("address_complement")
+  district          String?
+  owner             User?         @relation("AccountOwner", fields: [ownerUserId], references: [id])
+  tenant            Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  activities        Activity[]
+  contacts          Contact[]
+  interactions      Interaction[]
+  opportunities     Opportunity[]
+
+  @@index([tenantId, ownerUserId])
+  @@index([tenantId, name])
+  @@map("accounts")
+}
+
+model Contact {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String        @map("tenant_id") @db.Uuid
+  accountId     String        @map("account_id") @db.Uuid
+  ownerUserId   String?       @map("owner_user_id") @db.Uuid
+  name          String
+  title         String?
+  email         String?
+  phone         String?
+  whatsapp      String?
+  linkedinUrl   String?       @map("linkedin_url")
+  instagramUrl  String?       @map("instagram_url")
+  notes         String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  isPrimary     Boolean       @default(false) @map("is_primary")
+  activities    Activity[]
+  account       Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  owner         User?         @relation("ContactOwner", fields: [ownerUserId], references: [id])
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  interactions  Interaction[]
+  opportunities Opportunity[]
+
+  @@unique([tenantId, accountId], map: "contacts_one_primary_per_account", where: raw("is_primary"))
+  @@index([tenantId, accountId])
+  @@index([tenantId, ownerUserId])
+  @@map("contacts")
+}
+
+model Pipeline {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String          @map("tenant_id") @db.Uuid
+  name          String
+  isDefault     Boolean         @default(false) @map("is_default")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  opportunities Opportunity[]
+  stages        PipelineStage[]
+  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+  @@map("pipelines")
+}
+
+model PipelineStage {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String          @map("tenant_id") @db.Uuid
+  pipelineId    String          @map("pipeline_id") @db.Uuid
+  name          String
+  position      Int
+  stageType     String?         @map("stage_type")
+  isWon         Boolean         @default(false) @map("is_won")
+  isLost        Boolean         @default(false) @map("is_lost")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  opportunities Opportunity[]
+  pipeline      Pipeline        @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  movementsFrom StageMovement[] @relation("StageMovementFrom")
+  movementsTo   StageMovement[] @relation("StageMovementTo")
+
+  @@unique([pipelineId, position])
+  @@unique([pipelineId, name])
+  @@map("pipeline_stages")
+}
+
+model Opportunity {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String            @map("tenant_id") @db.Uuid
+  accountId         String            @map("account_id") @db.Uuid
+  contactId         String?           @map("contact_id") @db.Uuid
+  ownerUserId       String?           @map("owner_user_id") @db.Uuid
+  pipelineId        String            @map("pipeline_id") @db.Uuid
+  stageId           String            @map("stage_id") @db.Uuid
+  title             String
+  amountEstimated   Decimal?          @map("amount_estimated") @db.Decimal(12, 2)
+  probability       Int?
+  expectedCloseDate DateTime?         @map("expected_close_date")
+  status            OpportunityStatus @default(OPEN)
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  activities        Activity[]
+  interactions      Interaction[]
+  account           Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  contact           Contact?          @relation(fields: [contactId], references: [id])
+  owner             User?             @relation("OpportunityOwner", fields: [ownerUserId], references: [id])
+  pipeline          Pipeline          @relation(fields: [pipelineId], references: [id])
+  stage             PipelineStage     @relation(fields: [stageId], references: [id])
+  tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stageMovements    StageMovement[]
+
+  @@index([tenantId, ownerUserId])
+  @@index([tenantId, stageId])
+  @@map("opportunities")
+}
+
+model StageMovement {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String         @map("tenant_id") @db.Uuid
+  opportunityId   String         @map("opportunity_id") @db.Uuid
+  fromStageId     String?        @map("from_stage_id") @db.Uuid
+  toStageId       String         @map("to_stage_id") @db.Uuid
+  changedByUserId String         @map("changed_by_user_id") @db.Uuid
+  changedAt       DateTime       @default(now()) @map("changed_at")
+  note            String?
+  changedByUser   User           @relation("StageMovementChanger", fields: [changedByUserId], references: [id])
+  fromStage       PipelineStage? @relation("StageMovementFrom", fields: [fromStageId], references: [id])
+  opportunity     Opportunity    @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  toStage         PipelineStage  @relation("StageMovementTo", fields: [toStageId], references: [id])
+
+  @@index([tenantId, opportunityId])
+  @@map("stage_movements")
+}
+
+model Activity {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String         @map("tenant_id") @db.Uuid
+  accountId     String?        @map("account_id") @db.Uuid
+  contactId     String?        @map("contact_id") @db.Uuid
+  opportunityId String?        @map("opportunity_id") @db.Uuid
+  ownerUserId   String         @map("owner_user_id") @db.Uuid
+  type          ActivityType
+  title         String
+  description   String?
+  scheduledAt   DateTime?      @map("scheduled_at")
+  completedAt   DateTime?      @map("completed_at")
+  status        ActivityStatus @default(PENDING)
+  priority      Int            @default(2)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  account       Account?       @relation(fields: [accountId], references: [id])
+  contact       Contact?       @relation(fields: [contactId], references: [id])
+  opportunity   Opportunity?   @relation(fields: [opportunityId], references: [id])
+  owner         User           @relation("ActivityOwner", fields: [ownerUserId], references: [id])
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, ownerUserId, status])
+  @@index([tenantId, scheduledAt])
+  @@map("activities")
+}
+
+model Interaction {
+  id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String               @map("tenant_id") @db.Uuid
+  accountId     String?              @map("account_id") @db.Uuid
+  contactId     String?              @map("contact_id") @db.Uuid
+  opportunityId String?              @map("opportunity_id") @db.Uuid
+  userId        String?              @map("user_id") @db.Uuid
+  channel       InteractionChannel
+  direction     InteractionDirection @default(INTERNAL)
+  summary       String?
+  body          String?
+  occurredAt    DateTime             @default(now()) @map("occurred_at")
+  externalId    String?              @map("external_id")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  account       Account?             @relation(fields: [accountId], references: [id])
+  contact       Contact?             @relation(fields: [contactId], references: [id])
+  opportunity   Opportunity?         @relation(fields: [opportunityId], references: [id])
+  tenant        Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user          User?                @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, accountId, occurredAt])
+  @@map("interactions")
+}
+
+model Attachment {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  entityType       String   @map("entity_type")
+  entityId         String   @map("entity_id") @db.Uuid
+  uploadedByUserId String   @map("uploaded_by_user_id") @db.Uuid
+  fileName         String   @map("file_name")
+  mimeType         String   @map("mime_type")
+  storagePath      String   @map("storage_path")
+  createdAt        DateTime @default(now()) @map("created_at")
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  uploadedBy       User     @relation("AttachmentUploader", fields: [uploadedByUserId], references: [id])
+
+  @@index([tenantId, entityType, entityId])
+  @@map("attachments")
+}
+
+model AiJob {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  requestedByUserId String    @map("requested_by_user_id") @db.Uuid
+  jobType           String    @map("job_type")
+  status            JobStatus @default(QUEUED)
+  inputEntityType   String?   @map("input_entity_type")
+  inputEntityId     String?   @map("input_entity_id") @db.Uuid
+  outputJson        Json?     @map("output_json")
+  errorMessage      String?   @map("error_message")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  completedAt       DateTime? @map("completed_at")
+  requestedBy       User      @relation("AiJobRequester", fields: [requestedByUserId], references: [id])
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@map("ai_jobs")
+}
+
+model ImportBatch {
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String      @map("tenant_id") @db.Uuid
+  uploadedByUserId String      @map("uploaded_by_user_id") @db.Uuid
+  fileName         String      @map("file_name")
+  sourceType       String      @map("source_type")
+  status           JobStatus   @default(QUEUED)
+  totalRows        Int         @default(0) @map("total_rows")
+  validRows        Int         @default(0) @map("valid_rows")
+  invalidRows      Int         @default(0) @map("invalid_rows")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  completedAt      DateTime?   @map("completed_at")
+  rows             ImportRow[]
+  tenant           Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  uploadedBy       User        @relation("ImportUploader", fields: [uploadedByUserId], references: [id])
+
+  @@index([tenantId, status])
+  @@map("imports")
+}
+
+model ImportRow {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String      @map("tenant_id") @db.Uuid
+  importId       String      @map("import_id") @db.Uuid
+  rowNumber      Int         @map("row_number")
+  rawJson        Json        @map("raw_json")
+  normalizedJson Json?       @map("normalized_json")
+  status         JobStatus   @default(QUEUED)
+  errorMessage   String?     @map("error_message")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  import         ImportBatch @relation(fields: [importId], references: [id], onDelete: Cascade)
+  tenant         Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([importId, rowNumber])
+  @@index([tenantId, status])
+  @@map("import_rows")
 }
 
 enum UserRole {
@@ -18,8 +423,8 @@ enum UserRole {
 enum RecordStatus {
   ACTIVE
   INACTIVE
-  SUSPENDED
   ARCHIVED
+  SUSPENDED
 }
 
 enum AccountStatus {
@@ -74,427 +479,11 @@ enum InteractionDirection {
 enum JobStatus {
   QUEUED
   PROCESSING
+  REVIEWING
+  APPROVED
+  IMPORTED
+  DISCARDED
+  REJECTED
   COMPLETED
   FAILED
-}
-
-model Tenant {
-  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String
-  legalName String?      @map("legal_name")
-  document  String?
-  segment   String?
-  status    RecordStatus @default(ACTIVE)
-  plan      String?
-  createdAt DateTime     @default(now()) @map("created_at")
-  updatedAt DateTime     @updatedAt @map("updated_at")
-
-  users          User[]
-  teams          Team[]
-  teamMembers    TeamMember[]
-  accounts       Account[]
-  contacts       Contact[]
-  pipelines      Pipeline[]
-  stages         PipelineStage[]
-  opportunities  Opportunity[]
-  stageMovements StageMovement[]
-  activities     Activity[]
-  interactions   Interaction[]
-  attachments    Attachment[]
-  aiJobs         AiJob[]
-  imports        ImportBatch[]
-  importRows     ImportRow[]
-  notifications  Notification[]
-
-  @@map("tenants")
-}
-
-model PlatformAdmin {
-  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  authUserId String       @unique @map("auth_user_id") @db.Uuid
-  name       String
-  email      String       @unique
-  status     RecordStatus @default(ACTIVE)
-  createdAt  DateTime     @default(now()) @map("created_at")
-  updatedAt  DateTime     @updatedAt @map("updated_at")
-
-  notifications Notification[] @relation("NotificationRecipientPlatformAdmin")
-
-  @@index([status])
-  @@map("platform_admins")
-}
-
-model User {
-  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId   String       @map("tenant_id") @db.Uuid
-  authUserId String?      @map("auth_user_id") @db.Uuid
-  name       String
-  email      String
-  phone      String?
-  role       UserRole
-  status     RecordStatus @default(ACTIVE)
-  createdAt  DateTime     @default(now()) @map("created_at")
-  updatedAt  DateTime     @updatedAt @map("updated_at")
-
-  tenant                Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  managedTeams          Team[]          @relation("TeamManager")
-  teamMemberships       TeamMember[]
-  ownedAccounts         Account[]       @relation("AccountOwner")
-  ownedContacts         Contact[]       @relation("ContactOwner")
-  ownedOpportunities    Opportunity[]   @relation("OpportunityOwner")
-  changedStageMovements StageMovement[] @relation("StageMovementChanger")
-  ownedActivities       Activity[]      @relation("ActivityOwner")
-  interactions          Interaction[]
-  uploadedAttachments   Attachment[]    @relation("AttachmentUploader")
-  requestedAiJobs       AiJob[]         @relation("AiJobRequester")
-  uploadedImports       ImportBatch[]   @relation("ImportUploader")
-  receivedNotifications Notification[]  @relation("NotificationRecipientUser")
-  createdNotifications  Notification[]  @relation("NotificationActorUser")
-
-  @@unique([tenantId, email])
-  @@index([authUserId])
-  @@index([tenantId, role])
-  @@map("users")
-}
-
-model Notification {
-  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId                 String?   @map("tenant_id") @db.Uuid
-  recipientUserId          String?   @map("recipient_user_id") @db.Uuid
-  recipientPlatformAdminId String?   @map("recipient_platform_admin_id") @db.Uuid
-  actorUserId              String?   @map("actor_user_id") @db.Uuid
-  type                     String
-  title                    String
-  body                     String?
-  metadata                 Json?
-  readAt                   DateTime? @map("read_at")
-  createdAt                DateTime  @default(now()) @map("created_at")
-
-  tenant                 Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  recipientUser          User?          @relation("NotificationRecipientUser", fields: [recipientUserId], references: [id], onDelete: Cascade)
-  recipientPlatformAdmin PlatformAdmin? @relation("NotificationRecipientPlatformAdmin", fields: [recipientPlatformAdminId], references: [id], onDelete: Cascade)
-  actorUser              User?          @relation("NotificationActorUser", fields: [actorUserId], references: [id], onDelete: SetNull)
-
-  @@index([tenantId, createdAt])
-  @@index([recipientUserId, readAt, createdAt])
-  @@index([recipientPlatformAdminId, readAt, createdAt])
-  @@map("notifications")
-}
-
-model Team {
-  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId      String       @map("tenant_id") @db.Uuid
-  name          String
-  managerUserId String?      @map("manager_user_id") @db.Uuid
-  status        RecordStatus @default(ACTIVE)
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
-
-  tenant  Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  manager User?        @relation("TeamManager", fields: [managerUserId], references: [id])
-  members TeamMember[]
-
-  @@unique([tenantId, name])
-  @@map("teams")
-}
-
-model TeamMember {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId  String   @map("tenant_id") @db.Uuid
-  teamId    String   @map("team_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at")
-
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([teamId, userId])
-  @@index([tenantId, userId])
-  @@map("team_members")
-}
-
-model Account {
-  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId          String        @map("tenant_id") @db.Uuid
-  ownerUserId       String?       @map("owner_user_id") @db.Uuid
-  name              String
-  legalName         String?       @map("legal_name")
-  document          String?
-  segment           String?
-  city              String?
-  state             String?
-  postalCode        String?       @map("postal_code")
-  address           String?
-  addressNumber     String?       @map("address_number")
-  addressComplement String?       @map("address_complement")
-  district          String?
-  website           String?
-  mainSupplier      String?       @map("main_supplier")
-  source            String?
-  notes             String?
-  status            AccountStatus @default(PROSPECT)
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
-
-  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  owner         User?         @relation("AccountOwner", fields: [ownerUserId], references: [id])
-  contacts      Contact[]
-  opportunities Opportunity[]
-  activities    Activity[]
-  interactions  Interaction[]
-
-  @@index([tenantId, ownerUserId])
-  @@index([tenantId, name])
-  @@map("accounts")
-}
-
-model Contact {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId     String   @map("tenant_id") @db.Uuid
-  accountId    String   @map("account_id") @db.Uuid
-  ownerUserId  String?  @map("owner_user_id") @db.Uuid
-  name         String
-  title        String?
-  email        String?
-  phone        String?
-  whatsapp     String?
-  linkedinUrl  String?  @map("linkedin_url")
-  instagramUrl String?  @map("instagram_url")
-  isPrimary    Boolean  @default(false) @map("is_primary")
-  notes        String?
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  account       Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  owner         User?         @relation("ContactOwner", fields: [ownerUserId], references: [id])
-  opportunities Opportunity[]
-  activities    Activity[]
-  interactions  Interaction[]
-
-  @@index([tenantId, accountId])
-  @@index([tenantId, ownerUserId])
-  @@map("contacts")
-}
-
-model Pipeline {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId  String   @map("tenant_id") @db.Uuid
-  name      String
-  isDefault Boolean  @default(false) @map("is_default")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  stages        PipelineStage[]
-  opportunities Opportunity[]
-
-  @@unique([tenantId, name])
-  @@map("pipelines")
-}
-
-model PipelineStage {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId   String   @map("tenant_id") @db.Uuid
-  pipelineId String   @map("pipeline_id") @db.Uuid
-  name       String
-  position   Int
-  stageType  String?  @map("stage_type")
-  isWon      Boolean  @default(false) @map("is_won")
-  isLost     Boolean  @default(false) @map("is_lost")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  pipeline      Pipeline        @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
-  opportunities Opportunity[]
-  movementsFrom StageMovement[] @relation("StageMovementFrom")
-  movementsTo   StageMovement[] @relation("StageMovementTo")
-
-  @@unique([pipelineId, position])
-  @@unique([pipelineId, name])
-  @@map("pipeline_stages")
-}
-
-model Opportunity {
-  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId          String            @map("tenant_id") @db.Uuid
-  accountId         String            @map("account_id") @db.Uuid
-  contactId         String?           @map("contact_id") @db.Uuid
-  ownerUserId       String?           @map("owner_user_id") @db.Uuid
-  pipelineId        String            @map("pipeline_id") @db.Uuid
-  stageId           String            @map("stage_id") @db.Uuid
-  title             String
-  amountEstimated   Decimal?          @map("amount_estimated") @db.Decimal(12, 2)
-  probability       Int?
-  expectedCloseDate DateTime?         @map("expected_close_date")
-  status            OpportunityStatus @default(OPEN)
-  createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @updatedAt @map("updated_at")
-
-  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  account        Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  contact        Contact?        @relation(fields: [contactId], references: [id])
-  owner          User?           @relation("OpportunityOwner", fields: [ownerUserId], references: [id])
-  pipeline       Pipeline        @relation(fields: [pipelineId], references: [id])
-  stage          PipelineStage   @relation(fields: [stageId], references: [id])
-  stageMovements StageMovement[]
-  activities     Activity[]
-  interactions   Interaction[]
-
-  @@index([tenantId, ownerUserId])
-  @@index([tenantId, stageId])
-  @@map("opportunities")
-}
-
-model StageMovement {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId        String   @map("tenant_id") @db.Uuid
-  opportunityId   String   @map("opportunity_id") @db.Uuid
-  fromStageId     String?  @map("from_stage_id") @db.Uuid
-  toStageId       String   @map("to_stage_id") @db.Uuid
-  changedByUserId String   @map("changed_by_user_id") @db.Uuid
-  changedAt       DateTime @default(now()) @map("changed_at")
-  note            String?
-
-  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  opportunity   Opportunity    @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  fromStage     PipelineStage? @relation("StageMovementFrom", fields: [fromStageId], references: [id])
-  toStage       PipelineStage  @relation("StageMovementTo", fields: [toStageId], references: [id])
-  changedByUser User           @relation("StageMovementChanger", fields: [changedByUserId], references: [id])
-
-  @@index([tenantId, opportunityId])
-  @@map("stage_movements")
-}
-
-model Activity {
-  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId      String         @map("tenant_id") @db.Uuid
-  accountId     String?        @map("account_id") @db.Uuid
-  contactId     String?        @map("contact_id") @db.Uuid
-  opportunityId String?        @map("opportunity_id") @db.Uuid
-  ownerUserId   String         @map("owner_user_id") @db.Uuid
-  type          ActivityType
-  title         String
-  description   String?
-  scheduledAt   DateTime?      @map("scheduled_at")
-  completedAt   DateTime?      @map("completed_at")
-  status        ActivityStatus @default(PENDING)
-  priority      Int            @default(2)
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-
-  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  account     Account?     @relation(fields: [accountId], references: [id])
-  contact     Contact?     @relation(fields: [contactId], references: [id])
-  opportunity Opportunity? @relation(fields: [opportunityId], references: [id])
-  owner       User         @relation("ActivityOwner", fields: [ownerUserId], references: [id])
-
-  @@index([tenantId, ownerUserId, status])
-  @@index([tenantId, scheduledAt])
-  @@map("activities")
-}
-
-model Interaction {
-  id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId      String               @map("tenant_id") @db.Uuid
-  accountId     String?              @map("account_id") @db.Uuid
-  contactId     String?              @map("contact_id") @db.Uuid
-  opportunityId String?              @map("opportunity_id") @db.Uuid
-  userId        String?              @map("user_id") @db.Uuid
-  channel       InteractionChannel
-  direction     InteractionDirection @default(INTERNAL)
-  summary       String?
-  body          String?
-  occurredAt    DateTime             @default(now()) @map("occurred_at")
-  externalId    String?              @map("external_id")
-  createdAt     DateTime             @default(now()) @map("created_at")
-
-  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  account     Account?     @relation(fields: [accountId], references: [id])
-  contact     Contact?     @relation(fields: [contactId], references: [id])
-  opportunity Opportunity? @relation(fields: [opportunityId], references: [id])
-  user        User?        @relation(fields: [userId], references: [id])
-
-  @@index([tenantId, accountId, occurredAt])
-  @@map("interactions")
-}
-
-model Attachment {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId         String   @map("tenant_id") @db.Uuid
-  entityType       String   @map("entity_type")
-  entityId         String   @map("entity_id") @db.Uuid
-  uploadedByUserId String   @map("uploaded_by_user_id") @db.Uuid
-  fileName         String   @map("file_name")
-  mimeType         String   @map("mime_type")
-  storagePath      String   @map("storage_path")
-  createdAt        DateTime @default(now()) @map("created_at")
-
-  tenant     Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  uploadedBy User   @relation("AttachmentUploader", fields: [uploadedByUserId], references: [id])
-
-  @@index([tenantId, entityType, entityId])
-  @@map("attachments")
-}
-
-model AiJob {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId          String    @map("tenant_id") @db.Uuid
-  requestedByUserId String    @map("requested_by_user_id") @db.Uuid
-  jobType           String    @map("job_type")
-  status            JobStatus @default(QUEUED)
-  inputEntityType   String?   @map("input_entity_type")
-  inputEntityId     String?   @map("input_entity_id") @db.Uuid
-  outputJson        Json?     @map("output_json")
-  errorMessage      String?   @map("error_message")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  completedAt       DateTime? @map("completed_at")
-
-  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  requestedBy User   @relation("AiJobRequester", fields: [requestedByUserId], references: [id])
-
-  @@index([tenantId, status])
-  @@map("ai_jobs")
-}
-
-model ImportBatch {
-  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId         String    @map("tenant_id") @db.Uuid
-  uploadedByUserId String    @map("uploaded_by_user_id") @db.Uuid
-  fileName         String    @map("file_name")
-  sourceType       String    @map("source_type")
-  status           JobStatus @default(QUEUED)
-  totalRows        Int       @default(0) @map("total_rows")
-  validRows        Int       @default(0) @map("valid_rows")
-  invalidRows      Int       @default(0) @map("invalid_rows")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  completedAt      DateTime? @map("completed_at")
-
-  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  uploadedBy User        @relation("ImportUploader", fields: [uploadedByUserId], references: [id])
-  rows       ImportRow[]
-
-  @@index([tenantId, status])
-  @@map("imports")
-}
-
-model ImportRow {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String    @map("tenant_id") @db.Uuid
-  importId       String    @map("import_id") @db.Uuid
-  rowNumber      Int       @map("row_number")
-  rawJson        Json      @map("raw_json")
-  normalizedJson Json?     @map("normalized_json")
-  status         JobStatus @default(QUEUED)
-  errorMessage   String?   @map("error_message")
-  createdAt      DateTime  @default(now()) @map("created_at")
-
-  tenant Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  import ImportBatch @relation(fields: [importId], references: [id], onDelete: Cascade)
-
-  @@unique([importId, rowNumber])
-  @@index([tenantId, status])
-  @@map("import_rows")
 }

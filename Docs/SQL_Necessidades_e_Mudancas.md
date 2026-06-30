@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-28 11:30:18 -03:00
+Ultima modificacao: 2026-06-29 16:13:00 -03:00
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -43,6 +43,78 @@ Proximos passos:
 - Garantir que caracteres especiais da senha estejam URL-encoded nas strings de conexao.
 - Ajustar o `.env` para manter `DATABASE_URL` como pooler e `DIRECT_URL` como conexao direta, conforme `.env.example`.
 - Retestar a conexao Postgres e, depois disso, aplicar/verificar migrations pendentes.
+
+## 2026-06-29 11:35:01 -03:00 - Ajuste das URLs Postgres no `.env` local
+
+Status: Aplicado no ambiente local, sem migration SQL
+
+Objetivo:
+
+- Corrigir a configuracao local usada pelo Prisma apos login.
+- Separar a URL transacional do app da URL de sessao usada para operacoes diretas/migrations.
+- Evitar mistura de porta `5432` com parametro `pgbouncer=true`.
+
+Mudanca aplicada:
+
+```text
+DATABASE_URL = pooler Supabase transacional, porta 6543, com pgbouncer=true
+DIRECT_URL = pooler Supabase de sessao, porta 5432, sem pgbouncer=true
+```
+
+Comandos de validacao executados:
+
+```powershell
+npm ls next
+npm run prisma:validate
+```
+
+Observacao:
+
+- Nenhuma migration foi criada ou aplicada neste ajuste.
+- A correcao foi feita no `.env` local, que permanece ignorado pelo Git.
+
+## 2026-06-29 16:13:00 -03:00 - Status de revisao para importacao temporaria
+
+Status: Aplicado no Supabase remoto
+
+Objetivo:
+
+- Permitir que cargas temporarias de planilha fiquem em revisao sem gravar automaticamente nas tabelas definitivas.
+- Permitir que o Owner aprove, rejeite, importe ou descarte linhas individualmente.
+- Manter somente uma carga ativa por tenant ate descarte explicito pelo Owner.
+
+Migration:
+
+```text
+prisma/20260629115500_add_import_review_statuses.sql
+```
+
+Comandos SQL aplicados:
+
+```sql
+ALTER TYPE "JobStatus" ADD VALUE IF NOT EXISTS 'REVIEWING';
+ALTER TYPE "JobStatus" ADD VALUE IF NOT EXISTS 'APPROVED';
+ALTER TYPE "JobStatus" ADD VALUE IF NOT EXISTS 'IMPORTED';
+ALTER TYPE "JobStatus" ADD VALUE IF NOT EXISTS 'DISCARDED';
+ALTER TYPE "JobStatus" ADD VALUE IF NOT EXISTS 'REJECTED';
+```
+
+Uso dos estados:
+
+- `REVIEWING`: carga ou linha em revisao temporaria.
+- `APPROVED`: linha aprovada pelo Owner, ainda nao necessariamente importada.
+- `IMPORTED`: linha ja enviada para as tabelas definitivas.
+- `REJECTED`: linha rejeitada pelo Owner.
+- `DISCARDED`: carga ou linha descartada pelo Owner.
+
+Comandos de validacao executados:
+
+```powershell
+npm run prisma:generate
+npm run prisma:validate
+npx tsc --noEmit
+npx eslint .
+```
 
 ## 2026-06-12 17:13:16 -03:00 - Necessidade inicial de modelo SQL multi tenant
 

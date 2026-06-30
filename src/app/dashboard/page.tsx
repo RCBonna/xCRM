@@ -98,6 +98,7 @@ export default async function DashboardPage() {
   const userEmail = appUser.email || user.email || "E-mail não informado";
   const userRole = appUser.role.toLowerCase();
   const canOpenCompanySettings = canManageCompanySettings(appUser.role);
+  const canImportData = appUser.role === "OWNER";
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -131,6 +132,7 @@ export default async function DashboardPage() {
             </div>
             <AppSettingsMenu
               canManageCompanySettings={canOpenCompanySettings}
+              canImportData={canImportData}
             />
             <form action={signOutAction}>
               <button className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium">

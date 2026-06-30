@@ -2,7 +2,7 @@
 
 ## Instrucoes do projeto xCRM
 
-- Antes de iniciar qualquer desenvolvimento, alteracao de arquivos, instalacao, build, teste ou operacao Git, avisar o usuario para pausar/parar o OneDrive e confirmar que a sincronizacao esta interrompida. Esta verificacao faz parte da lista inicial obrigatoria de validacao para evitar arquivos em uso, placeholders de nuvem, `.git` incompleto e conflitos de sincronizacao.
+- Antes de iniciar qualquer desenvolvimento, alteracao de arquivos, instalacao, build, teste ou operacao Git, avisar o usuario para pausar/parar o OneDrive e confirmar que a sincronizacao esta interrompida somente na primeira iteracao da manha e na primeira iteracao da tarde. Uma confirmacao valida para o periodo dispensa novas confirmacoes no mesmo periodo. Esta verificacao periodica faz parte da lista inicial obrigatoria de validacao para evitar arquivos em uso, placeholders de nuvem, `.git` incompleto e conflitos de sincronizacao.
 - Para projetos que usam DB SQL, sempre documentar as necessidades e mudancas em um arquivo unico, mantendo no inicio data/hora de criacao, data/hora de modificacao, linhas ou blocos de comandos documentados.
 - O app esta em desenvolvimento, entao esta autorizado aplicar migrations no DB SQL quando necessario.
 - Em todos os projetos, manter gravado um resumo feito por dia das mudancas.

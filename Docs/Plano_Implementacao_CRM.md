@@ -1,7 +1,7 @@
 # Plano de Implementacao do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-13 20:25:32 -03:00  
+Ultima modificacao: 2026-06-29 16:13:00 -03:00
 Status: Proposta inicial para validacao e evolucao diaria
 
 ## 1. Objetivo
@@ -57,6 +57,22 @@ Leitura inicial da planilha:
 - Historico como centro do CRM: tudo que aconteceu com um prospect deve aparecer em linha do tempo unica.
 - IA como assistente fluido: capturar, resumir, sugerir e preencher, sem obrigar o vendedor a trabalhar de forma engessada.
 - Importacao e saneamento de dados como recurso nativo: a planilha atual deve virar carga inicial e tambem referencia para importacoes futuras.
+
+## 3.1. Importacao Temporaria Assistida
+
+O fluxo de importacao de planilhas deve usar uma area temporaria antes de gravar dados definitivos.
+
+Regras do primeiro corte:
+
+- Somente Owner pode iniciar e operar importacoes.
+- O caminho da pasta de origem fica em parametro local JSON.
+- Uma empresa/tenant pode ter apenas uma carga temporaria ativa por vez.
+- Nova carga so pode ser iniciada depois que o Owner descartar a carga atual.
+- A planilha baguncada e transformada em linhas temporarias com dados brutos e dados organizados.
+- A organizacao inicial deve tentar separar Empresa/Prospect, Contato Principal, Historico Realizado e Proxima Acao.
+- O Owner revisa e corrige cada linha no ambiente temporario.
+- O Owner pode importar uma linha por vez, sem obrigacao de concluir todas as linhas.
+- A IA deve atuar como assistente de organizacao e sugestao, nunca como gravacao automatica nas tabelas definitivas.
 
 ## 4. Modelo SaaS multi tenant
 

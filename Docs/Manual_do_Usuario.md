@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-18 18:31:46 -03:00
+Ultima modificacao: 2026-06-30 13:08:42 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -63,6 +63,22 @@ No MVP, a prioridade e garantir:
 - Claro.
 - Escuro.
 
+## Feedback Visual dos Botoes
+
+Os botoes e links com aparência de botao respondem visualmente ao mouse e ao clique:
+
+- Ao passar o mouse, a borda e a sombra ficam mais evidentes.
+- Ao clicar, o botao afunda levemente para indicar a pressao.
+- Quando um botao esta desabilitado, ele permanece sem resposta de clique.
+
+## Campos de Entrada
+
+Os campos de texto, selecao e areas de texto acompanham o tema escolhido:
+
+- No tema claro, os campos permanecem claros para leitura rapida.
+- No tema escuro, os campos usam fundo escuro com borda visivel, evitando blocos brancos fora do padrao visual.
+- Campos preenchidos automaticamente pelo navegador seguem a mesma regra visual do tema.
+
 ## Login e Primeiro Acesso
 
 O login inicial ja esta disponivel em `/login`.
@@ -77,6 +93,15 @@ Na tela de login, o usuario pode:
 A aba selecionada recebe destaque visual com indicador na borda inferior.
 
 Quando nao ha mensagem de erro ou aviso, o painel superior da area de acesso mostra textos rotativos sobre o xCRM. Os textos mudam automaticamente a cada 30 segundos. Quando existe erro ou aviso, o painel mostra a mensagem do sistema.
+
+Depois de entrar com e-mail e senha validos, o sistema deve redirecionar automaticamente conforme o perfil e o estado da conta:
+
+- `/dashboard`, quando o usuario pertence a um tenant ativo.
+- `/onboarding`, quando o usuario autenticado ainda precisa criar a primeira empresa.
+- `/platform`, quando o usuario e `Platform Admin`.
+- `/tenant-suspended`, quando o tenant esta suspenso.
+
+Se o usuario retornar para `/login` apos autenticar, o ambiente deve ser revisado antes de novos testes.
 
 Os botoes principais das abas `Entrar` e `Criar Acesso` ficam alinhados no rodape da area do formulario.
 
@@ -324,6 +349,39 @@ Quando um tenant está suspenso:
 - O acesso ao Dashboard, Base Comercial e Configurações fica bloqueado enquanto o tenant permanecer suspenso.
 - Cada login em tenant suspenso gera uma mensagem para o `Platform Admin`.
 
+## Importação Temporária de Dados
+
+A tela `/imports` permite ao Owner carregar uma planilha da pasta parametrizada do sistema para um ambiente temporario antes de gravar dados na base definitiva.
+
+Regras atuais:
+
+- Somente Owner acessa a tela e executa importacao.
+- O menu superior mostra `Importação de Dados` apenas para Owner.
+- O caminho inicial da pasta de planilhas fica em `config/import-settings.json`.
+- Enquanto existir uma carga temporaria ativa, o sistema nao permite iniciar outra.
+- O Owner pode descartar a carga temporaria atual para liberar uma nova importacao.
+- A planilha carregada vira linhas temporarias com dados originais e uma sugestao organizada.
+- A pasta de origem aparece no topo da tela; os indicadores mostram a carga ativa, linhas temporarias, pendentes e concluidas/rejeitadas.
+- Cada linha pode ser revisada, corrigida, salva, aprovada, rejeitada ou importada individualmente.
+- Ao selecionar uma linha na lista esquerda, o formulario de revisao da direita atualiza os campos da linha escolhida.
+- O formulario de revisao usa blocos compactos para Empresa/Prospect, Contato Principal e Acoes/Observacoes.
+- O campo CNPJ usa mascara no formato `AA.AAA.AAA/AAAA-00`.
+- A revisao aparece como uma bancada de triagem: resumo da carga no topo, fila de linhas a esquerda e ficha de correcao a direita.
+- A fila de linhas pode ser filtrada pelo icone de filtro no topo do card da carga: Todas, Em Revisão, Aprovadas, Importadas e Rejeitadas.
+- Ao selecionar uma linha dentro de um filtro, o sistema mantem o mesmo filtro ativo.
+- Quando um filtro nao possui linhas, a lista mostra que nao ha linhas para aquele status.
+- Durante a troca de filtro, o icone indica processamento ate a tela atualizar.
+- Os dados originais da planilha ficam recolhidos em `Dados Originais da Planilha`.
+- Os botoes `Salvar Revisão`, `Aprovar Linha`, `Importar Linha` e `Rejeitar Linha` ficam no rodape da ficha da linha, alinhados a esquerda.
+- Em linhas ja importadas para a base definitiva, esses botoes ficam desabilitados.
+- A ausencia de próxima ação não gera aviso superior; o Owner confere esse ponto diretamente no bloco `Ações e Observações`.
+- Quando a Razão Social vier vazia da planilha, o campo inicia preenchido com o mesmo valor de Nome Fantasia/Empresa.
+- Ao rejeitar ou importar uma linha, o sistema abre automaticamente a proxima linha pendente/aprovada.
+- Ao escolher `Descartar Carga`, o sistema mostra uma confirmacao antes de descartar.
+- Nao e necessario importar todas as linhas da carga.
+- A importacao definitiva de uma linha pode criar Empresa/Prospect, Contato Principal, Historico Realizado e Proxima Acao.
+- A sugestao automatica apenas organiza os dados; a decisao final e sempre do Owner.
+
 Observacoes de uso:
 
 - A Observacao Comercial fica disponivel na tela de detalhe da Empresa/Prospect.
@@ -360,6 +418,19 @@ Versao atual:
 - `2026-06-16 19:31:38`
 - `2026-06-18 19:22:16`
 - `2026-06-18 20:37:14`
+- `2026-06-29 11:41:09`
+- `2026-06-29 16:13:00`
+- `2026-06-29 17:27:27`
+- `2026-06-29 18:20:47`
+- `2026-06-29 22:06:55`
+- `2026-06-29 22:28:49`
+- `2026-06-30 08:56:17`
+- `2026-06-30 09:24:26`
+- `2026-06-30 09:50:41`
+- `2026-06-30 10:02:34`
+- `2026-06-30 10:12:47`
+- `2026-06-30 12:43:53`
+- `2026-06-30 13:08:42`
 
 ## Fluxos ainda nao implementados
 

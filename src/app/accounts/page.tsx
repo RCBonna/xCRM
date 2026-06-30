@@ -181,6 +181,7 @@ export default async function AccountsPage({
   const userRole = appUser.role.toLowerCase();
   const hasActiveFilters = Boolean(searchQuery || selectedStatus);
   const canOpenCompanySettings = canManageCompanySettings(appUser.role);
+  const canImportData = appUser.role === "OWNER";
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -220,6 +221,7 @@ export default async function AccountsPage({
             </Link>
             <AppSettingsMenu
               canManageCompanySettings={canOpenCompanySettings}
+              canImportData={canImportData}
             />
             <form action={signOutAction}>
               <button className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium">

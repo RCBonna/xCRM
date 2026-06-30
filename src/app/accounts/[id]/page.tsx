@@ -240,6 +240,7 @@ export default async function AccountDetailPage({
   const userEmail = appUser.email || user.email || "E-mail não informado";
   const userRole = appUser.role.toLowerCase();
   const canOpenCompanySettings = canManageCompanySettings(appUser.role);
+  const canImportData = appUser.role === "OWNER";
   const primaryContact =
     account.contacts.find((contact) => contact.isPrimary) ?? account.contacts[0];
   const pendingActivities = account.activities.filter(
@@ -442,6 +443,7 @@ export default async function AccountDetailPage({
             </div>
             <AppSettingsMenu
               canManageCompanySettings={canOpenCompanySettings}
+              canImportData={canImportData}
             />
             <form action={signOutAction}>
               <button className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium">

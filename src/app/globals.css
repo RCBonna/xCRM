@@ -6,6 +6,8 @@
   --surface: #ffffff;
   --surface-muted: #eef2f7;
   --border: #d8dee8;
+  --field: #ffffff;
+  --field-autofill: #e8f0fe;
   --muted: #667085;
   --primary: #2563eb;
   --primary-foreground: #ffffff;
@@ -21,6 +23,7 @@
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
   --color-border: var(--border);
+  --color-field: var(--field);
   --color-muted: var(--muted);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -39,6 +42,8 @@
     --surface: #151b23;
     --surface-muted: #1d2733;
     --border: #2d3748;
+    --field: #0f1720;
+    --field-autofill: #172538;
     --muted: #a0aec0;
     --primary: #63b3ed;
     --primary-foreground: #0b1220;
@@ -55,6 +60,8 @@
   --surface: #ffffff;
   --surface-muted: #eef2f7;
   --border: #d8dee8;
+  --field: #ffffff;
+  --field-autofill: #e8f0fe;
   --muted: #667085;
   --primary: #2563eb;
   --primary-foreground: #ffffff;
@@ -70,6 +77,8 @@
   --surface: #151b23;
   --surface-muted: #1d2733;
   --border: #2d3748;
+  --field: #0f1720;
+  --field-autofill: #172538;
   --muted: #a0aec0;
   --primary: #63b3ed;
   --primary-foreground: #0b1220;
@@ -85,6 +94,8 @@
   --surface: #ffffff;
   --surface-muted: #e8f0fb;
   --border: #cbd8ea;
+  --field: #ffffff;
+  --field-autofill: #e7f0ff;
   --muted: #57677f;
   --primary: #1d5fbf;
   --primary-foreground: #ffffff;
@@ -100,6 +111,8 @@
   --surface: #ffffff;
   --surface-muted: #e8f2ec;
   --border: #ccddd2;
+  --field: #ffffff;
+  --field-autofill: #e8f4ee;
   --muted: #5b6f63;
   --primary: #1d7a4d;
   --primary-foreground: #ffffff;
@@ -125,6 +138,83 @@ input,
 select,
 textarea {
   outline-color: var(--focus);
+}
+
+input,
+select,
+textarea {
+  background-color: var(--field);
+  color: var(--foreground);
+  caret-color: var(--primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in srgb, var(--muted) 82%, transparent);
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: color-mix(in srgb, var(--primary) 48%, var(--border));
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 16%, transparent);
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  border-color: color-mix(in srgb, var(--primary) 48%, var(--border));
+  -webkit-text-fill-color: var(--foreground);
+  box-shadow: 0 0 0 1000px var(--field-autofill) inset;
+  caret-color: var(--primary);
+}
+
+button,
+a[class*="rounded"] {
+  transition-property:
+    color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+button:not(:disabled):hover,
+a[class*="rounded"]:hover {
+  border-color: color-mix(in srgb, var(--primary) 68%, var(--border));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent),
+    0 8px 18px -16px color-mix(in srgb, var(--primary) 78%, transparent);
+}
+
+button:not(:disabled):active,
+a[class*="rounded"]:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow:
+    inset 0 1px 2px color-mix(in srgb, var(--foreground) 16%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--primary) 24%, transparent);
+}
+
+button:focus-visible,
+a[class*="rounded"]:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 18%, transparent);
+}
+
+button:disabled {
+  transform: none;
+  box-shadow: none;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator,
@@ -204,6 +294,16 @@ input[type="datetime-local"]:focus::-webkit-calendar-picker-indicator {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  button,
+  a[class*="rounded"] {
+    transition-duration: 0ms;
+  }
+
+  button:not(:disabled):active,
+  a[class*="rounded"]:active {
+    transform: none;
+  }
+
   .return-link-shimmer::after {
     animation: none;
   }

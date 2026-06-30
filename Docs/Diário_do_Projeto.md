@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-28 11:30:18 -03:00
+Ultima modificacao: 2026-06-30 13:08:42 -03:00
 
 ## 2026-06-12
 
@@ -330,6 +330,103 @@ Ultima modificacao: 2026-06-28 11:30:18 -03:00
 - Identificado que `DATABASE_URL` e `DIRECT_URL` falham no Postgres com `password authentication failed for user "postgres"`.
 - Registrado em `Docs/SQL_Necessidades_e_Mudancas.md` que a correção depende de connection string/senha atualizada do painel Supabase e ajuste do `.env`.
 - Atualizada versão WIP para `2026-06-28 11:30:18`.
+
+## 2026-06-29
+
+### Resumo do dia
+
+- Confirmado com o usuario que a sincronizacao do OneDrive estava pausada antes das alteracoes.
+- Investigado loop de login e erro fatal do Turbopack em `/login/page`.
+- Ajustado `.env` local para separar `DATABASE_URL` no pooler transacional Supabase `:6543` com `pgbouncer=true` e `DIRECT_URL` no pooler de sessao `:5432` sem `pgbouncer=true`.
+- Ajustado `npm run dev` para iniciar `next dev --webpack`, evitando o caminho instavel do Turbopack no ambiente local dentro do OneDrive.
+- Validado que o pacote `next@16.2.9` esta instalado e que `npm run prisma:validate` continua valido.
+- Validado que `npx eslint .` conclui sem erros.
+- Atualizada e fechada a issue `#41` apos validar a conexao Postgres local.
+- Criada e fechada a issue `#42` para documentar o loop de login local com panic do Turbopack.
+- Atualizada versao WIP para `2026-06-29 11:41:09`.
+- Iniciada a fundacao da importacao temporaria de planilhas baguncadas.
+- Criado `config/import-settings.json` com a pasta parametrizada `C:\Users\rcbon\OneDrive\Apps\Importar\xCRM`.
+- Adicionada dependencia `read-excel-file` para leitura de `.xlsx`; `.csv` usa parser local simples.
+- Criada rota `/imports`, acessivel somente para Owner, com link `Importação de Dados` no menu superior.
+- Implementada regra de uma carga temporaria ativa por tenant; nova carga fica bloqueada ate o Owner descartar a carga atual.
+- Implementada leitura da planilha para `import_rows.raw_json` e normalizacao inicial em `normalized_json`, separando Empresa, Contato Principal, Historico Realizado e Proxima Acao.
+- Implementada revisao temporaria linha por linha, com salvar, aprovar, rejeitar e importar uma linha individual para a base definitiva.
+- Criada e aplicada a migration `prisma/20260629115500_add_import_review_statuses.sql` para ampliar `JobStatus` com estados de revisao/importacao.
+- Validado `npm run prisma:generate`, `npm run prisma:validate`, `npx tsc --noEmit` e `npx eslint .`.
+- Atualizada versao WIP para `2026-06-29 16:13:00`.
+- Ajustada a regra do `AGENTS.md`: confirmacao do OneDrive pausado passa a ser exigida somente na primeira iteracao da manha e na primeira iteracao da tarde.
+- Criada a issue `#43` para documentar erro `PrismaClientValidationError` ao acessar `/imports`.
+- Identificado que o dev server em `localhost:3000` estava ativo desde antes da geracao/recarga do Prisma Client com os novos status de importacao.
+- Reiniciado o dev server local e validado no Chrome autenticado que `/imports` carrega a tela `Importação Temporária`, mostra a pasta parametrizada e lista `Prospecção_Clientes.xlsx`.
+- Fechada a issue `#43` apos validacao.
+- Atualizada versao WIP para `2026-06-29 16:45:09`.
+- Criada a issue `#44` para ajustes de UX e leitura da tela de importacao temporaria.
+- Ajustada a leitura de planilhas para detectar a linha real de cabecalho quando existem linhas institucionais antes dos campos.
+- A tela `/imports` passou a exibir a pasta de origem em uma faixa propria e substituiu o card `Arquivos` por indicadores menores de carga, linhas temporarias, pendentes e concluidas/rejeitadas.
+- Reorganizada a barra de acoes da linha temporaria com botoes alinhados: salvar, aprovar, importar e rejeitar.
+- A rejeicao/importacao de uma linha passa a redirecionar para a proxima linha pendente/aprovada.
+- O descarte de carga temporaria passou a exigir confirmacao em modal antes de executar.
+- Validado no arquivo `Prospecção_Clientes.xlsx` que o leitor detecta o cabecalho na linha 6, identifica 379 linhas de dados e inicia a primeira linha temporaria na linha 7.
+- Validado `npm run prisma:validate`, `npx tsc --noEmit` e `npx eslint .`.
+- Atualizada versao WIP para `2026-06-29 17:27:27`.
+- Criada a issue `#45` para corrigir selecao de linha, remodelar o formulario de revisao e aplicar formato definido de CNPJ.
+- Ajustado o painel de revisao para remontar ao trocar a linha selecionada na lista esquerda, garantindo que os campos da direita sejam atualizados.
+- Remodelado o formulario de revisao em blocos compactos de Empresa/Prospect, Contato Principal e Acoes/Observacoes.
+- Ajustadas larguras proporcionais para campos curtos como UF, CNPJ, telefone e Data e Hora.
+- CNPJ da importacao temporaria passou a usar o componente `CnpjInput`, com mascara `AA.AAA.AAA/AAAA-00`.
+- Barra de acoes da linha ficou compacta e alinhada a direita.
+- Validado `npx tsc --noEmit` e `npx eslint .`.
+- Atualizada versao WIP para `2026-06-29 18:20:47`.
+- Criada a issue `#46` para redesenhar a UX da tela de revisao de importacao.
+- A tela `/imports` foi remodelada como bancada de triagem: faixa unica de origem/metricas, fila esquerda compacta e ficha de revisao mais densa.
+- Os dados originais da planilha passaram para uma area recolhivel, reduzindo altura e ruido visual.
+- A barra de acoes da revisao passou a ficar fixa no rodape do painel da linha.
+- Campos da ficha foram compactados com labels menores, inputs de altura reduzida e divisores por grupo funcional.
+- Validado `npx tsc --noEmit` e `npx eslint .`.
+- Atualizada versao WIP para `2026-06-29 22:06:55`.
+- Criada e fechada a issue `#47` para alinhar a barra de acoes da revisao de importacao a esquerda.
+- A barra de acoes da ficha de revisao em `/imports` passou de alinhamento a direita para alinhamento a esquerda.
+- Atualizada versao WIP para `2026-06-29 22:28:49`.
+
+## 2026-06-30
+
+### Resumo do dia
+
+- Confirmado com o usuario que a sincronizacao do OneDrive estava pausada na primeira iteracao da manha.
+- Criada a issue `#48` para remover aviso redundante de proxima acao na revisao de importacao.
+- Removido da exibicao superior da ficha de revisao o aviso `Nenhuma próxima ação futura foi identificada.`, pois a ausencia de proxima acao ja fica clara no bloco `Ações e Observações`.
+- Atualizada versao WIP para `2026-06-30 08:56:17`.
+- Criada a issue `#49` para ajustes de filtro, Razão Social e espacamento da revisao de importacao.
+- Adicionado filtro minimalista por status na fila esquerda da tela `/imports`: Todas, Em Revisão, Aprovadas, Importadas e Rejeitadas.
+- A selecao do painel de revisao passa a respeitar o filtro de status ativo.
+- Quando a Razão Social nao vem da planilha, o sistema usa o Nome Fantasia/Empresa como valor inicial e tambem no salvamento da revisao.
+- Os numeros dos indicadores superiores foram centralizados.
+- A grade dos campos da ficha recebeu maior espacamento horizontal e breakpoint maior para evitar que campos curtos/telefone ultrapassem a lateral direita.
+- Validado `npx tsc --noEmit` e `npx eslint .`.
+- Atualizada versao WIP para `2026-06-30 09:24:26`.
+- Criada a issue `#50` para trocar filtros de status por menu com icone, reforcar espacamento entre campos e bloquear acoes de linhas ja importadas.
+- O filtro de status da fila esquerda passou a usar botao com icone de filtro e menu suspenso, fechando apos a escolha por navegacao.
+- A ficha de revisao recebeu inputs com largura controlada e maior espacamento entre colunas, especialmente em UF/Endereco e E-mail/Telefone.
+- Linhas com status `Importada` passam a deixar `Salvar Revisão`, `Aprovar Linha`, `Importar Linha` e `Rejeitar Linha` desabilitados, mantendo a linha apenas para consulta/correção visual sem novo envio.
+- Atualizada versao WIP para `2026-06-30 09:50:41`.
+- Criada a issue `#51` para reposicionar o filtro de status, recolher o menu apos a selecao e preservar o filtro ao navegar entre linhas.
+- O filtro de status passou para o topo do card da carga, ao lado de `Descartar Carga`, usando componente cliente controlado para abrir e fechar.
+- A selecao de uma linha na fila preserva a querystring `status`, evitando retorno automatico para `Todas` ao abrir outra linha filtrada.
+- Atualizada versao WIP para `2026-06-30 10:02:34`.
+- Criada a issue `#52` para corrigir filtro sem resultados e adicionar estado visual de processamento.
+- A fila temporaria passou a respeitar filtros sem resultado, mostrando estado vazio em vez de voltar para `Todas`.
+- O filtro de status agora exibe icone girando e cursor de processamento durante a navegacao.
+- Atualizada versao WIP para `2026-06-30 10:12:47`.
+- Confirmado com o usuario que a sincronizacao do OneDrive estava pausada na primeira iteracao da tarde.
+- Criada a issue `#53` para melhorar feedback visual de hover e clique nos botoes.
+- Adicionado padrao global em `src/app/globals.css` para botoes e links arredondados: hover com borda/sombra mais clara, focus visivel e clique com leve deslocamento/afundamento.
+- O padrao respeita botoes desabilitados e `prefers-reduced-motion`.
+- Atualizada versao WIP para `2026-06-30 12:43:53`.
+- Criada a issue `#54` para ajustar a aparencia dos inputs nos temas claro e escuro.
+- Adicionados tokens globais `--field` e `--field-autofill` por tema em `src/app/globals.css`.
+- Inputs, selects e textareas passaram a usar fundo de campo do tema, cor de texto/caret consistente, hover/focus padronizados e tratamento de autofill do navegador.
+- No tema escuro, campos preenchidos/autofill deixam de aparecer brancos; no tema claro, permanecem claros e integrados ao painel.
+- Atualizada versao WIP para `2026-06-30 13:08:42`.
 
 ### Observacoes
 
