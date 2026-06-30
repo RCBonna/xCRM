@@ -56,6 +56,15 @@ type ReviewRowJson = {
   };
 };
 
+type OwnerUser = Awaited<ReturnType<typeof getOwnerUser>>;
+
+type ReviewImportRow = {
+  id: string;
+  importId: string;
+  rowNumber: number;
+  normalizedJson: Prisma.JsonValue | null;
+};
+
 function encodeMessage(message: string) {
   return encodeURIComponent(message);
 }
@@ -138,7 +147,9 @@ async function refreshImportCounts(importId: string, tenantId: string) {
       where: {
         importId,
         tenantId,
-        status: "REJECTED",
+        status: {
+          in: ["REJECTED", "FAILED"],
+        },
       },
     }),
   ]);
@@ -200,6 +211,210 @@ async function getNextReviewRowId({
     }));
 
   return nextRow?.id ?? null;
+}
+
+async function getTeamAssignment({
+  tenantId,
+  teamId,
+}: {
+  tenantId: string;
+  teamId: string | null;
+}) {
+  if (!teamId) {
+    return null;
+  }
+
+  return prisma.team.findFirst({
+    where: {
+      id: teamId,
+      tenantId,
+      status: "ACTIVE",
+      managerUserId: {
+        not: null,
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      managerUserId: true,
+      manager: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+}
+
+async function importReviewedRow({
+  row,
+  appUser,
+  assignedOwnerUserId,
+  assignmentTeamName,
+}: {
+  row: ReviewImportRow;
+  appUser: OwnerUser;
+  assignedOwnerUserId?: string | null;
+  assignmentTeamName?: string | null;
+}) {
+  if (!row.normalizedJson) {
+    throw new Error("Linha temporária sem dados revisados.");
+  }
+
+  const reviewJson = row.normalizedJson as ReviewRowJson;
+
+  if (!reviewJson.company.name) {
+    throw new Error("Informe o nome da empresa antes de importar.");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const existingAccount = await tx.account.findFirst({
+      where: {
+        tenantId: appUser.tenantId,
+        name: {
+          equals: reviewJson.company.name!,
+          mode: "insensitive",
+        },
+      },
+      select: {
+        id: true,
+        ownerUserId: true,
+      },
+    });
+
+    const account =
+      existingAccount ??
+      (await tx.account.create({
+        data: {
+          tenantId: appUser.tenantId,
+          ownerUserId: assignedOwnerUserId ?? appUser.id,
+          name: reviewJson.company.name!,
+          legalName: reviewJson.company.legalName,
+          document: reviewJson.company.document,
+          city: reviewJson.company.city,
+          state: reviewJson.company.state,
+          address: reviewJson.company.address,
+          website: reviewJson.company.website,
+          segment: reviewJson.company.segment,
+          mainSupplier: reviewJson.company.mainSupplier,
+          source: "Importado",
+          notes: reviewJson.company.notes,
+        },
+        select: {
+          id: true,
+          ownerUserId: true,
+        },
+      }));
+
+    if (existingAccount && assignedOwnerUserId) {
+      await tx.account.update({
+        where: {
+          id: existingAccount.id,
+        },
+        data: {
+          ownerUserId: assignedOwnerUserId,
+        },
+      });
+    }
+
+    for (const contact of reviewJson.contacts) {
+      if (!contact.name && !contact.email && !contact.phone) {
+        continue;
+      }
+
+      const duplicateContact = contact.email
+        ? await tx.contact.findFirst({
+            where: {
+              tenantId: appUser.tenantId,
+              accountId: account.id,
+              email: contact.email,
+            },
+            select: {
+              id: true,
+            },
+          })
+        : null;
+
+      if (!duplicateContact) {
+        await tx.contact.create({
+          data: {
+            tenantId: appUser.tenantId,
+            accountId: account.id,
+            ownerUserId: assignedOwnerUserId ?? appUser.id,
+            name: contact.name || "Contato a Revisar",
+            title: contact.role,
+            email: contact.email,
+            phone: contact.phone,
+            isPrimary: contact.isPrimary,
+          },
+        });
+      }
+    }
+
+    for (const history of reviewJson.history) {
+      await tx.interaction.create({
+        data: {
+          tenantId: appUser.tenantId,
+          accountId: account.id,
+          userId: appUser.id,
+          channel: "MANUAL_NOTE",
+          direction: "INTERNAL",
+          summary: history.summary || "Histórico Importado",
+          body: history.body,
+          occurredAt: history.occurredAt ? new Date(history.occurredAt) : undefined,
+        },
+      });
+    }
+
+    for (const action of reviewJson.futureActions) {
+      await tx.activity.create({
+        data: {
+          tenantId: appUser.tenantId,
+          accountId: account.id,
+          ownerUserId: assignedOwnerUserId ?? appUser.id,
+          type: "FOLLOW_UP",
+          title: action.title || "Próxima Ação Importada",
+          description: action.description,
+          scheduledAt: action.scheduledAt ? new Date(action.scheduledAt) : null,
+          priority: action.priority,
+        },
+      });
+    }
+
+    await tx.interaction.create({
+      data: {
+        tenantId: appUser.tenantId,
+        accountId: account.id,
+        userId: appUser.id,
+        channel: "MANUAL_NOTE",
+        direction: "INTERNAL",
+        summary: assignmentTeamName
+          ? "Linha Importada e Encaminhada"
+          : "Linha Importada",
+        body: assignmentTeamName
+          ? `Linha ${row.rowNumber} da carga ${row.importId} importada pelo Owner e encaminhada para a equipe ${assignmentTeamName}.`
+          : `Linha ${row.rowNumber} da carga ${row.importId} importada pelo Owner.`,
+      },
+    });
+
+    await tx.importRow.update({
+      where: {
+        id: row.id,
+      },
+      data: {
+        status: "IMPORTED",
+        errorMessage: null,
+      },
+    });
+
+    return {
+      accountId: account.id,
+      accountName: reviewJson.company.name!,
+      wasExistingAccount: Boolean(existingAccount),
+    };
+  });
 }
 
 function getReviewRowFromForm(formData: FormData): ReviewRowJson {
@@ -495,127 +710,9 @@ export async function importSingleRowAction(formData: FormData) {
     redirect(`/imports?row=${row.id}&error=Informe%20o%20nome%20da%20empresa%20antes%20de%20importar.`);
   }
 
-  await prisma.$transaction(async (tx) => {
-    const existingAccount = await tx.account.findFirst({
-      where: {
-        tenantId: appUser.tenantId,
-        name: {
-          equals: reviewJson.company.name!,
-          mode: "insensitive",
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    const account =
-      existingAccount ??
-      (await tx.account.create({
-        data: {
-          tenantId: appUser.tenantId,
-          ownerUserId: appUser.id,
-          name: reviewJson.company.name!,
-          legalName: reviewJson.company.legalName,
-          document: reviewJson.company.document,
-          city: reviewJson.company.city,
-          state: reviewJson.company.state,
-          address: reviewJson.company.address,
-          website: reviewJson.company.website,
-          segment: reviewJson.company.segment,
-          mainSupplier: reviewJson.company.mainSupplier,
-          notes: reviewJson.company.notes,
-        },
-        select: {
-          id: true,
-        },
-      }));
-
-    for (const contact of reviewJson.contacts) {
-      if (!contact.name && !contact.email && !contact.phone) {
-        continue;
-      }
-
-      const duplicateContact = contact.email
-        ? await tx.contact.findFirst({
-            where: {
-              tenantId: appUser.tenantId,
-              accountId: account.id,
-              email: contact.email,
-            },
-            select: {
-              id: true,
-            },
-          })
-        : null;
-
-      if (!duplicateContact) {
-        await tx.contact.create({
-          data: {
-            tenantId: appUser.tenantId,
-            accountId: account.id,
-            ownerUserId: appUser.id,
-            name: contact.name || "Contato a Revisar",
-            title: contact.role,
-            email: contact.email,
-            phone: contact.phone,
-            isPrimary: contact.isPrimary,
-          },
-        });
-      }
-    }
-
-    for (const history of reviewJson.history) {
-      await tx.interaction.create({
-        data: {
-          tenantId: appUser.tenantId,
-          accountId: account.id,
-          userId: appUser.id,
-          channel: "MANUAL_NOTE",
-          direction: "INTERNAL",
-          summary: history.summary || "Histórico Importado",
-          body: history.body,
-          occurredAt: history.occurredAt ? new Date(history.occurredAt) : undefined,
-        },
-      });
-    }
-
-    for (const action of reviewJson.futureActions) {
-      await tx.activity.create({
-        data: {
-          tenantId: appUser.tenantId,
-          accountId: account.id,
-          ownerUserId: appUser.id,
-          type: "FOLLOW_UP",
-          title: action.title || "Próxima Ação Importada",
-          description: action.description,
-          scheduledAt: action.scheduledAt ? new Date(action.scheduledAt) : null,
-          priority: action.priority,
-        },
-      });
-    }
-
-    await tx.interaction.create({
-      data: {
-        tenantId: appUser.tenantId,
-        accountId: account.id,
-        userId: appUser.id,
-        channel: "MANUAL_NOTE",
-        direction: "INTERNAL",
-        summary: "Linha Importada",
-        body: `Linha ${row.rowNumber} da carga ${row.importId} importada pelo Owner.`,
-      },
-    });
-
-    await tx.importRow.update({
-      where: {
-        id: row.id,
-      },
-      data: {
-        status: "IMPORTED",
-        errorMessage: null,
-      },
-    });
+  await importReviewedRow({
+    row,
+    appUser,
   });
 
   await refreshImportCounts(row.importId, appUser.tenantId);
@@ -627,6 +724,143 @@ export async function importSingleRowAction(formData: FormData) {
   revalidatePath("/imports");
   redirect(
     `/imports${nextRowId ? `?row=${nextRowId}&` : "?"}message=Linha%20importada%20para%20a%20base%20definitiva.`,
+  );
+}
+
+export async function importApprovedRowsAction(formData: FormData) {
+  const appUser = await getOwnerUser();
+  const batchId = normalizeOptionalText(formData.get("batchId"));
+  const teamId = normalizeOptionalText(formData.get("teamId"));
+
+  if (!batchId) {
+    redirect("/imports?error=Carga%20temporaria%20nao%20informada.");
+  }
+
+  const batch = await prisma.importBatch.findFirst({
+    where: {
+      id: batchId,
+      tenantId: appUser.tenantId,
+      status: {
+        in: activeImportStatuses,
+      },
+    },
+    select: {
+      id: true,
+      fileName: true,
+    },
+  });
+
+  if (!batch) {
+    redirect("/imports?error=Carga%20temporaria%20nao%20encontrada.");
+  }
+
+  const teamAssignment = await getTeamAssignment({
+    tenantId: appUser.tenantId,
+    teamId,
+  });
+
+  if (teamId && !teamAssignment?.managerUserId) {
+    redirect(
+      `/imports?error=${encodeMessage(
+        "Selecione uma equipe ativa com líder definido para encaminhar prospects.",
+      )}`,
+    );
+  }
+
+  const approvedRows = await prisma.importRow.findMany({
+    where: {
+      importId: batch.id,
+      tenantId: appUser.tenantId,
+      status: "APPROVED",
+    },
+    orderBy: {
+      rowNumber: "asc",
+    },
+  });
+
+  if (approvedRows.length === 0) {
+    redirect("/imports?error=Nenhuma%20linha%20aprovada%20para%20importar.");
+  }
+
+  const importedAccounts: Array<{ id: string; name: string }> = [];
+  let importedCount = 0;
+  let errorCount = 0;
+
+  for (const row of approvedRows) {
+    try {
+      const result = await importReviewedRow({
+        row,
+        appUser,
+        assignedOwnerUserId: teamAssignment?.managerUserId,
+        assignmentTeamName: teamAssignment?.name,
+      });
+
+      importedCount += 1;
+      importedAccounts.push({
+        id: result.accountId,
+        name: result.accountName,
+      });
+    } catch (error) {
+      errorCount += 1;
+      await prisma.importRow.update({
+        where: {
+          id: row.id,
+        },
+        data: {
+          status: "FAILED",
+          errorMessage:
+            error instanceof Error
+              ? error.message
+              : "Erro inesperado ao importar a linha aprovada.",
+        },
+      });
+    }
+  }
+
+  await refreshImportCounts(batch.id, appUser.tenantId);
+
+  if (teamAssignment?.managerUserId && importedCount > 0) {
+    await prisma.notification.create({
+      data: {
+        tenantId: appUser.tenantId,
+        recipientUserId: teamAssignment.managerUserId,
+        actorUserId: appUser.id,
+        type: "PROSPECTS_ASSIGNED_TO_TEAM",
+        title: "Novos Prospects para Distribuir",
+        body: `${appUser.name} encaminhou ${importedCount} prospect(s) da carga ${batch.fileName} para a equipe ${teamAssignment.name}.`,
+        metadata: {
+          importBatchId: batch.id,
+          importFileName: batch.fileName,
+          teamId: teamAssignment.id,
+          teamName: teamAssignment.name,
+          importedCount,
+          errorCount,
+          accounts: importedAccounts.slice(0, 20),
+        },
+      },
+    });
+  }
+
+  await prisma.interaction.create({
+    data: {
+      tenantId: appUser.tenantId,
+      userId: appUser.id,
+      channel: "MANUAL_NOTE",
+      direction: "INTERNAL",
+      summary: "Aprovadas Importadas em Lote",
+      body: teamAssignment
+        ? `${importedCount} linha(s) aprovadas da carga ${batch.fileName} foram importadas e encaminhadas para a equipe ${teamAssignment.name}. ${errorCount} linha(s) falharam.`
+        : `${importedCount} linha(s) aprovadas da carga ${batch.fileName} foram importadas. ${errorCount} linha(s) falharam.`,
+    },
+  });
+
+  revalidatePath("/imports");
+  revalidatePath("/accounts");
+  revalidatePath("/dashboard");
+  redirect(
+    `/imports?message=${encodeMessage(
+      `${importedCount} aprovada(s) importada(s). ${errorCount} com erro.`,
+    )}`,
   );
 }
 

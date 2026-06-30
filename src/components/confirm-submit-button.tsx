@@ -9,6 +9,8 @@ type ConfirmSubmitButtonProps = {
   confirmLabel: string;
   cancelLabel?: string;
   className?: string;
+  confirmClassName?: string;
+  disabled?: boolean;
   children: React.ReactNode;
 };
 
@@ -19,13 +21,20 @@ export function ConfirmSubmitButton({
   confirmLabel,
   cancelLabel = "Cancelar",
   className,
+  confirmClassName = "inline-flex h-10 items-center justify-center rounded-md bg-danger px-4 text-sm font-medium text-background",
+  disabled = false,
   children,
 }: ConfirmSubmitButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      <button type="button" className={className} onClick={() => setIsOpen(true)}>
+      <button
+        type="button"
+        className={className}
+        disabled={disabled}
+        onClick={() => setIsOpen(true)}
+      >
         {children}
       </button>
 
@@ -45,7 +54,7 @@ export function ConfirmSubmitButton({
               <button
                 type="submit"
                 form={formId}
-                className="inline-flex h-10 items-center justify-center rounded-md bg-danger px-4 text-sm font-medium text-background"
+                className={confirmClassName}
               >
                 {confirmLabel}
               </button>

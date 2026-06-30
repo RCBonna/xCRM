@@ -17,6 +17,7 @@ import { signOutAction } from "@/app/auth/actions";
 import { ActionDateTimeInput } from "@/components/action-date-time-input";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { UppercaseInput } from "@/components/uppercase-input";
+import { UserIdentityCard } from "@/components/user-identity-card";
 import type { Prisma } from "@/generated/prisma/client";
 import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { BRAZILIAN_STATES } from "@/lib/brazilian-states";
@@ -130,7 +131,12 @@ export default async function AccountsPage({
         }
       : {}),
   };
-  const [accounts, matchingCount, visibleTotalCount] = await Promise.all([
+  const [
+    accounts,
+    matchingCount,
+    visibleTotalCount,
+    unreadNotificationsCount,
+  ] = await Promise.all([
     prisma.account.findMany({
       where: accountsWhere,
       include: {
@@ -175,6 +181,13 @@ export default async function AccountsPage({
         ...visibilityWhere,
       },
     }),
+    prisma.notification.count({
+      where: {
+        tenantId: appUser.tenantId,
+        recipientUserId: appUser.id,
+        readAt: null,
+      },
+    }),
   ]);
   const userIdentity = appUser.name || user.email || "Usuário autenticado";
   const userEmail = appUser.email || user.email || "E-mail não informado";
@@ -200,19 +213,12 @@ export default async function AccountsPage({
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="flex h-12 min-w-0 items-center gap-2 rounded-md border border-border bg-surface px-3 text-left">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary">
-                <UserRound size={16} aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-medium leading-4">
-                  {userIdentity}
-                </p>
-                <p className="truncate text-[11px] leading-4 text-muted">
-                  {userEmail} - {userRole}
-                </p>
-              </div>
-            </div>
+            <UserIdentityCard
+              name={userIdentity}
+              email={userEmail}
+              role={userRole}
+              unreadNotificationsCount={unreadNotificationsCount}
+            />
             <Link
               href="/dashboard"
               className="inline-flex h-12 items-center justify-center rounded-md border border-border px-4 text-sm font-medium"

@@ -12,7 +12,6 @@ import {
   Star,
   Trash2,
   UserPlus,
-  UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -40,6 +39,7 @@ import { AccountHistoryPanel } from "@/components/account-history-panel";
 import { CurrencyInput } from "@/components/currency-input";
 import { DirtySubmitButton } from "@/components/dirty-submit-button";
 import { UppercaseInput } from "@/components/uppercase-input";
+import { UserIdentityCard } from "@/components/user-identity-card";
 import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { BRAZILIAN_STATES } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
@@ -153,7 +153,7 @@ export default async function AccountDetailPage({
   const { id } = await params;
   const feedback = await searchParams;
   const visibilityWhere = await getAccountVisibilityWhere(appUser);
-  const [account, defaultPipeline] = await Promise.all([
+  const [account, defaultPipeline, unreadNotificationsCount] = await Promise.all([
     prisma.account.findFirst({
       where: {
         id,
@@ -228,6 +228,13 @@ export default async function AccountDetailPage({
             position: "asc",
           },
         },
+      },
+    }),
+    prisma.notification.count({
+      where: {
+        tenantId: appUser.tenantId,
+        recipientUserId: appUser.id,
+        readAt: null,
       },
     }),
   ]);
@@ -428,19 +435,12 @@ export default async function AccountDetailPage({
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="flex h-12 min-w-0 items-center gap-2 rounded-md border border-border bg-surface px-3 text-left">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary">
-                <UserRound size={16} aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-medium leading-4">
-                  {userIdentity}
-                </p>
-                <p className="truncate text-[11px] leading-4 text-muted">
-                  {userEmail} - {userRole}
-                </p>
-              </div>
-            </div>
+            <UserIdentityCard
+              name={userIdentity}
+              email={userEmail}
+              role={userRole}
+              unreadNotificationsCount={unreadNotificationsCount}
+            />
             <AppSettingsMenu
               canManageCompanySettings={canOpenCompanySettings}
               canImportData={canImportData}

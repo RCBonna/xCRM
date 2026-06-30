@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-30 13:08:42 -03:00
+Ultima modificacao: 2026-06-30 18:51:49 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -38,12 +38,14 @@ Atualizar quando houver mudancas em:
 
 - `src/app/globals.css` define feedback global para `button` e links com classe arredondada.
 - `src/app/globals.css` define tokens globais de campos (`--field` e `--field-autofill`) para manter inputs coerentes com cada tema.
+- `src/app/globals.css` define tokens `--primary-action-*` para diferenciar a intensidade dos botoes primarios por tema.
 - Hover: borda e sombra ficam mais claras para indicar que o elemento e clicavel.
 - Active: o elemento recebe deslocamento discreto para baixo e escala leve, simulando clique/pressao.
 - Focus visivel: teclado recebe outline com cor de foco do tema.
 - Disabled: botoes desabilitados nao aplicam deslocamento nem sombra de clique.
 - Inputs, selects e textareas usam fundo de campo por tema, hover/focus padronizados e sobrescrita de `:-webkit-autofill`.
 - No tema claro os campos usam fundo claro; no tema escuro usam fundo escuro para evitar contraste excessivo com os paineis.
+- No tema claro, botoes `bg-primary` permanecem preenchidos; no tema escuro, usam fundo primario suave com borda e texto claros.
 - A regra respeita `prefers-reduced-motion`, removendo transicoes e transformacoes quando o usuario prefere menos movimento.
 
 ## Estrutura inicial
@@ -492,6 +494,12 @@ Observacoes de seguranca:
 - A fila esquerda de `/imports` possui filtro por status via querystring `status`, acionado por um botao com icone de filtro e menu suspenso no topo do card da carga.
 - Os links das linhas em `/imports` preservam `status` ao navegar entre registros filtrados.
 - Filtros de importacao sem registros exibem estado vazio e nao retornam automaticamente para a lista completa.
+- Empresas/Prospects criados pela importacao definitiva de linha temporaria recebem `accounts.source = Importado`.
+- `/imports` possui acao em lote `importApprovedRowsAction`, que importa todas as linhas `APPROVED` da carga ativa e mantem a importacao individual como alternativa por linha.
+- O Owner pode selecionar uma equipe ativa com líder definido antes da importacao em lote; nesse caso, `accounts.ownerUserId`, contatos e proximas acoes importadas ficam sob responsabilidade do líder.
+- O encaminhamento em lote cria notificação `PROSPECTS_ASSIGNED_TO_TEAM` para o líder, contendo carga, equipe, totais e ate 20 prospects no `metadata`.
+- As telas principais usam `UserIdentityCard` com contador de `notifications` não lidas para sinalizar pendências próximas ao nome do usuário.
+- Linhas aprovadas com erro durante o lote passam para `JobStatus.FAILED`; esse status entra na contagem de inválidas e fica disponível no filtro `Falharam`.
 - Quando `legalName` nao vem da planilha, a revisao temporaria usa `company.name` como fallback para Razão Social.
 - A grade da ficha de revisao usa breakpoint `lg`, maior espacamento horizontal e inputs `w-full` para evitar estouro lateral de campos compactos.
 - Linhas com status `IMPORTED` desabilitam as acoes de salvar, aprovar, importar e rejeitar na ficha temporaria.
@@ -506,7 +514,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-30 13:08:42`
+- Valor: `2026-06-30 18:51:49`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

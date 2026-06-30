@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-30 13:08:42 -03:00
+Ultima modificacao: 2026-06-30 17:34:11 -03:00
 
 ## 2026-06-12
 
@@ -427,6 +427,21 @@ Ultima modificacao: 2026-06-30 13:08:42 -03:00
 - Inputs, selects e textareas passaram a usar fundo de campo do tema, cor de texto/caret consistente, hover/focus padronizados e tratamento de autofill do navegador.
 - No tema escuro, campos preenchidos/autofill deixam de aparecer brancos; no tema claro, permanecem claros e integrados ao painel.
 - Atualizada versao WIP para `2026-06-30 13:08:42`.
+- Criada a issue `#56` para ajustar a intensidade dos botoes primarios no tema escuro.
+- Adicionados tokens globais de acao primaria em `src/app/globals.css`, mantendo botoes preenchidos no tema claro e usando acao primaria suave no tema escuro.
+- Botoes com `bg-primary` agora recebem fundo, borda, hover e texto a partir dos tokens `--primary-action-*`.
+- Atualizada versao WIP para `2026-06-30 16:49:00`.
+- Criada a issue `#57` para ajustar o rotulo `Nome Fantasia` e a origem de prospects importados.
+- A tela `Configurações da Empresa` passou a exibir `Nome Fantasia` no campo principal do tenant.
+- A importacao definitiva de nova Empresa/Prospect via carga temporaria passa a gravar `Origem` como `Importado`.
+- Atualizada versao WIP para `2026-06-30 17:34:11`.
+- Criada a issue `#58` para importar linhas aprovadas em lote e encaminhar prospects para equipe.
+- A tela `/imports` recebeu bloco de encaminhamento para equipe ativa com líder definido, permitindo ao Owner importar todas as linhas aprovadas de uma vez.
+- Quando uma equipe e selecionada, os prospects importados em lote passam a ficar sob responsabilidade do líder da equipe.
+- O líder recebe notificação interna `PROSPECTS_ASSIGNED_TO_TEAM` com resumo da carga e dos prospects encaminhados.
+- O cartão de identidade do usuário passou a exibir badge vermelho com contagem de notificações não lidas nas telas principais.
+- Linhas aprovadas que falharem no lote passam para status `Falhou`, entram na contagem de inválidas e podem ser filtradas na fila temporária.
+- Atualizada versao WIP para `2026-06-30 18:51:49`.
 
 ### Observacoes
 

@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-29 16:13:00 -03:00
+Ultima modificacao: 2026-06-30 18:51:49 -03:00
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -834,4 +834,26 @@ set name = excluded.name,
     auth_user_id = excluded.auth_user_id,
     status = 'ACTIVE',
     updated_at = now();
+```
+
+## 2026-06-30 18:51:49 -03:00 - Importacao em Lote e Notificacao ao Lider
+
+Status: Sem migration necessária
+
+Objetivo:
+
+- Reaproveitar a estrutura existente de `notifications` para avisar o líder quando o Owner encaminhar prospects importados para uma equipe.
+- Registrar que o status `FAILED` de `JobStatus`, ja criado na migration da importacao temporaria, passa a ser usado em falhas de importacao em lote.
+- Confirmar que a atribuicao operacional dos prospects importados usa `accounts.owner_user_id`, `contacts.owner_user_id` e `activities.owner_user_id`, sem criar novas colunas.
+
+Decisão:
+
+- Nenhum comando SQL foi necessario nesta etapa.
+- A notificacao usa `notifications.type = 'PROSPECTS_ASSIGNED_TO_TEAM'` e grava detalhes em `notifications.metadata`.
+- O contador visual do usuário consulta `notifications` com `recipient_user_id` do usuário autenticado e `read_at is null`.
+
+Comandos SQL:
+
+```sql
+-- Sem alteracao estrutural de banco nesta etapa.
 ```

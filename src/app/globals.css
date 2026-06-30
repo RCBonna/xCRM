@@ -11,6 +11,10 @@
   --muted: #667085;
   --primary: #2563eb;
   --primary-foreground: #ffffff;
+  --primary-action-bg: #2563eb;
+  --primary-action-bg-hover: #1d4ed8;
+  --primary-action-border: #2563eb;
+  --primary-action-foreground: #ffffff;
   --success: #188a5b;
   --warning: #b7791f;
   --danger: #c2410c;
@@ -27,6 +31,10 @@
   --color-muted: var(--muted);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-action-bg: var(--primary-action-bg);
+  --color-primary-action-bg-hover: var(--primary-action-bg-hover);
+  --color-primary-action-border: var(--primary-action-border);
+  --color-primary-action-foreground: var(--primary-action-foreground);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
@@ -47,6 +55,10 @@
     --muted: #a0aec0;
     --primary: #63b3ed;
     --primary-foreground: #0b1220;
+    --primary-action-bg: color-mix(in srgb, #63b3ed 18%, #1d2733);
+    --primary-action-bg-hover: color-mix(in srgb, #63b3ed 28%, #1d2733);
+    --primary-action-border: color-mix(in srgb, #63b3ed 72%, #2d3748);
+    --primary-action-foreground: #b9e2ff;
     --success: #68d391;
     --warning: #f6ad55;
     --danger: #fc8181;
@@ -65,6 +77,10 @@
   --muted: #667085;
   --primary: #2563eb;
   --primary-foreground: #ffffff;
+  --primary-action-bg: #2563eb;
+  --primary-action-bg-hover: #1d4ed8;
+  --primary-action-border: #2563eb;
+  --primary-action-foreground: #ffffff;
   --success: #188a5b;
   --warning: #b7791f;
   --danger: #c2410c;
@@ -82,6 +98,10 @@
   --muted: #a0aec0;
   --primary: #63b3ed;
   --primary-foreground: #0b1220;
+  --primary-action-bg: color-mix(in srgb, #63b3ed 18%, #1d2733);
+  --primary-action-bg-hover: color-mix(in srgb, #63b3ed 28%, #1d2733);
+  --primary-action-border: color-mix(in srgb, #63b3ed 72%, #2d3748);
+  --primary-action-foreground: #b9e2ff;
   --success: #68d391;
   --warning: #f6ad55;
   --danger: #fc8181;
@@ -99,6 +119,10 @@
   --muted: #57677f;
   --primary: #1d5fbf;
   --primary-foreground: #ffffff;
+  --primary-action-bg: #1d5fbf;
+  --primary-action-bg-hover: #174f9f;
+  --primary-action-border: #1d5fbf;
+  --primary-action-foreground: #ffffff;
   --success: #147a58;
   --warning: #a76516;
   --danger: #b23b22;
@@ -116,6 +140,10 @@
   --muted: #5b6f63;
   --primary: #1d7a4d;
   --primary-foreground: #ffffff;
+  --primary-action-bg: #1d7a4d;
+  --primary-action-bg-hover: #16633f;
+  --primary-action-border: #1d7a4d;
+  --primary-action-foreground: #ffffff;
   --success: #17834f;
   --warning: #a86818;
   --danger: #b3432c;
@@ -215,6 +243,22 @@ a[class*="rounded"]:focus-visible {
 button:disabled {
   transform: none;
   box-shadow: none;
+}
+
+button[class*="bg-primary"],
+a[class*="bg-primary"] {
+  border: 1px solid var(--primary-action-border);
+  background-color: var(--primary-action-bg);
+  color: var(--primary-action-foreground);
+}
+
+button[class*="bg-primary"]:not(:disabled):hover,
+a[class*="bg-primary"]:hover {
+  background-color: var(--primary-action-bg-hover);
+  color: var(--primary-action-foreground);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent),
+    0 10px 24px -18px color-mix(in srgb, var(--primary) 88%, transparent);
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator,

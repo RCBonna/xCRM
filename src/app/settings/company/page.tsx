@@ -1,4 +1,4 @@
-import { ArrowLeft, Building2, LogOut, Save, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, Building2, LogOut, Save, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -7,7 +7,9 @@ import { updateCompanySettingsAction } from "@/app/settings/company/actions";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { CnpjInput } from "@/components/cnpj-input";
 import { UppercaseInput } from "@/components/uppercase-input";
+import { UserIdentityCard } from "@/components/user-identity-card";
 import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function canManageCompanySettings(role: string) {
@@ -50,6 +52,13 @@ export default async function CompanySettingsPage({
   }
 
   const params = await searchParams;
+  const unreadNotificationsCount = await prisma.notification.count({
+    where: {
+      tenantId: appUser.tenantId,
+      recipientUserId: appUser.id,
+      readAt: null,
+    },
+  });
   const userIdentity = appUser.name || user.email || "Usuário autenticado";
   const userEmail = appUser.email || user.email || "E-mail não informado";
   const userRole = appUser.role.toLowerCase();
@@ -74,19 +83,12 @@ export default async function CompanySettingsPage({
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="flex h-12 min-w-0 items-center gap-2 rounded-md border border-border bg-surface px-3 text-left">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary">
-                <UserRound size={16} aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-medium leading-4">
-                  {userIdentity}
-                </p>
-                <p className="truncate text-[11px] leading-4 text-muted">
-                  {userEmail} - {userRole}
-                </p>
-              </div>
-            </div>
+            <UserIdentityCard
+              name={userIdentity}
+              email={userEmail}
+              role={userRole}
+              unreadNotificationsCount={unreadNotificationsCount}
+            />
             <AppSettingsMenu
               canManageCompanySettings={canManageCompanySettings(appUser.role)}
               canImportData={canImportData}
@@ -138,7 +140,7 @@ export default async function CompanySettingsPage({
             </div>
             <div className="grid gap-4 p-4">
               <label className="grid gap-1 text-sm">
-                <span className="font-medium">Nome da Empresa</span>
+                <span className="font-medium">Nome Fantasia</span>
                 <UppercaseInput
                   required
                   name="companyName"
@@ -210,7 +212,7 @@ export default async function CompanySettingsPage({
                 são registradas no Histórico do tenant para auditoria.
               </p>
               <p>
-                O Nome da Empresa alimenta o cabeçalho das telas autenticadas e
+                O Nome Fantasia alimenta o cabeçalho das telas autenticadas e
                 ajuda a separar visualmente cada operação no modelo multiempresa.
               </p>
               <p>

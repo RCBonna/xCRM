@@ -2,7 +2,6 @@ import {
   ArrowLeft,
   LogOut,
   Plus,
-  UserRound,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +17,7 @@ import { TeamAuditLogPanel } from "@/components/team-audit-log-panel";
 import { TeamLeadersTab } from "@/components/team-leaders-tab";
 import { TeamTeamsTab } from "@/components/team-teams-tab";
 import { TeamUsersTab } from "@/components/team-users-tab";
+import { UserIdentityCard } from "@/components/user-identity-card";
 import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -96,7 +96,7 @@ export default async function TeamSettingsPage({
 
   const params = await searchParams;
   const currentTab = getCurrentTab(params.tab);
-  const [users, teams, auditLogs] = await Promise.all([
+  const [users, teams, auditLogs, unreadNotificationsCount] = await Promise.all([
     prisma.user.findMany({
       where: {
         tenantId: appUser.tenantId,
@@ -157,6 +157,13 @@ export default async function TeamSettingsPage({
       },
       take: 8,
     }),
+    prisma.notification.count({
+      where: {
+        tenantId: appUser.tenantId,
+        recipientUserId: appUser.id,
+        readAt: null,
+      },
+    }),
   ]);
 
   const activeTeams = teams.filter((team) => team.status === "ACTIVE");
@@ -194,19 +201,12 @@ export default async function TeamSettingsPage({
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="flex h-12 min-w-0 items-center gap-2 rounded-md border border-border bg-surface px-3 text-left">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary">
-                <UserRound size={16} aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-medium leading-4">
-                  {userIdentity}
-                </p>
-                <p className="truncate text-[11px] leading-4 text-muted">
-                  {userEmail} - {userRole}
-                </p>
-              </div>
-            </div>
+            <UserIdentityCard
+              name={userIdentity}
+              email={userEmail}
+              role={userRole}
+              unreadNotificationsCount={unreadNotificationsCount}
+            />
             <AppSettingsMenu
               canManageCompanySettings
               canImportData={canImportData}

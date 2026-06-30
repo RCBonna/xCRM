@@ -1,12 +1,14 @@
 import {
   ArrowLeft,
   CheckCircle2,
+  FileCheck2,
   FileSpreadsheet,
   FileUp,
   LogOut,
   Save,
   Trash2,
   Upload,
+  UsersRound,
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
@@ -14,6 +16,7 @@ import { redirect } from "next/navigation";
 
 import {
   discardImportBatchAction,
+  importApprovedRowsAction,
   importSingleRowAction,
   rejectImportRowAction,
   startImportBatchAction,
@@ -24,6 +27,7 @@ import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { CnpjInput } from "@/components/cnpj-input";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { ImportStatusFilter } from "@/components/import-status-filter";
+import { UserIdentityCard } from "@/components/user-identity-card";
 import type { JobStatus } from "@/generated/prisma/client";
 import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { getImportSettings } from "@/lib/imports/settings";
@@ -102,6 +106,7 @@ const rowStatusFilters: Array<{
   { label: "Aprovadas", value: "APPROVED" },
   { label: "Importadas", value: "IMPORTED" },
   { label: "Rejeitadas", value: "REJECTED" },
+  { label: "Falharam", value: "FAILED" },
 ];
 
 function formatDateTimeLocal(value?: string | null) {
@@ -152,7 +157,13 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
   }
 
   const params = await searchParams;
-  const [settings, files, activeImport] = await Promise.all([
+  const [
+    settings,
+    files,
+    activeImport,
+    activeTeamsWithLeader,
+    unreadNotificationsCount,
+  ] = await Promise.all([
     getImportSettings(),
     listImportFiles(),
     prisma.importBatch.findFirst({
@@ -173,12 +184,36 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
         createdAt: "desc",
       },
     }),
+    prisma.team.findMany({
+      where: {
+        tenantId: appUser.tenantId,
+        status: "ACTIVE",
+        managerUserId: {
+          not: null,
+        },
+      },
+      include: {
+        manager: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    }),
+    prisma.notification.count({
+      where: {
+        tenantId: appUser.tenantId,
+        recipientUserId: appUser.id,
+        readAt: null,
+      },
+    }),
   ]);
 
   const importedRows =
     activeImport?.rows.filter((row) => row.status === "IMPORTED").length ?? 0;
   const rejectedRows =
     activeImport?.rows.filter((row) => row.status === "REJECTED").length ?? 0;
+  const approvedRows =
+    activeImport?.rows.filter((row) => row.status === "APPROVED").length ?? 0;
   const pendingRows =
     activeImport?.rows.filter((row) =>
       ["REVIEWING", "APPROVED"].includes(row.status),
@@ -219,6 +254,9 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
     isActive: currentStatusFilter === filter.value,
   }));
   const isImportedRow = selectedRow?.status === "IMPORTED";
+  const userIdentity = appUser.name || user.email || "Usuário autenticado";
+  const userEmail = appUser.email || user.email || "E-mail não informado";
+  const userRole = appUser.role.toLowerCase();
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -236,6 +274,12 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <UserIdentityCard
+              name={userIdentity}
+              email={userEmail}
+              role={userRole}
+              unreadNotificationsCount={unreadNotificationsCount}
+            />
             <Link
               href="/dashboard"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium"
@@ -378,6 +422,13 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                 >
                   <input type="hidden" name="batchId" value={activeImport.id} />
                 </form>
+                <form
+                  id="import-approved-rows-form"
+                  action={importApprovedRowsAction}
+                  className="hidden"
+                >
+                  <input type="hidden" name="batchId" value={activeImport.id} />
+                </form>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <ConfirmSubmitButton
                     formId="discard-import-batch-form"
@@ -393,6 +444,47 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                     label={selectedFilterLabel}
                     options={statusFilterOptions}
                   />
+                </div>
+                <div className="mt-3 rounded-md border border-border bg-background p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="flex items-center gap-2 text-xs font-semibold">
+                        <UsersRound size={14} className="text-primary" aria-hidden />
+                        Encaminhar Para Equipe
+                      </p>
+                      <p className="mt-1 text-[11px] leading-4 text-muted">
+                        O líder recebe os prospects e uma notificação para distribuir.
+                      </p>
+                    </div>
+                    <span className="rounded bg-surface-muted px-2 py-1 text-xs text-primary">
+                      {approvedRows}
+                    </span>
+                  </div>
+                  <select
+                    form="import-approved-rows-form"
+                    name="teamId"
+                    className="mt-3 h-9 w-full rounded-md border border-border bg-background px-2 text-xs"
+                    defaultValue=""
+                  >
+                    <option value="">Sem encaminhamento</option>
+                    {activeTeamsWithLeader.map((team) => (
+                      <option key={team.id} value={team.id}>
+                        {team.name} - {team.manager?.name ?? "Líder"}
+                      </option>
+                    ))}
+                  </select>
+                  <ConfirmSubmitButton
+                    formId="import-approved-rows-form"
+                    title="Importar Linhas Aprovadas"
+                    message={`Importar ${approvedRows} linha(s) aprovada(s) para a Base Comercial? Se uma equipe for selecionada, os prospects serão atribuídos ao líder e ele receberá uma notificação.`}
+                    confirmLabel="Importar Aprovadas"
+                    disabled={approvedRows === 0}
+                    confirmClassName="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+                    className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    <FileCheck2 size={14} aria-hidden />
+                    Importar {approvedRows} Aprovada(s)
+                  </ConfirmSubmitButton>
                 </div>
               </div>
               <div className="max-h-[41rem] overflow-auto p-2">

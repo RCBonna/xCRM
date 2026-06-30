@@ -5,13 +5,13 @@ import {
   ClipboardList,
   LogOut,
   Sparkles,
-  UserRound,
   UsersRound,
 } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/app/auth/actions";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
+import { UserIdentityCard } from "@/components/user-identity-card";
 import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -49,7 +49,13 @@ export default async function DashboardPage() {
     redirect(suspendedRedirectPath);
   }
 
-  const [accountCount, contactCount, activityCount, stages] = await Promise.all([
+  const [
+    accountCount,
+    contactCount,
+    activityCount,
+    stages,
+    unreadNotificationsCount,
+  ] = await Promise.all([
     prisma.account.count({ where: { tenantId: appUser.tenantId } }),
     prisma.contact.count({ where: { tenantId: appUser.tenantId } }),
     prisma.activity.count({
@@ -64,6 +70,13 @@ export default async function DashboardPage() {
       },
       orderBy: {
         position: "asc",
+      },
+    }),
+    prisma.notification.count({
+      where: {
+        tenantId: appUser.tenantId,
+        recipientUserId: appUser.id,
+        readAt: null,
       },
     }),
   ]);
@@ -117,19 +130,12 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="flex h-12 min-w-0 items-center gap-2 rounded-md border border-border bg-surface px-3 text-left">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary">
-                <UserRound size={16} aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-medium leading-4">
-                  {userIdentity}
-                </p>
-                <p className="truncate text-[11px] leading-4 text-muted">
-                  {userEmail} - {userRole}
-                </p>
-              </div>
-            </div>
+            <UserIdentityCard
+              name={userIdentity}
+              email={userEmail}
+              role={userRole}
+              unreadNotificationsCount={unreadNotificationsCount}
+            />
             <AppSettingsMenu
               canManageCompanySettings={canOpenCompanySettings}
               canImportData={canImportData}

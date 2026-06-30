@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-30 13:08:42 -03:00
+Ultima modificacao: 2026-06-30 18:51:49 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -69,6 +69,7 @@ Os botoes e links com aparência de botao respondem visualmente ao mouse e ao cl
 
 - Ao passar o mouse, a borda e a sombra ficam mais evidentes.
 - Ao clicar, o botao afunda levemente para indicar a pressao.
+- No tema escuro, botoes principais usam azul mais contido, com borda e texto destacados.
 - Quando um botao esta desabilitado, ele permanece sem resposta de clique.
 
 ## Campos de Entrada
@@ -363,11 +364,14 @@ Regras atuais:
 - A planilha carregada vira linhas temporarias com dados originais e uma sugestao organizada.
 - A pasta de origem aparece no topo da tela; os indicadores mostram a carga ativa, linhas temporarias, pendentes e concluidas/rejeitadas.
 - Cada linha pode ser revisada, corrigida, salva, aprovada, rejeitada ou importada individualmente.
+- Depois de revisar várias linhas, o Owner pode usar `Importar Aprovadas` para enviar todas as linhas aprovadas para a Base Comercial em uma única operação.
+- Antes de importar as aprovadas, o Owner pode escolher uma equipe ativa; os prospects importados ficam sob responsabilidade do líder dessa equipe.
+- Quando prospects são encaminhados para uma equipe, o líder recebe uma notificação interna e vê um badge vermelho de pendências próximo ao próprio nome no topo das telas principais.
 - Ao selecionar uma linha na lista esquerda, o formulario de revisao da direita atualiza os campos da linha escolhida.
 - O formulario de revisao usa blocos compactos para Empresa/Prospect, Contato Principal e Acoes/Observacoes.
 - O campo CNPJ usa mascara no formato `AA.AAA.AAA/AAAA-00`.
 - A revisao aparece como uma bancada de triagem: resumo da carga no topo, fila de linhas a esquerda e ficha de correcao a direita.
-- A fila de linhas pode ser filtrada pelo icone de filtro no topo do card da carga: Todas, Em Revisão, Aprovadas, Importadas e Rejeitadas.
+- A fila de linhas pode ser filtrada pelo icone de filtro no topo do card da carga: Todas, Em Revisão, Aprovadas, Importadas, Rejeitadas e Falharam.
 - Ao selecionar uma linha dentro de um filtro, o sistema mantem o mesmo filtro ativo.
 - Quando um filtro nao possui linhas, a lista mostra que nao ha linhas para aquele status.
 - Durante a troca de filtro, o icone indica processamento ate a tela atualizar.
@@ -380,6 +384,7 @@ Regras atuais:
 - Ao escolher `Descartar Carga`, o sistema mostra uma confirmacao antes de descartar.
 - Nao e necessario importar todas as linhas da carga.
 - A importacao definitiva de uma linha pode criar Empresa/Prospect, Contato Principal, Historico Realizado e Proxima Acao.
+- Empresas/Prospects criados pela importacao definitiva recebem `Origem` como `Importado`.
 - A sugestao automatica apenas organiza os dados; a decisao final e sempre do Owner.
 
 Observacoes de uso:
@@ -431,12 +436,15 @@ Versao atual:
 - `2026-06-30 10:12:47`
 - `2026-06-30 12:43:53`
 - `2026-06-30 13:08:42`
+- `2026-06-30 16:49:00`
+- `2026-06-30 17:34:11`
+- `2026-06-30 18:51:49`
 
 ## Fluxos ainda nao implementados
 
 - Selecao de empresa/tenant quando o usuario participar de mais de uma empresa.
 - Tela dedicada de funil/board.
-- Importacao de planilha.
+- Central de notificações para o usuário operacional abrir e marcar mensagens como lidas.
 - IA assistiva.
 - Relatorios de gestor.
 
