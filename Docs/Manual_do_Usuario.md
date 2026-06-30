@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-30 18:51:49 -03:00
+Ultima modificacao: 2026-06-30 20:18:27 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -375,6 +375,7 @@ Regras atuais:
 - Ao selecionar uma linha dentro de um filtro, o sistema mantem o mesmo filtro ativo.
 - Quando um filtro nao possui linhas, a lista mostra que nao ha linhas para aquele status.
 - Durante a troca de filtro, o icone indica processamento ate a tela atualizar.
+- Em acoes que podem demorar, como login, navegacao, selecao de linhas e envio de formularios, o ponteiro do mouse muda para processamento ate o app liberar a tela.
 - Os dados originais da planilha ficam recolhidos em `Dados Originais da Planilha`.
 - Os botoes `Salvar Revisão`, `Aprovar Linha`, `Importar Linha` e `Rejeitar Linha` ficam no rodape da ficha da linha, alinhados a esquerda.
 - Em linhas ja importadas para a base definitiva, esses botoes ficam desabilitados.
@@ -439,6 +440,7 @@ Versao atual:
 - `2026-06-30 16:49:00`
 - `2026-06-30 17:34:11`
 - `2026-06-30 18:51:49`
+- `2026-06-30 20:18:27`
 
 ## Fluxos ainda nao implementados
 

@@ -245,6 +245,11 @@ button:disabled {
   box-shadow: none;
 }
 
+html[data-app-pending="true"],
+html[data-app-pending="true"] * {
+  cursor: progress !important;
+}
+
 button[class*="bg-primary"],
 a[class*="bg-primary"] {
   border: 1px solid var(--primary-action-border);

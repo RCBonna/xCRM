@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import { DateTimeLocalDefaults } from "@/components/datetime-local-defaults";
+import { GlobalPendingCursor } from "@/components/global-pending-cursor";
 import { VersionBanner } from "@/components/version-banner";
 import "./globals.css";
 
@@ -33,6 +35,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <VersionBanner />
         <DateTimeLocalDefaults />
+        <Suspense fallback={null}>
+          <GlobalPendingCursor />
+        </Suspense>
         {children}
       </body>
     </html>

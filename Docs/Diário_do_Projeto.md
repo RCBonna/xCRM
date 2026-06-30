@@ -442,6 +442,11 @@ Ultima modificacao: 2026-06-30 17:34:11 -03:00
 - O cartão de identidade do usuário passou a exibir badge vermelho com contagem de notificações não lidas nas telas principais.
 - Linhas aprovadas que falharem no lote passam para status `Falhou`, entram na contagem de inválidas e podem ser filtradas na fila temporária.
 - Atualizada versao WIP para `2026-06-30 18:51:49`.
+- Criada a issue `#59` para exibir cursor de processamento durante navegacoes e envios demorados.
+- Adicionado componente global `GlobalPendingCursor` no layout para ativar cursor `progress` em links internos e submits de formularios.
+- O cursor de processamento cobre fluxos como login, troca de tela, selecao de linhas/filtros na importacao e acoes que disparam Server Actions.
+- O estado de processamento e limpo ao concluir a navegacao e possui fallback automatico para evitar cursor preso.
+- Atualizada versao WIP para `2026-06-30 20:18:27`.
 
 ### Observacoes
 

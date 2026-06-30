@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-30 18:51:49 -03:00
+Ultima modificacao: 2026-06-30 20:18:27 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -465,6 +465,7 @@ Arquivos principais:
 - `src/app/imports/page.tsx`
 - `src/app/imports/actions.ts`
 - `src/app/accounts/actions.ts`
+- `src/components/global-pending-cursor.tsx`
 - `src/components/account-history-panel.tsx`
 - `src/lib/brazilian-states.ts`
 
@@ -500,6 +501,9 @@ Observacoes de seguranca:
 - O encaminhamento em lote cria notificação `PROSPECTS_ASSIGNED_TO_TEAM` para o líder, contendo carga, equipe, totais e ate 20 prospects no `metadata`.
 - As telas principais usam `UserIdentityCard` com contador de `notifications` não lidas para sinalizar pendências próximas ao nome do usuário.
 - Linhas aprovadas com erro durante o lote passam para `JobStatus.FAILED`; esse status entra na contagem de inválidas e fica disponível no filtro `Falharam`.
+- `GlobalPendingCursor` e renderizado no layout global e escuta cliques em links internos e submits de formularios para aplicar `data-app-pending="true"` no `html`.
+- `globals.css` transforma `html[data-app-pending="true"] *` em cursor `progress`, dando feedback visual durante login, navegacao e Server Actions.
+- O cursor global e removido quando `pathname`/`searchParams` mudam, em `pageshow` ou por fallback de 30 segundos.
 - Quando `legalName` nao vem da planilha, a revisao temporaria usa `company.name` como fallback para Razão Social.
 - A grade da ficha de revisao usa breakpoint `lg`, maior espacamento horizontal e inputs `w-full` para evitar estouro lateral de campos compactos.
 - Linhas com status `IMPORTED` desabilitam as acoes de salvar, aprovar, importar e rejeitar na ficha temporaria.
@@ -514,7 +518,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-30 18:51:49`
+- Valor: `2026-06-30 20:18:27`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`
