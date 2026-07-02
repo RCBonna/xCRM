@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { signInAction, signUpAction } from "@/app/auth/actions";
 import { PasswordField } from "@/components/password-field";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 
 type AccessTab = "sign-in" | "sign-up";
 
@@ -84,9 +85,9 @@ export function LoginAccessTabs({ initialTab }: LoginAccessTabsProps) {
               <PasswordField name="password" autoComplete="current-password" />
             </label>
           </div>
-          <button className="mt-auto h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
+          <PendingSubmitButton className="mt-auto h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:cursor-wait disabled:opacity-80">
             Entrar
-          </button>
+          </PendingSubmitButton>
         </form>
       )}
 
@@ -124,9 +125,9 @@ export function LoginAccessTabs({ initialTab }: LoginAccessTabsProps) {
               <PasswordField name="password" autoComplete="new-password" />
             </label>
           </div>
-          <button className="mt-6 h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
+          <PendingSubmitButton className="mt-6 h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:cursor-wait disabled:opacity-80">
             Criar Acesso
-          </button>
+          </PendingSubmitButton>
         </form>
       )}
     </div>

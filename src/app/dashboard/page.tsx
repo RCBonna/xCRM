@@ -11,6 +11,7 @@ import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/app/auth/actions";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
+import { DashboardPendingActivitiesPanel } from "@/components/dashboard-pending-activities-panel";
 import { UserIdentityCard } from "@/components/user-identity-card";
 import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -23,11 +24,23 @@ const nextActions = [
   "Começar a registrar contatos e follow-ups.",
 ];
 
+const dateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
+  dateStyle: "short",
+  timeStyle: "short",
+});
+
+type DashboardPageProps = {
+  searchParams: Promise<{
+    error?: string;
+    message?: string;
+  }>;
+};
+
 function canManageCompanySettings(role: string) {
   return ["OWNER", "ADMIN"].includes(role);
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -49,11 +62,13 @@ export default async function DashboardPage() {
     redirect(suspendedRedirectPath);
   }
 
+  const params = await searchParams;
   const [
     accountCount,
     contactCount,
     activityCount,
     stages,
+    pendingActivities,
     unreadNotificationsCount,
   ] = await Promise.all([
     prisma.account.count({ where: { tenantId: appUser.tenantId } }),
@@ -71,6 +86,29 @@ export default async function DashboardPage() {
       orderBy: {
         position: "asc",
       },
+    }),
+    prisma.activity.findMany({
+      where: {
+        tenantId: appUser.tenantId,
+        status: "PENDING",
+      },
+      include: {
+        account: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: [
+        {
+          scheduledAt: "asc",
+        },
+        {
+          createdAt: "asc",
+        },
+      ],
+      take: 8,
     }),
     prisma.notification.count({
       where: {
@@ -112,6 +150,15 @@ export default async function DashboardPage() {
   const userRole = appUser.role.toLowerCase();
   const canOpenCompanySettings = canManageCompanySettings(appUser.role);
   const canImportData = appUser.role === "OWNER";
+  const pendingActivityItems = pendingActivities.map((activity) => ({
+    id: activity.id,
+    title: activity.title,
+    description: activity.description,
+    scheduledAt: activity.scheduledAt
+      ? dateTimeFormatter.format(activity.scheduledAt)
+      : null,
+    account: activity.account,
+  }));
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -149,26 +196,39 @@ export default async function DashboardPage() {
           </div>
         </header>
 
+        {(params.error || params.message) && (
+          <div
+            className={[
+              "rounded-md border px-3 py-2 text-sm",
+              params.error
+                ? "border-danger text-danger"
+                : "border-border text-muted",
+            ].join(" ")}
+          >
+            {params.error ?? params.message}
+          </div>
+        )}
+
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {metrics.map((metric) => {
             const Icon = metric.icon;
             return (
               <article
                 key={metric.label}
-                className="rounded-md border border-border bg-surface p-4"
+                className="flex min-h-32 flex-col rounded-md border border-border bg-surface p-4"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm text-muted">{metric.label}</p>
-                    <p className="mt-2 text-3xl font-semibold">
-                      {metric.value}
-                    </p>
-                  </div>
+                <div className="flex items-center gap-2">
                   <span className="rounded-md bg-surface-muted p-2 text-primary">
                     <Icon size={18} aria-hidden />
                   </span>
+                  <p className="text-sm font-medium text-muted">
+                    {metric.label}
+                  </p>
                 </div>
-                <p className="mt-3 text-xs leading-5 text-muted">
+                <p className="mt-3 text-center text-3xl font-semibold">
+                  {metric.value}
+                </p>
+                <p className="mt-auto text-center text-xs leading-5 text-muted">
                   {metric.detail}
                 </p>
               </article>
@@ -193,19 +253,21 @@ export default async function DashboardPage() {
                   key={stage.id}
                   className="min-h-28 rounded-md border border-border bg-background p-3"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-medium">{stage.name}</h3>
-                    <span className="rounded bg-surface-muted px-2 py-1 text-xs text-muted">
-                      {stage.position}
-                    </span>
+                  <div className="grid gap-3">
+                    <h3 className="flex items-center gap-2 text-sm font-medium">
+                      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-surface-muted text-xs font-semibold text-muted">
+                        {stage.position}
+                      </span>
+                      {stage.name}
+                    </h3>
+                    <p className="text-xs leading-5 text-muted">
+                      {stage.isWon
+                        ? "Etapa de ganho"
+                        : stage.isLost
+                          ? "Etapa de perda"
+                          : "Etapa comercial ativa"}
+                    </p>
                   </div>
-                  <p className="mt-4 text-xs leading-5 text-muted">
-                    {stage.isWon
-                      ? "Etapa de ganho"
-                      : stage.isLost
-                        ? "Etapa de perda"
-                        : "Etapa comercial ativa"}
-                  </p>
                 </div>
               ))}
             </div>
@@ -233,6 +295,8 @@ export default async function DashboardPage() {
             </ol>
           </aside>
         </section>
+
+        <DashboardPendingActivitiesPanel activities={pendingActivityItems} />
       </div>
     </main>
   );

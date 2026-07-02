@@ -140,6 +140,184 @@ export async function reactivateTenantAction(formData: FormData) {
   redirect(`/platform?message=${encodeMessage("Tenant reativado.")}`);
 }
 
+export async function deleteTenantAction(formData: FormData) {
+  const platformAdmin = await requirePlatformAdmin();
+  const tenantId = normalizeText(formData.get("tenantId"));
+  const confirmation = normalizeText(formData.get("confirmation"));
+
+  if (!tenantId) {
+    redirect("/platform?error=Organizacao%20nao%20informada.");
+  }
+
+  const tenant = await prisma.tenant.findUnique({
+    where: {
+      id: tenantId,
+    },
+    select: {
+      id: true,
+      name: true,
+      _count: {
+        select: {
+          users: true,
+          accounts: true,
+          contacts: true,
+          activities: true,
+          interactions: true,
+          opportunities: true,
+          imports: true,
+        },
+      },
+    },
+  });
+
+  if (!tenant) {
+    redirect("/platform?error=Organizacao%20nao%20encontrada.");
+  }
+
+  const expectedConfirmation = `EXCLUIR ${tenant.name}`;
+
+  if (confirmation !== expectedConfirmation) {
+    redirect(
+      `/platform?error=${encodeMessage(
+        `Digite exatamente "${expectedConfirmation}" para excluir a organizacao.`,
+      )}`,
+    );
+  }
+
+  const deletedSummary = {
+    users: tenant._count.users,
+    accounts: tenant._count.accounts,
+    contacts: tenant._count.contacts,
+    activities: tenant._count.activities,
+    interactions: tenant._count.interactions,
+    opportunities: tenant._count.opportunities,
+    imports: tenant._count.imports,
+  };
+
+  await prisma.$transaction(async (tx) => {
+    await tx.notification.create({
+      data: {
+        recipientPlatformAdminId: platformAdmin.id,
+        type: "TENANT_DELETED",
+        title: "Organização Excluída",
+        body: `${tenant.name} foi excluída completamente por ${platformAdmin.name}.`,
+        metadata: {
+          tenantId: tenant.id,
+          tenantName: tenant.name,
+          deletedByPlatformAdminId: platformAdmin.id,
+          deletedByPlatformAdminName: platformAdmin.name,
+          deletedSummary,
+        },
+      },
+    });
+
+    await tx.stageMovement.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.activity.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.interaction.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.attachment.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.aiJob.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.importRow.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.importBatch.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.opportunity.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.contact.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.account.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.teamMember.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.team.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.pipelineStage.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.pipeline.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.notification.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.notification.updateMany({
+      where: {
+        actorUser: {
+          is: {
+            tenantId: tenant.id,
+          },
+        },
+      },
+      data: {
+        actorUserId: null,
+      },
+    });
+    await tx.user.deleteMany({
+      where: {
+        tenantId: tenant.id,
+      },
+    });
+    await tx.tenant.delete({
+      where: {
+        id: tenant.id,
+      },
+    });
+  });
+
+  revalidatePath("/platform");
+  redirect(
+    `/platform?message=${encodeMessage(
+      `Organizacao ${tenant.name} excluida completamente.`,
+    )}`,
+  );
+}
+
 export async function markPlatformNotificationsReadAction() {
   const platformAdmin = await requirePlatformAdmin();
 

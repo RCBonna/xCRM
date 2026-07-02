@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-30 18:51:49 -03:00
+Ultima modificacao: 2026-07-02 18:14:31 -03:00
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -857,3 +857,180 @@ Comandos SQL:
 ```sql
 -- Sem alteracao estrutural de banco nesta etapa.
 ```
+
+## 2026-07-01 20:45:59 -03:00 - Exclusao completa de organizacao por Platform Admin
+
+Status: Sem migration necessaria
+
+Objetivo:
+
+- Permitir que o `Platform Admin` exclua completamente uma organizacao/tenant selecionado.
+- Remover dados operacionais vinculados ao tenant em ordem explicita para evitar bloqueios por chaves estrangeiras.
+- Registrar auditoria global da exclusao para o administrador executor.
+
+Decisao:
+
+- Nenhuma alteracao estrutural de banco foi necessaria.
+- A exclusao e feita por Server Action em transacao Prisma.
+- A operacao exige confirmacao textual no formato `EXCLUIR Nome da Organização`.
+- A rotina remove registros por `tenant_id` nas tabelas operacionais antes de excluir `tenants`.
+- Notificacoes globais que apontem para usuarios do tenant como `actor_user_id` sao atualizadas para `null` antes da remocao dos usuarios.
+- A auditoria global da remocao usa `notifications.type = 'TENANT_DELETED'` sem `tenant_id`, preservando a mensagem para o `Platform Admin`.
+
+Comandos SQL:
+
+```sql
+-- Sem alteracao estrutural de banco nesta etapa.
+-- A ordem logica da exclusao transacional no app cobre:
+-- stage_movements, activities, interactions, attachments, ai_jobs,
+-- import_rows, imports, opportunities, contacts, accounts,
+-- team_members, teams, pipeline_stages, pipelines, notifications,
+-- users e tenants.
+```
+
+## 2026-07-02 09:23:06 -03:00 - Script local de truncate total das tabelas
+
+Status: Criado arquivo local, nao executado
+
+Objetivo:
+
+- Criar um script SQL manual para eliminar todos os registros das tabelas publicas do app.
+- Atender ao requisito de usar `TRUNCATE`, nao `DELETE`.
+- Manter o script fora do Git por ser destrutivo e operacional.
+
+Arquivo criado:
+
+```text
+prisma/truncate_all_tables.SQL-Truncated
+```
+
+Decisao:
+
+- O script usa `TRUNCATE TABLE ... RESTART IDENTITY CASCADE`.
+- O escopo sao as tabelas publicas gerenciadas pelo xCRM.
+- O script nao altera `auth.users` do Supabase.
+- O arquivo foi incluido no `.gitignore` por nome e tambem pelo padrao `*.SQL-Truncated`.
+- Nenhum comando SQL foi executado no banco nesta etapa.
+
+Comandos SQL documentados:
+
+```sql
+BEGIN;
+
+TRUNCATE TABLE
+  public.stage_movements,
+  public.activities,
+  public.interactions,
+  public.attachments,
+  public.ai_jobs,
+  public.import_rows,
+  public.imports,
+  public.opportunities,
+  public.contacts,
+  public.accounts,
+  public.team_members,
+  public.teams,
+  public.pipeline_stages,
+  public.pipelines,
+  public.notifications,
+  public.users,
+  public.platform_admins,
+  public.tenants
+RESTART IDENTITY CASCADE;
+
+COMMIT;
+```
+
+## 2026-07-02 09:27:48 -03:00 - Script local para criar Platform Admin
+
+Status: Criado arquivo local, nao executado
+
+Objetivo:
+
+- Criar um script SQL manual para incluir ou atualizar um administrador da plataforma no app.
+- Permitir preencher `Nome`, `e-mail` e `senha` diretamente no bloco de variaveis do script.
+- Vincular o usuario do Supabase Auth a `public.platform_admins`.
+- Manter o script fora do Git por conter senha operacional quando preenchido.
+
+Arquivo criado:
+
+```text
+prisma/create_platform_admin.SQL-Administrador
+```
+
+Decisao:
+
+- O script usa um bloco `DO` com as variaveis `admin_name`, `admin_email` e `admin_password`.
+- Quando o e-mail nao existe em `auth.users`, o script cria o usuario autenticavel com provider `email`.
+- Quando o e-mail ja existe em `auth.users`, o script atualiza a senha, confirma o e-mail e reativa campos de bloqueio/exclusao.
+- O script garante a identidade em `auth.identities`.
+- O script cria ou atualiza `public.platform_admins` com `status = 'ACTIVE'`.
+- O script nao cria tenant e nao cria usuario operacional em `public.users`.
+- O arquivo foi incluido no `.gitignore` por nome e tambem pelo padrao `*.SQL-Administrador`.
+- Nenhum comando SQL foi executado no banco nesta etapa.
+
+Trecho de configuracao do script:
+
+```sql
+DECLARE
+  admin_name text := 'NOME DO ADMINISTRADOR';
+  admin_email text := 'administrador@exemplo.com';
+  admin_password text := 'senha-temporaria-com-8-ou-mais-caracteres';
+```
+
+## 2026-07-02 18:01:02 -03:00 - Conclusao de atividades gerais pelo Dashboard
+
+Status: Sem migration necessaria
+
+Objetivo:
+
+- Permitir que atividades pendentes sem Empresa/Prospect vinculada, como a tarefa automatica do onboarding, possam ser vistas e concluidas no Dashboard.
+- Reaproveitar a tabela existente `public.activities`.
+
+Decisao:
+
+- Nenhuma alteracao estrutural de banco foi necessaria.
+- A Server Action `completeDashboardActivityAction` valida usuario autenticado, tenant atual e `activities.status = 'PENDING'`.
+- Ao concluir, a action atualiza `status` para `COMPLETED` e preenche `completed_at`.
+
+Comandos SQL conceituais:
+
+```sql
+update public.activities
+set status = 'COMPLETED',
+    completed_at = now()
+where id = '<activity_id>'
+  and tenant_id = '<tenant_id>'
+  and status = 'PENDING';
+```
+
+## 2026-07-02 18:14:31 -03:00 - Data e Hora da atividade inicial do onboarding
+
+Status: Aplicado ajuste pontual em dado existente, sem migration estrutural
+
+Objetivo:
+
+- Garantir que a atividade inicial criada no onboarding tenha Data e Hora preenchida.
+- Corrigir atividade inicial pendente existente que ainda estava sem `scheduled_at`.
+
+Decisao:
+
+- Nenhuma alteracao estrutural de banco foi necessaria.
+- `createTenantAction` passa a preencher `activities.scheduled_at` com a data/hora da criacao da tarefa inicial.
+- Foi aplicado backfill apenas em atividades pendentes do tipo `INTERNAL_TASK`, com titulo `Revisar configurações iniciais do xCRM` e `scheduled_at is null`.
+
+Comando SQL aplicado:
+
+```sql
+update public.activities
+set scheduled_at = created_at,
+    updated_at = now()
+where status = 'PENDING'
+  and type = 'INTERNAL_TASK'
+  and title = 'Revisar configurações iniciais do xCRM'
+  and scheduled_at is null;
+```
+
+Resultado:
+
+- 1 registro atualizado.

@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-30 17:34:11 -03:00
+Ultima modificacao: 2026-07-02 18:50:59 -03:00
 
 ## 2026-06-12
 
@@ -462,3 +462,67 @@ Ultima modificacao: 2026-06-30 17:34:11 -03:00
 - Criar ERD inicial a partir do schema Prisma.
 - Testar manualmente cadastro, login e onboarding com um usuario real.
 - Evoluir uma tela de funil/board quando houver volume de oportunidades suficiente para justificar uma visão dedicada.
+
+## 2026-07-01
+
+### Resumo do dia
+
+- Confirmado com o usuario que a sincronizacao do OneDrive estava pausada antes das alteracoes.
+- Criada a issue `#60` para rotina administrativa de exclusao completa de organizacao.
+- Adicionada em `/platform` a area `Exclusão de Organização`, visivel apenas para `Platform Admin`.
+- A area lista organizacoes cadastradas, status e contadores de usuarios, Empresas/Prospects, acoes e importacoes.
+- Implementada Server Action transacional `deleteTenantAction` para excluir completamente o tenant selecionado e dados vinculados.
+- A exclusao exige confirmacao digitada no formato `EXCLUIR Nome da Organização` e modal final antes do envio.
+- A rotina remove dados relacionados como historico, acoes, oportunidades, contatos, anexos, IA, importacoes, equipes, usuarios e notificacoes do tenant.
+- Antes de remover os usuarios, notificacoes globais que apontem para usuario do tenant como ator sao desvinculadas para evitar bloqueio por chave estrangeira.
+- A exclusao registra uma notificacao global `TENANT_DELETED` para o `Platform Admin` executor, com resumo dos dados removidos.
+- Atualizada versao WIP para `2026-07-01 20:45:59`.
+
+## 2026-07-02
+
+### Resumo do dia
+
+- Confirmado com o usuario que a sincronizacao do OneDrive estava pausada antes das alteracoes.
+- Criada a issue `#61` para corrigir a confirmacao da exclusao de organizacao e adicionar feedback de processamento no login.
+- Substituido o botao generico de confirmacao da area `Exclusão de Organização` por um componente cliente dedicado.
+- O fluxo de exclusao agora exige confirmacao textual, abre um primeiro modal de conferencia da organizacao e um segundo modal de exclusao permanente.
+- Ao confirmar a exclusao definitiva, a tela mostra uma janela de processamento abaixo do formulario com icone girando e etapas como eliminacao de acoes, historico, oportunidades, contatos, importacoes, equipes e usuarios.
+- Adicionado componente `PendingSubmitButton` para mostrar `Processando...` com icone girando nos botoes `Entrar` e `Criar Acesso`.
+- Atualizada versao WIP para `2026-07-02 08:46:00`.
+- Criada a issue `#62` para corrigir o botao `Excluir Organização` sem acao na tela `/platform`.
+- Identificado nos logs do dev server que o acesso por `127.0.0.1` bloqueava recursos de desenvolvimento do Next, impedindo a hidratacao de componentes cliente.
+- Adicionado `allowedDevOrigins: ["127.0.0.1"]` em `next.config.ts` para permitir que o app local funcione tanto por `localhost` quanto por `127.0.0.1`.
+- Ajustado `PlatformTenantDeleteForm` para usar `formId` deterministico baseado no `tenantId`.
+- Atualizada versao WIP para `2026-07-02 09:00:48`.
+- Criada a issue `#63` para script SQL local de truncate total das tabelas.
+- Criado `prisma/truncate_all_tables.SQL-Truncated` com `TRUNCATE TABLE ... RESTART IDENTITY CASCADE` para todas as tabelas publicas do app.
+- O script de truncate nao foi executado no banco; foi apenas salvo para uso manual/controlado.
+- Adicionado `*.SQL-Truncated` e `prisma/truncate_all_tables.SQL-Truncated` ao `.gitignore`.
+- Atualizada versao WIP para `2026-07-02 09:23:06`.
+- Criada a issue `#64` para script SQL local de provisionamento de administrador da plataforma.
+- Criado `prisma/create_platform_admin.SQL-Administrador`, com variaveis para Nome, e-mail e senha.
+- O script cria ou atualiza o usuario em `auth.users`, garante identidade em `auth.identities` e cria/ativa o registro em `public.platform_admins`.
+- O script de administrador nao foi executado no banco; foi apenas salvo para uso manual/controlado.
+- Adicionado `*.SQL-Administrador` e `prisma/create_platform_admin.SQL-Administrador` ao `.gitignore`.
+- Atualizada versao WIP para `2026-07-02 09:27:48`.
+- Criada a issue `#66` para exibir e concluir atividades pendentes gerais no Dashboard.
+- Identificado que a atividade pendente do onboarding era criada corretamente, mas nao havia tela para concluir atividades sem Empresa/Prospect vinculada.
+- Adicionada a Server Action `completeDashboardActivityAction` em `src/app/dashboard/actions.ts`.
+- O Dashboard passou a exibir a secao `Atividades Pendentes`, listando atividades do tenant atual, incluindo atividades gerais do onboarding.
+- A lista permite concluir uma atividade pendente diretamente pelo Dashboard e exibe link para a Empresa/Prospect quando a atividade tiver vinculo.
+- Atualizada versao WIP para `2026-07-02 18:01:02`.
+- Criada a issue `#67` para ajustes visuais no Dashboard Owner.
+- Criada a issue `#68` para futura evolucao do Dashboard Owner com quantidade de times, pessoas e atividades pendentes por equipe/representante.
+- Movida a secao `Atividades Pendentes` para o final do Dashboard e transformada em painel com `Expandir`/`Recolher`.
+- Reorganizados os quatro cards de metricas do topo, colocando icone e titulo juntos e a descricao centralizada no rodape do card.
+- A atividade inicial criada no onboarding passa a gravar `scheduledAt` com a data/hora de criacao.
+- Aplicado backfill em 1 atividade inicial pendente existente, preenchendo `scheduled_at` com `created_at`.
+- Nos cards do `Funil Padrão`, a descricao da etapa passou a aparecer antes do numero, deixando o numero como indicador inferior.
+- Atualizada versao WIP para `2026-07-02 18:14:31`.
+- Criada a issue `#69` para ajustes finos nos cards do Dashboard Owner.
+- Centralizado o valor nos quatro cards superiores do Dashboard.
+- Nos cards do `Funil Padrão`, o numero da etapa passou a ficar ao lado esquerdo da descricao da etapa.
+- Atualizada versao WIP para `2026-07-02 18:47:32`.
+- Criada a issue `#70` para ajustar o numero da etapa ao lado do nome no `Funil Padrão`.
+- Nos cards do `Funil Padrão`, o numero/posicao passou a ficar ao lado esquerdo do nome da etapa, por exemplo `1 Visitantes`.
+- Atualizada versao WIP para `2026-07-02 18:50:59`.

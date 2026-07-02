@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-30 20:18:27 -03:00
+Ultima modificacao: 2026-07-02 18:50:59 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -54,6 +54,7 @@ Atualizar quando houver mudancas em:
 - `src/components`: componentes reutilizaveis de interface.
 - `src/lib`: clientes e utilitarios de infraestrutura.
 - `src/app/auth/actions.ts`: Server Actions de login, cadastro, logout e onboarding.
+- `src/app/dashboard/actions.ts`: Server Actions do Dashboard, incluindo conclusao de atividades pendentes gerais do tenant.
 - `src/app/accounts/actions.ts`: Server Actions para cadastro, edição, contatos, oportunidades, criação, edição, conclusão e exclusão de ações de Empresa/Prospect.
 - `src/app/settings/company`: tela de Configurações da Empresa restrita a Owner/Admin.
 - `src/app/settings/company/actions.ts`: Server Action para atualização dos dados institucionais do tenant.
@@ -78,6 +79,9 @@ Atualizar quando houver mudancas em:
 - `src/app/login`: tela de login e criacao de acesso.
 - `src/components/login-access-tabs.tsx`: abas de acesso para entrar ou criar acesso.
 - `src/components/login-info-panel.tsx`: painel de mensagens e textos rotativos da tela de acesso.
+- `src/components/pending-submit-button.tsx`: botao de submit com `useFormStatus`, exibindo `Processando...` e icone girando durante Server Actions.
+- `src/components/dashboard-pending-activities-panel.tsx`: painel expansivel do Dashboard para exibir/recolher e concluir atividades pendentes do tenant.
+- `src/components/platform-tenant-delete-form.tsx`: fluxo cliente da exclusao completa de organizacao, com confirmacao textual, dois modais e painel de processamento visual.
 - `src/components/account-history-panel.tsx`: painel expansivel do historico de Empresa/Prospect.
 - `src/components/account-contacts-panel.tsx`: painel expansivel de contatos no detalhe da Empresa/Prospect.
 - `src/components/account-customer-data-panel.tsx`: painel recolhível de Dados do Cliente, com CEP, endereço e busca via ViaCEP.
@@ -92,6 +96,8 @@ Atualizar quando houver mudancas em:
 - `src/lib/app-version.ts`: valor unico da versao exibida no topo.
 - `src/components/currency-input.tsx`: Client Component para entrada monetaria em formato `R$` no padrao pt-BR.
 - `prisma/schema.prisma`: modelo de dados multi tenant.
+- `prisma/truncate_all_tables.SQL-Truncated`: script local e ignorado pelo Git para truncate total das tabelas publicas do app, criado para uso manual/controlado e nao executado automaticamente.
+- `prisma/create_platform_admin.SQL-Administrador`: script local e ignorado pelo Git para criar/atualizar um `Platform Admin` com Nome, e-mail e senha, vinculando Supabase Auth a `public.platform_admins`.
 - `Docs`: documentacao viva do projeto.
 
 ## Configuracao local
@@ -138,6 +144,8 @@ npm run dev
 ```
 
 O script `npm run dev` usa `cross-env NODE_OPTIONS=--use-system-ca next dev --webpack` para evitar erro local de certificado ao chamar Supabase Auth no Windows/Node e para desativar Turbopack no ambiente local enquanto houver instabilidade de cache/build dentro da pasta sincronizada pelo OneDrive.
+
+`next.config.ts` configura `allowedDevOrigins: ["127.0.0.1"]` para permitir que os recursos de desenvolvimento do Next sejam carregados quando o app local for acessado por `http://127.0.0.1:3000`. Sem essa origem liberada, componentes cliente podem nao hidratar no dev server e botoes com `onClick`, como a confirmacao de exclusao de organizacao, podem nao responder.
 
 O cliente Prisma em `src/lib/prisma.ts` prioriza `DIRECT_URL` quando ela esta configurada. Esse padrao evita falhas observadas no pooler durante o fluxo de login/onboarding no ambiente local.
 
@@ -326,6 +334,11 @@ Fluxo implementado:
 11. Os formulários das abas de acesso usam altura mínima comum para manter os botões `Entrar` e `Criar Acesso` alinhados no rodapé, preservando respiro entre o último campo e o botão.
 12. `signUpAction` verifica e-mail ativo na tabela `users` antes de chamar Supabase Auth e trata retorno com identidade vazia como e-mail ja existente.
 13. `signInAction` e `signUpAction` traduzem erros relevantes do Supabase Auth para Português-BR, incluindo e-mail não confirmado, limite de envio de e-mails, e-mail inválido e credenciais inválidas.
+14. O Dashboard exibe a secao expansivel `Atividades Pendentes` no final da tela, listando tarefas pendentes do tenant atual, inclusive atividades gerais criadas no onboarding sem Empresa/Prospect vinculada.
+15. `completeDashboardActivityAction` permite concluir atividades pendentes do tenant atual diretamente pelo Dashboard, atualizando `activities.status = COMPLETED` e `completed_at`.
+16. A atividade inicial criada por `createTenantAction` recebe `scheduledAt` com a data/hora da criacao.
+17. Os cards de metricas do Dashboard agrupam icone e titulo no topo, centralizam o valor e centralizam a descricao no rodape.
+18. Os cards do `Funil Padrão` mostram o numero/posicao ao lado esquerdo do nome da etapa, como `1 Visitantes`.
 
 ## CRM Base
 
@@ -402,6 +415,13 @@ Fluxo inicial implementado:
 69. `/platform` permite ao `Platform Admin` listar tenants, suspender/reativar acesso e marcar notificações como lidas.
 70. `/tenant-suspended` exibe mensagem distinta para Owner e usuários operacionais: Owner recebe canais do SAC, demais usuários devem procurar a gerência.
 71. A lista de clientes em `/platform` exibe resumo total/ativos/suspensos, status por tenant, contadores de Usuários, Prospects e Contatos, e ação de suspensão ou reativação em bloco separado.
+72. `/platform` possui a área restrita `Exclusão de Organização`, exibida somente para `Platform Admin`, para excluir completamente um tenant selecionado.
+73. `deleteTenantAction` exige confirmação textual no formato `EXCLUIR Nome da Organização` e executa a exclusão dentro de uma transação Prisma.
+74. A exclusão remove explicitamente dados por `tenantId` em entidades dependentes antes de remover `users` e `tenants`, cobrindo ações, histórico, anexos, IA, importações, oportunidades, contatos, empresas/prospects, equipes, funis, notificações e usuários.
+75. Antes de excluir usuários, notificações globais que apontem para usuários do tenant como ator são desvinculadas com `actorUserId = null`.
+76. A exclusão registra uma notificação global `TENANT_DELETED` para o `Platform Admin` executor, sem `tenantId`, com resumo dos dados removidos no `metadata`.
+77. `PlatformTenantDeleteForm` controla a confirmacao no cliente: primeiro modal confere a organizacao, segundo modal reforca a exclusao permanente e, durante o submit, mostra painel de processamento com etapas visuais.
+78. `PlatformTenantDeleteForm` usa `formId` deterministico baseado no `tenantId`, evitando ids gerados com caracteres especiais no vinculo entre o botao final do modal e o formulario.
 
 Validacoes atuais:
 
@@ -413,9 +433,12 @@ Validacoes atuais:
 - Configurações da Empresa exigem Nome da Empresa com pelo menos 2 caracteres e CNPJ com 14 posições quando preenchido.
 - Em Equipes e Usuários, Owner/Admin pode criar/editar Equipe com Status, criar/editar Usuário com Status, alterar Líder e vincular/remover Usuário de Equipe.
 - Platform Admin ativo é redirecionado para `/platform` após login.
+- Atividades pendentes gerais do onboarding podem ser concluidas no Dashboard pelo Owner/Admin/usuario autenticado do mesmo tenant.
 - Usuário ativo em tenant suspenso é redirecionado para `/tenant-suspended` e não acessa Dashboard, Base Comercial ou Configurações.
 - Login em tenant suspenso cria notificação `TENANT_SUSPENDED_LOGIN` para cada Platform Admin ativo.
 - Suspender tenant cria notificação `TENANT_SUSPENDED`; reativar cria `TENANT_REACTIVATED`.
+- Excluir organização exige `Platform Admin`, tenant existente e confirmação textual exata; erro de confirmação impede a operação.
+- Login e criacao de acesso exibem estado `Processando...` nos botoes enquanto a Server Action de autenticacao esta pendente.
 - Cadastro de usuário exige Nome, E-mail válido, Perfil permitido (`MANAGER`, `SELLER` ou `ASSISTANT`) e Status (`ACTIVE` ou `INACTIVE`).
 - Vinculação de equipe exige Equipe ativa e Usuário pertencentes ao mesmo tenant.
 - Inativação de Equipe exige que não exista Líder ativo nem Usuários ativos vinculados.
@@ -480,11 +503,14 @@ Observacoes de seguranca:
 - Chamadas de login/cadastro tratam falhas de conexao com mensagem amigavel, sem expor `fetch failed` cru ao usuario.
 - Platform Admin não depende de vínculo com tenant comum e deve ser provisionado de forma controlada em `platform_admins`.
 - Tenants suspensos preservam dados, mas bloqueiam a navegação operacional por checagem de status nas páginas principais.
+- A exclusão completa de organização é irreversível e deve ser usada apenas quando a remoção de todos os dados do tenant for desejada.
 - Importacao de planilhas e restrita ao perfil Owner.
 - A tela `/imports` nao permite iniciar nova carga enquanto existir carga temporaria ativa no tenant.
 - Linhas importadas para a base definitiva passam por Server Action e gravam sempre com `tenantId` e `ownerUserId` do Owner autenticado.
 - A normalizacao por heuristica/IA assistida nunca grava diretamente nas tabelas definitivas; o Owner precisa revisar e importar a linha.
 - Depois de alterar enums usados pelo Prisma Client, como `JobStatus`, executar `npm run prisma:generate` e reiniciar o dev server local para evitar runtime com client antigo em memoria.
+- Arquivos `*.SQL-Truncated` sao ignorados pelo Git por serem scripts operacionais destrutivos.
+- Arquivos `*.SQL-Administrador` sao ignorados pelo Git por poderem conter senha operacional preenchida.
 - O leitor de planilhas detecta a linha de cabecalho por termos esperados como Empresa, Contato, Cidade, UF, E-mail e Fone, permitindo arquivos com linhas introdutorias antes da tabela.
 - Rejeitar ou importar uma linha temporaria redireciona para a proxima linha ainda pendente/aprovada da mesma carga.
 - Descartar carga temporaria exige confirmacao em modal antes de enviar a Server Action.
@@ -518,7 +544,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-06-30 20:18:27`
+- Valor: `2026-07-02 18:50:59`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

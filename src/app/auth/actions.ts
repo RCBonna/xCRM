@@ -209,6 +209,7 @@ export async function createTenantAction(formData: FormData) {
   }
 
   await prisma.$transaction(async (tx) => {
+    const initialActivityDate = new Date();
     const tenant = await tx.tenant.create({
       data: {
         name: companyName,
@@ -253,6 +254,7 @@ export async function createTenantAction(formData: FormData) {
         title: "Revisar configurações iniciais do xCRM",
         description:
           "Primeira tarefa criada automaticamente para concluir o onboarding da empresa.",
+        scheduledAt: initialActivityDate,
       },
     });
   });

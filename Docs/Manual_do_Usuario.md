@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-06-30 20:18:27 -03:00
+Ultima modificacao: 2026-07-02 18:50:59 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -91,6 +91,8 @@ Na tela de login, o usuario pode:
 - Criar um novo acesso com nome, e-mail e senha na aba `Criar Acesso`.
 - Mostrar ou ocultar o conteudo do campo de senha.
 
+Ao clicar em `Entrar` ou `Criar Acesso`, o botao mostra `Processando...` com icone girando enquanto o sistema valida a autenticacao.
+
 A aba selecionada recebe destaque visual com indicador na borda inferior.
 
 Quando nao ha mensagem de erro ou aviso, o painel superior da area de acesso mostra textos rotativos sobre o xCRM. Os textos mudam automaticamente a cada 30 segundos. Quando existe erro ou aviso, o painel mostra a mensagem do sistema.
@@ -166,6 +168,10 @@ Ele mostra:
 No cabecalho do dashboard, o bloco do usuario logado, o seletor de temas e o botao de sair usam a mesma altura visual.
 
 O dashboard concentra o acesso a cadastros e configurações no menu superior.
+
+O Dashboard possui a seção `Atividades Pendentes` no final da tela, em um painel com `Expandir` e `Recolher`. Ali o Owner vê tarefas abertas do tenant atual. A tarefa automática `Revisar configurações iniciais do xCRM`, criada no onboarding com Data e Hora, aparece nessa seção como `Atividade Geral` e pode ser encerrada pelo botão `Concluir`.
+
+Quando uma atividade estiver vinculada a uma Empresa/Prospect, a mesma seção mostra o nome da Empresa/Prospect como link para abrir o detalhe.
 
 O menu superior concentra Configurações e Preferências. Todos
 os perfis podem alterar o tema por esse menu. Para usuarios Owner/Admin, o menu
@@ -341,6 +347,13 @@ Na tela `/platform`, o `Platform Admin` pode:
 - Reativar um tenant suspenso.
 - Ver mensagens da plataforma, incluindo tentativas de login em tenant suspenso.
 - Marcar mensagens como lidas.
+- Usar a área `Exclusão de Organização` para remover completamente uma organização selecionada e seus dados vinculados.
+
+Na área `Exclusão de Organização`, o administrador vê cada organização com status e contadores de usuários, Empresas/Prospects, ações e importações. Para excluir, é necessário digitar a confirmação exatamente no formato `EXCLUIR Nome da Organização`, passar pelo primeiro modal de conferência da organização e confirmar um segundo modal de exclusão permanente.
+
+Ao confirmar a exclusão definitiva, a tela mostra uma janela de processamento abaixo do formulário, com ícone girando e mensagens como `Eliminando Ações...`, `Eliminando Usuários...` e `Finalizando Exclusão da Organização...`.
+
+Esta exclusão é permanente. Ela remove usuários da empresa, clientes/prospects, contatos, ações, histórico, oportunidades, equipes, importações, anexos, jobs de IA, notificações e demais dados vinculados à organização.
 
 Quando um tenant está suspenso:
 
@@ -441,6 +454,15 @@ Versao atual:
 - `2026-06-30 17:34:11`
 - `2026-06-30 18:51:49`
 - `2026-06-30 20:18:27`
+- `2026-07-01 20:45:59`
+- `2026-07-02 08:46:00`
+- `2026-07-02 09:00:48`
+- `2026-07-02 09:23:06`
+- `2026-07-02 09:27:48`
+- `2026-07-02 18:01:02`
+- `2026-07-02 18:14:31`
+- `2026-07-02 18:47:32`
+- `2026-07-02 18:50:59`
 
 ## Fluxos ainda nao implementados
 

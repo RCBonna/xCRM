@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   Bell,
   Building2,
   CheckCircle2,
@@ -14,6 +15,7 @@ import {
   suspendTenantAction,
 } from "@/app/platform/actions";
 import { signOutAction } from "@/app/auth/actions";
+import { PlatformTenantDeleteForm } from "@/components/platform-tenant-delete-form";
 import { getPlatformAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -78,6 +80,10 @@ export default async function PlatformPage({ searchParams }: PlatformPageProps) 
             users: true,
             accounts: true,
             contacts: true,
+            activities: true,
+            interactions: true,
+            opportunities: true,
+            imports: true,
           },
         },
       },
@@ -343,6 +349,96 @@ export default async function PlatformPage({ searchParams }: PlatformPageProps) 
               )}
             </div>
           </aside>
+        </section>
+
+        <section className="rounded-md border border-danger/40 bg-surface">
+          <div className="flex flex-col gap-2 border-b border-danger/30 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 text-base font-semibold text-danger">
+                <AlertTriangle size={18} aria-hidden />
+                Exclusão de Organização
+              </h2>
+              <p className="mt-1 text-xs leading-5 text-muted">
+                Uso exclusivo do administrador da plataforma. Esta ação remove
+                completamente a organização selecionada e todos os dados ligados
+                a ela.
+              </p>
+            </div>
+          </div>
+          <div className="divide-y divide-border">
+            {tenants.length === 0 ? (
+              <p className="px-4 py-4 text-sm text-muted">
+                Nenhuma organização cadastrada.
+              </p>
+            ) : (
+              tenants.map((tenant) => {
+                return (
+                  <article
+                    key={`delete-${tenant.id}`}
+                    className="grid gap-4 px-4 py-4 xl:grid-cols-[minmax(0,1fr)_minmax(22rem,0.7fr)] xl:items-start"
+                  >
+                    <div className="min-w-0 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="min-w-0 text-sm font-semibold">
+                          {tenant.name}
+                        </p>
+                        <span
+                          className={[
+                            "rounded px-2 py-1 text-xs font-medium",
+                            statusClasses[tenant.status] ??
+                              "bg-surface-muted text-muted",
+                          ].join(" ")}
+                        >
+                          {statusLabels[tenant.status]}
+                        </span>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-4">
+                        <div className="rounded-md border border-border bg-background px-3 py-2">
+                          <p className="text-sm font-semibold">
+                            {tenant._count.users}
+                          </p>
+                          <p className="mt-1 text-xs text-muted">Usuários</p>
+                        </div>
+                        <div className="rounded-md border border-border bg-background px-3 py-2">
+                          <p className="text-sm font-semibold">
+                            {tenant._count.accounts}
+                          </p>
+                          <p className="mt-1 text-xs text-muted">
+                            Empresas/Prospects
+                          </p>
+                        </div>
+                        <div className="rounded-md border border-border bg-background px-3 py-2">
+                          <p className="text-sm font-semibold">
+                            {tenant._count.activities}
+                          </p>
+                          <p className="mt-1 text-xs text-muted">Ações</p>
+                        </div>
+                        <div className="rounded-md border border-border bg-background px-3 py-2">
+                          <p className="text-sm font-semibold">
+                            {tenant._count.imports}
+                          </p>
+                          <p className="mt-1 text-xs text-muted">
+                            Importações
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-xs leading-5 text-muted">
+                        Também serão removidos contatos, oportunidades,
+                        histórico, anexos, jobs de IA, equipes, vínculos de
+                        equipe, notificações e linhas temporárias de importação
+                        desta organização.
+                      </p>
+                    </div>
+
+                    <PlatformTenantDeleteForm
+                      tenantId={tenant.id}
+                      tenantName={tenant.name}
+                    />
+                  </article>
+                );
+              })
+            )}
+          </div>
         </section>
       </div>
     </main>

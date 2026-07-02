@@ -30,6 +30,10 @@ Thumbs.db
 *.xls
 *.csv
 *.tsv
+*.SQL-Truncated
+*.SQL-Administrador
+prisma/truncate_all_tables.SQL-Truncated
+prisma/create_platform_admin.SQL-Administrador
 NFC-e/
 
 
