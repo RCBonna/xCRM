@@ -21,6 +21,7 @@ export function AccountHistoryPanel({
   const [expanded, setExpanded] = useState(false);
   const hasExtraItems = interactions.length > 1;
   const visibleInteractions = expanded ? interactions : interactions.slice(0, 1);
+  const contentId = "account-history-content";
 
   return (
     <div className="rounded-md border border-border bg-surface">
@@ -33,8 +34,9 @@ export function AccountHistoryPanel({
           <button
             type="button"
             aria-expanded={expanded}
+            aria-controls={contentId}
             onClick={() => setExpanded((current) => !current)}
-            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-border px-2 text-xs font-medium text-muted transition-colors hover:text-foreground"
+            className="inline-flex h-11 items-center justify-center gap-1 rounded-md border border-border px-3 text-sm font-medium text-muted transition-colors hover:text-foreground"
           >
             {expanded ? "Recolher" : "Ver Todos"}
             {expanded ? (
@@ -45,7 +47,7 @@ export function AccountHistoryPanel({
           </button>
         )}
       </div>
-      <div className="divide-y divide-border">
+      <div id={contentId} className="divide-y divide-border">
         {interactions.length === 0 ? (
           <p className="px-4 py-4 text-sm text-muted">
             Histórico ainda não registrado.

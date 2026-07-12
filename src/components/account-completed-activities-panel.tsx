@@ -19,6 +19,7 @@ export function AccountCompletedActivitiesPanel({
   const [expanded, setExpanded] = useState(false);
   const hasExtraItems = activities.length > 1;
   const visibleActivities = expanded ? activities : activities.slice(0, 1);
+  const contentId = "account-completed-activities-content";
 
   return (
     <div className="rounded-md border border-border bg-surface">
@@ -31,8 +32,9 @@ export function AccountCompletedActivitiesPanel({
           <button
             type="button"
             aria-expanded={expanded}
+            aria-controls={contentId}
             onClick={() => setExpanded((current) => !current)}
-            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-border px-2 text-xs font-medium text-muted transition-colors hover:text-foreground"
+            className="inline-flex h-11 items-center justify-center gap-1 rounded-md border border-border px-3 text-sm font-medium text-muted transition-colors hover:text-foreground"
           >
             {expanded ? "Recolher" : "Ver Todas"}
             {expanded ? (
@@ -43,7 +45,7 @@ export function AccountCompletedActivitiesPanel({
           </button>
         )}
       </div>
-      <div className="divide-y divide-border">
+      <div id={contentId} className="divide-y divide-border">
         {activities.length === 0 ? (
           <p className="px-4 py-4 text-sm text-muted">
             Nenhuma ação concluída.

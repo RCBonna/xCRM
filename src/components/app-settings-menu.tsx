@@ -3,6 +3,7 @@
 import {
   BriefcaseBusiness,
   Building2,
+  CalendarDays,
   DatabaseZap,
   Menu,
   Monitor,
@@ -69,6 +70,20 @@ export function AppSettingsMenu({
     };
   }, []);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   function updateTheme(value: ThemeValue) {
     setTheme(value);
   }
@@ -78,6 +93,7 @@ export function AppSettingsMenu({
       <button
         type="button"
         aria-expanded={isOpen}
+        aria-controls="app-settings-menu-panel"
         aria-label="Abrir Menu"
         title="Menu"
         onClick={() => setIsOpen((current) => !current)}
@@ -87,7 +103,10 @@ export function AppSettingsMenu({
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 top-14 z-20 w-72 rounded-md border border-border bg-surface shadow-lg shadow-black/10">
+        <div
+          id="app-settings-menu-panel"
+          className="absolute left-0 top-14 z-20 w-72 rounded-md border border-border bg-surface shadow-lg shadow-black/10 sm:left-auto sm:right-0"
+        >
           <div className="border-b border-border px-3 py-3">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
               Tema
@@ -105,7 +124,7 @@ export function AppSettingsMenu({
                     aria-pressed={isActive}
                     onClick={() => updateTheme(item.value)}
                     className={[
-                      "inline-flex h-10 items-center justify-center rounded text-muted transition-colors hover:bg-surface-muted hover:text-foreground",
+                      "inline-flex h-11 items-center justify-center rounded text-muted transition-colors hover:bg-surface-muted hover:text-foreground",
                       isActive ? "bg-primary text-primary-foreground" : "",
                     ].join(" ")}
                   >
@@ -117,12 +136,23 @@ export function AppSettingsMenu({
             </div>
           </div>
 
+          <div className="border-b border-border p-2">
+            <Link
+              href="/agenda"
+              onClick={() => setIsOpen(false)}
+              className="flex h-11 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
+            >
+              <CalendarDays size={16} className="text-primary" aria-hidden />
+              Agenda de Atividades
+            </Link>
+          </div>
+
           {canManageCompanySettings ? (
             <div className="p-2">
               <Link
                 href="/settings/company"
                 onClick={() => setIsOpen(false)}
-                className="flex h-10 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
+                className="flex h-11 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
               >
                 <Building2 size={16} className="text-primary" aria-hidden />
                 Configurações da Empresa
@@ -130,7 +160,7 @@ export function AppSettingsMenu({
               <Link
                 href="/accounts"
                 onClick={() => setIsOpen(false)}
-                className="mt-1 flex h-10 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
+                className="mt-1 flex h-11 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
               >
                 <BriefcaseBusiness
                   size={16}
@@ -142,7 +172,7 @@ export function AppSettingsMenu({
               <Link
                 href="/settings/team"
                 onClick={() => setIsOpen(false)}
-                className="mt-1 flex h-10 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
+                className="mt-1 flex h-11 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
               >
                 <UsersRound size={16} className="text-primary" aria-hidden />
                 Equipes e Usuários
@@ -151,7 +181,7 @@ export function AppSettingsMenu({
                 <Link
                   href="/imports"
                   onClick={() => setIsOpen(false)}
-                  className="mt-1 flex h-10 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
+                  className="mt-1 flex h-11 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
                 >
                   <DatabaseZap
                     size={16}

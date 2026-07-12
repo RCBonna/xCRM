@@ -1,9 +1,0 @@
-{
-  "spreadsheetImportPath": "C:\\Users\\rcbon\\OneDrive\\Apps\\Importar\\xCRM",
-  "allowedExtensions": [".xlsx", ".csv"],
-  "singleActiveImportPerTenant": true,
-  "aiAssistedNormalization": {
-    "enabled": true,
-    "mode": "heuristic-until-provider-configured"
-  }
-}

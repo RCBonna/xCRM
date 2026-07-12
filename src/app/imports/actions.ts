@@ -6,7 +6,10 @@ import { redirect } from "next/navigation";
 import type { JobStatus, Prisma } from "@/generated/prisma/client";
 import { getAppUser } from "@/lib/auth";
 import { normalizeSpreadsheetRow } from "@/lib/imports/normalizer";
-import { getImportFile, readSpreadsheetRows } from "@/lib/imports/spreadsheet";
+import {
+  getUploadedFileMetadata,
+  readUploadedSpreadsheetRows,
+} from "@/lib/imports/spreadsheet";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -366,6 +369,23 @@ async function importReviewedRow({
           occurredAt: history.occurredAt ? new Date(history.occurredAt) : undefined,
         },
       });
+
+      if (history.body) {
+        await tx.activity.create({
+          data: {
+            tenantId: appUser.tenantId,
+            accountId: account.id,
+            ownerUserId: assignedOwnerUserId ?? appUser.id,
+            type: "FOLLOW_UP",
+            title: history.body,
+            description: history.body,
+            status: "COMPLETED",
+            completedAt: history.occurredAt ? new Date(history.occurredAt) : new Date(),
+            scheduledAt: history.occurredAt ? new Date(history.occurredAt) : new Date(),
+            priority: 2,
+          },
+        });
+      }
     }
 
     for (const action of reviewJson.futureActions) {
@@ -375,7 +395,7 @@ async function importReviewedRow({
           accountId: account.id,
           ownerUserId: assignedOwnerUserId ?? appUser.id,
           type: "FOLLOW_UP",
-          title: action.title || "Próxima Ação Importada",
+          title: action.description || action.title || "Próxima Ação Importada",
           description: action.description,
           scheduledAt: action.scheduledAt ? new Date(action.scheduledAt) : null,
           priority: action.priority,
@@ -499,10 +519,31 @@ function getReviewRowFromForm(formData: FormData): ReviewRowJson {
 
 export async function startImportBatchAction(formData: FormData) {
   const appUser = await getOwnerUser();
-  const fileName = normalizeOptionalText(formData.get("fileName"));
+  const uploadedFile = formData.get("file");
+  const sourcePath = normalizeOptionalText(formData.get("sourcePath"));
 
-  if (!fileName) {
+  if (
+    !uploadedFile ||
+    typeof uploadedFile === "string" ||
+    uploadedFile.size === 0
+  ) {
     redirect("/imports?error=Selecione%20um%20arquivo%20para%20importar.");
+  }
+
+  const fileMetadata = getUploadedFileMetadata(uploadedFile);
+
+  if (!fileMetadata) {
+    redirect(
+      "/imports?error=Selecione%20uma%20planilha%20nos%20formatos%20XLSX%20ou%20CSV.",
+    );
+  }
+
+  if (uploadedFile.size > 10 * 1024 * 1024) {
+    redirect("/imports?error=O%20arquivo%20deve%20ter%20no%20maximo%2010%20MB.");
+  }
+
+  if (sourcePath && sourcePath.length > 1000) {
+    redirect("/imports?error=O%20Caminho%20de%20Origem%20deve%20ter%20no%20maximo%201000%20caracteres.");
   }
 
   const activeImport = await prisma.importBatch.findFirst({
@@ -525,13 +566,11 @@ export async function startImportBatchAction(formData: FormData) {
     );
   }
 
-  const file = await getImportFile(fileName);
-
-  if (!file) {
-    redirect("/imports?error=Arquivo%20nao%20encontrado%20na%20pasta%20configurada.");
-  }
-
-  const rows = await readSpreadsheetRows(file);
+  const file = {
+    ...fileMetadata,
+    content: Buffer.from(await uploadedFile.arrayBuffer()),
+  };
+  const rows = await readUploadedSpreadsheetRows(file);
 
   if (rows.length === 0) {
     redirect("/imports?error=O%20arquivo%20selecionado%20nao%20possui%20linhas%20validas.");
@@ -542,6 +581,7 @@ export async function startImportBatchAction(formData: FormData) {
       tenantId: appUser.tenantId,
       uploadedByUserId: appUser.id,
       fileName: file.fileName,
+      sourcePath,
       sourceType: file.extension.replace(".", "").toUpperCase(),
       status: "REVIEWING",
       totalRows: rows.length,

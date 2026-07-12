@@ -11,7 +11,7 @@ export function canSeeWholeTenant(role: string) {
   return ["OWNER", "ADMIN"].includes(role);
 }
 
-export async function getVisibleAccountOwnerIds(appUser: AppUserForVisibility) {
+export async function getVisibleWorkOwnerIds(appUser: AppUserForVisibility) {
   if (canSeeWholeTenant(appUser.role)) {
     return null;
   }
@@ -35,6 +35,26 @@ export async function getVisibleAccountOwnerIds(appUser: AppUserForVisibility) {
   return Array.from(
     new Set([appUser.id, ...teamMembers.map((member) => member.userId)]),
   );
+}
+
+export async function getVisibleAccountOwnerIds(appUser: AppUserForVisibility) {
+  return getVisibleWorkOwnerIds(appUser);
+}
+
+export async function getActivityVisibilityWhere(
+  appUser: AppUserForVisibility,
+): Promise<Prisma.ActivityWhereInput> {
+  const ownerIds = await getVisibleWorkOwnerIds(appUser);
+
+  if (!ownerIds) {
+    return {};
+  }
+
+  return {
+    ownerUserId: {
+      in: ownerIds,
+    },
+  };
 }
 
 export async function getAccountVisibilityWhere(

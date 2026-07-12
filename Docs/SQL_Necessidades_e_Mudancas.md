@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-07-02 18:14:31 -03:00
+Ultima modificacao: 2026-07-12 19:57:15 -03:00
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -1034,3 +1034,101 @@ where status = 'PENDING'
 Resultado:
 
 - 1 registro atualizado.
+
+## 2026-07-12 07:02:21 -03:00 - RLS para Platform Admin e Notificacoes
+
+Status: Migration aplicada e validada no banco
+
+Objetivo:
+
+- Corrigir alerta de seguranca `RLS Disabled in Public` para `public.platform_admins` e `public.notifications`.
+- Impedir acesso direto via PostgREST a registros de administradores da plataforma e notificacoes sem isolamento por usuario autenticado.
+- Manter criacao, alteracao e exclusao dessas tabelas sob responsabilidade do backend/Prisma neste momento.
+
+Arquivo criado:
+
+```text
+prisma/20260712070221_enable_rls_platform_admin_notifications.sql
+```
+
+Decisao:
+
+- `public.platform_admins` passa a ter RLS habilitado com policy apenas de leitura do proprio administrador ativo, vinculado por `auth_user_id = auth.uid()`.
+- `public.notifications` passa a ter RLS habilitado com policy apenas de leitura para o destinatario operacional ativo ou para o `Platform Admin` ativo destinatario.
+- Nenhuma policy de `insert`, `update` ou `delete` foi criada para o papel `authenticated`; assim, acessos diretos pelo PostgREST ficam restritos a leitura autorizada.
+- As Server Actions continuam executando as mutacoes pelo backend usando Prisma.
+
+Aplicacao:
+
+- A tentativa via `npx prisma db execute --file prisma/20260712070221_enable_rls_platform_admin_notifications.sql` ficou em timeout.
+- A migration foi aplicada com script Node usando `pg`, `DIRECT_URL` e SSL compativel com Supabase.
+- Consulta ao catalogo confirmou `relrowsecurity = true` em `public.platform_admins` e `public.notifications`.
+- Consulta a `pg_policies` confirmou as policies `platform_admin_self_select` e `notification_recipient_select` para o papel `authenticated`.
+
+Comandos SQL documentados:
+
+```sql
+alter table public.platform_admins enable row level security;
+alter table public.notifications enable row level security;
+
+drop policy if exists platform_admin_self_select on public.platform_admins;
+drop policy if exists notification_recipient_select on public.notifications;
+
+create policy platform_admin_self_select
+on public.platform_admins
+for select
+to authenticated
+using (
+  auth_user_id = (select auth.uid())
+  and status = 'ACTIVE'::public."RecordStatus"
+);
+
+create policy notification_recipient_select
+on public.notifications
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.users u
+    where u.id = notifications.recipient_user_id
+      and u.auth_user_id = (select auth.uid())
+      and u.status = 'ACTIVE'::public."RecordStatus"
+  )
+  or exists (
+    select 1
+    from public.platform_admins pa
+    where pa.id = notifications.recipient_platform_admin_id
+      and pa.auth_user_id = (select auth.uid())
+      and pa.status = 'ACTIVE'::public."RecordStatus"
+  )
+);
+```
+
+## 2026-07-12 19:25:00 -03:00 - Caminho de Origem da Carga de Importacao
+
+Status: Migration aplicada e validada no Supabase remoto
+
+Objetivo:
+
+- Registrar o caminho de origem informado manualmente pelo Owner ao enviar uma planilha.
+- Preservar o dado sem depender de acesso do navegador ao caminho absoluto local, que e bloqueado por seguranca.
+
+Arquivo criado:
+
+```text
+prisma/20260712192500_add_import_source_path.sql
+```
+
+Comando SQL:
+
+```sql
+alter table public.imports
+  add column if not exists source_path text;
+```
+
+Decisao:
+
+- A coluna e opcional, pois o upload continua valido sem caminho informado.
+- O valor vem do campo `Caminho de Origem` preenchido pelo Owner; ele nao e deduzido do navegador.
+- A aplicacao foi realizada com `pg`, usando `DIRECT_URL` e SSL compativel com Supabase; uma consulta a `information_schema.columns` confirmou `public.imports.source_path`.

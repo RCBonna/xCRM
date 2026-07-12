@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-07-02 18:50:59 -03:00
+Ultima modificacao: 2026-07-12 20:09:52 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -159,17 +159,41 @@ Ele mostra:
 
 - Nome da Empresa atual.
 - Nome, e-mail e perfil do usuario logado.
+- Uma area superior de prioridade operacional com a acao recomendada para o momento.
 - Metricas reais do tenant.
 - Etapas do Funil Padrao.
-- Proximas Acoes sugeridas.
+- Acessos Rapidos conforme a permissao do usuario.
 - Botao de Sair.
 - Seletor de temas.
 
 No cabecalho do dashboard, o bloco do usuario logado, o seletor de temas e o botao de sair usam a mesma altura visual.
 
-O dashboard concentra o acesso a cadastros e configurações no menu superior.
+O dashboard mostra `Acessos Rápidos` para Base Comercial, Importacao de Dados,
+Equipes e Usuarios e Configuracoes da Empresa, respeitando as permissoes do
+perfil. O menu superior permanece disponivel para temas e opcoes secundarias.
 
-O Dashboard possui a seção `Atividades Pendentes` no final da tela, em um painel com `Expandir` e `Recolher`. Ali o Owner vê tarefas abertas do tenant atual. A tarefa automática `Revisar configurações iniciais do xCRM`, criada no onboarding com Data e Hora, aparece nessa seção como `Atividade Geral` e pode ser encerrada pelo botão `Concluir`.
+Nas telas autenticadas do tenant, o cabeçalho mostra o logo inteiro da
+Scientiam à esquerda e, à direita, a Organização do Tenant, o título da tela e
+o subtítulo operacional em linhas compactas. O título da tela continua sendo a
+linha de maior destaque.
+
+No topo do conteudo, o Dashboard mostra uma prioridade operacional. Essa area
+usa os dados atuais do tenant para sugerir a proxima acao: concluir atividades
+pendentes, cadastrar a primeira Empresa/Prospect, adicionar contatos, abrir a
+importacao ou acompanhar a Base Comercial. O botao da area leva diretamente para
+o ponto indicado.
+
+Os cards de metricas do topo mostram icone maior, titulo, valor e descricao em
+blocos separados para facilitar a leitura. Quando houver atividades pendentes, o card
+`Atividades Pendentes` recebe destaque visual discreto.
+
+O Dashboard possui a secao `Atividades Pendentes` no final da tela. Quando ha
+atividades, o painel oferece `Expandir` e `Recolher` e antecipa a proxima tarefa
+quando estiver fechado. O botao `Ver Atividades`, no bloco de prioridade, leva
+ate essa secao e ja abre a lista de atividades. Quando nao ha pendencias, mostra
+um estado vazio direto, sem oferecer uma expansao sem conteudo. A tarefa
+automatica criada na configuracao inicial aparece como `Atividade Geral` e pode
+ser encerrada pelo botao `Concluir`.
 
 Quando uma atividade estiver vinculada a uma Empresa/Prospect, a mesma seção mostra o nome da Empresa/Prospect como link para abrir o detalhe.
 
@@ -262,7 +286,7 @@ Na base comercial, o usuario pode:
 - Limpar filtros para voltar a lista geral.
 - Ver o Ultimo Historico registrado.
 - Ver a Proxima Acao pendente quando houver.
-- Abrir o detalhe de uma Empresa/Prospect pelo nome do registro.
+- Abrir o detalhe de uma Empresa/Prospect clicando em qualquer ponto do card do registro; o card fica iluminado quando o mouse passa por cima.
 
 Na tela de detalhe da Empresa/Prospect, o usuario pode:
 
@@ -275,21 +299,21 @@ Na tela de detalhe da Empresa/Prospect, o usuario pode:
 - Abrir ou recolher o bloco `Dados do Cliente`, que fica recolhido por padrão para preservar foco do vendedor.
 - Preencher CEP, Endereço, Número, Complemento e Bairro.
 - Buscar endereço pelo CEP usando o botão `Buscar`; quando encontrado, o sistema preenche Endereço, Bairro, Cidade e UF.
-- Ver Contato Principal.
-- Ver Contatos cadastrados.
-- Abrir e recolher contatos adicionais quando houver mais de um contato cadastrado.
-- Criar Novo Contato com Nome, Função/Cargo, E-mail e Telefone.
+- Ver Contato Principal no resumo superior com Nome, Função/Cargo, E-mail e Telefone quando estiverem cadastrados.
+- Usar `Gerenciar Contatos` para ir ao quadro de Contatos e expandir todos os contatos cadastrados.
+- Abrir e recolher o quadro `Contatos`, que inclui o Contato Principal e os demais contatos cadastrados.
+- Usar `Adicionar Contato` para abrir o formulário de Novo Contato somente quando for cadastrar um contato.
 - Salvar Alterações de dados básicos ou de um contato existente apenas depois de modificar alguma informação.
 - Tornar outro contato o Contato Principal.
 - Excluir contatos que não estejam marcados como Contato Principal.
 - Identificar o Contato Principal pela faixa de ações do próprio contato.
-- Ver Oportunidades registradas para a Empresa/Prospect.
-- Criar uma Nova Oportunidade com Título, Contato opcional, Etapa, Valor Estimado e Previsão de Fechamento.
+- Abrir e recolher o quadro `Oportunidades` para ver as oportunidades registradas para a Empresa/Prospect.
+- Usar `Adicionar Oportunidade` para abrir o formulário de Nova Oportunidade somente quando for cadastrar uma oportunidade, com Título, Contato opcional, Etapa, Valor Estimado e Previsão de Fechamento.
 - O campo Valor Estimado da Nova Oportunidade formata o valor em Real ao sair do campo ou enviar, por exemplo `1000000` vira `R$ 1.000.000,00`.
 - Mover uma Oportunidade para outra Etapa do Funil.
 - Ver o ultimo registro do Historico em formato compacto e expandir os demais registros quando necessario.
-- Ver Proximas Acoes pendentes.
-- Criar uma Nova Acao pendente com descricao e Data e Hora opcionais.
+- Abrir e recolher o quadro `Próximas Ações` para ver as ações pendentes.
+- Usar `Adicionar Ação` para abrir o formulário de Nova Ação somente quando for cadastrar uma ação pendente, com descrição e Data e Hora opcionais.
 - Editar descricao, Data e Hora de uma Acao Pendente antes de concluir ou excluir.
 - Os minutos em Data e Hora de Ações ficam restritos a `00`, `15`, `30` e `45`.
 - Concluir uma Acao pendente para move-la para Acoes Concluidas.
@@ -365,7 +389,11 @@ Quando um tenant está suspenso:
 
 ## Importação Temporária de Dados
 
-A tela `/imports` permite ao Owner carregar uma planilha da pasta parametrizada do sistema para um ambiente temporario antes de gravar dados na base definitiva.
+A tela `/imports` permite ao Owner escolher uma planilha XLSX ou CSV em qualquer disco ou pasta acessivel no seu dispositivo e carregá-la para um ambiente temporario antes de gravar dados na base definitiva. O arquivo nao precisa estar em uma pasta predefinida e deve ter no maximo 10 MB.
+
+Antes de carregar, o Owner pode preencher `Caminho de Origem` para registrar o local completo do arquivo. Esse preenchimento e opcional: por seguranca, o navegador nao disponibiliza o caminho absoluto automaticamente.
+
+Quando houver uma carga ativa, `Descartar Carga` fica na mesma faixa do resumo, ao lado da metrica `Linhas`. No painel lateral, use `Buscar Prospect` para localizar linhas pelo Nome Fantasia/Empresa ou Razao Social; a busca funciona junto com o filtro de status.
 
 Regras atuais:
 
@@ -398,11 +426,19 @@ Regras atuais:
 - Ao escolher `Descartar Carga`, o sistema mostra uma confirmacao antes de descartar.
 - Nao e necessario importar todas as linhas da carga.
 - A importacao definitiva de uma linha pode criar Empresa/Prospect, Contato Principal, Historico Realizado e Proxima Acao.
+- Quando o Historico Realizado importado tiver texto, ele tambem fica registrado como atividade concluida do prospect, preservando o que ja aconteceu no acompanhamento.
+- Quando a Proxima Acao importada tiver descricao, essa descricao aparece como titulo principal da atividade criada.
 - Empresas/Prospects criados pela importacao definitiva recebem `Origem` como `Importado`.
 - A sugestao automatica apenas organiza os dados; a decisao final e sempre do Owner.
 
 Observacoes de uso:
 
+- Na tela de detalhe da Empresa/Prospect, a faixa superior mostra a próxima decisão comercial: Status, localização, próxima ação ou ausência de pendência, Contato Principal, Ações Pendentes e Oportunidades.
+- O botão principal da faixa leva para `Próximas Ações` quando já existe ação pendente; quando não existe, direciona o usuário para a área de contatos/ações para continuar o acompanhamento.
+- O painel `Contatos` mostra o Contato Principal no próprio formulário de edição, sem repetir um resumo separado.
+- A inclusão de contato fica recolhida em `Adicionar Contato` e pode ser aberta quando o usuário quiser cadastrar outra pessoa.
+- Os botões de salvamento indicam o escopo da alteração, como `Salvar Dados Básicos`, `Salvar Contato` e `Salvar Ação`.
+- Excluir contato ou ação pendente exige confirmação em janela antes de enviar a exclusão.
 - A Observacao Comercial fica disponivel na tela de detalhe da Empresa/Prospect.
 - Apenas um contato pode ficar marcado como Contato Principal por Empresa/Prospect.
 - O Contato Principal não pode ser excluído antes de escolher outro contato como principal.
@@ -463,6 +499,26 @@ Versao atual:
 - `2026-07-02 18:14:31`
 - `2026-07-02 18:47:32`
 - `2026-07-02 18:50:59`
+- `2026-07-03 10:50:37`
+- `2026-07-03 15:52:09`
+- `2026-07-03 15:59:39`
+- `2026-07-09 21:15:15`
+- `2026-07-09 22:09:19`
+- `2026-07-09 22:10:44`
+- `2026-07-09 22:14:24`
+- `2026-07-09 22:16:36`
+- `2026-07-12 07:02:21`
+- `2026-07-12 07:07:19`
+- `2026-07-12 07:50:10`
+- `2026-07-12 09:15:43`
+- `2026-07-12 15:28:57`
+- `2026-07-12 15:53:06`
+- `2026-07-12 16:19:34`
+- `2026-07-12 16:32:32`
+- `2026-07-12 16:48:07`
+- `2026-07-12 16:58:21`
+- `2026-07-12 17:11:55`
+- `2026-07-12 17:35:02`
 
 ## Fluxos ainda nao implementados
 
@@ -477,3 +533,13 @@ Versao atual:
 O login, o cadastro de acesso e o onboarding inicial ja existem.
 
 Ainda falta validar manualmente o fluxo completo com um usuario real pela interface e depois evoluir permissao por papel, selecao de tenant e telas operacionais.
+
+## Agenda de Atividades
+
+A opcao `Agenda de Atividades` fica disponivel no menu superior. Ela concentra as atividades comerciais em visoes `Dia`, `Semana`, `Lista` e `Mes`, iniciando pela Semana.
+
+- Use a Data de Referencia e as setas de periodo para navegar pela agenda; `Hoje` retorna ao periodo atual.
+- Use os filtros de Responsavel e Status para restringir os itens exibidos. Atividades concluidas ficam ocultas inicialmente e podem ser abertas pelo filtro `Concluidas`.
+- Atividades sem Data e Hora permanecem no quadro `Sem Agendamento`; atividades pendentes de periodos anteriores aparecem no quadro `Atrasadas`.
+- Clique em uma atividade para abrir a edicao no proprio painel. E possivel ajustar titulo, tipo, Data e Hora, prioridade e descricao, ou concluir uma pendencia.
+- O Proprietario e o Administrador veem as atividades de toda a organizacao. O Lider ve as proprias atividades e as dos membros das equipes que lidera. Vendedor e Assistente veem somente as atividades sob sua responsabilidade.

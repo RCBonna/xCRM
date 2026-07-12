@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { getAppUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getActivityVisibilityWhere } from "@/lib/visibility";
 
 function encodeMessage(message: string) {
   return encodeURIComponent(message);
@@ -33,11 +34,14 @@ export async function completeDashboardActivityAction(formData: FormData) {
     redirect("/dashboard?error=Atividade%20nao%20informada.");
   }
 
+  const activityVisibilityWhere = await getActivityVisibilityWhere(appUser);
+
   const activity = await prisma.activity.findFirst({
     where: {
       id: activityId,
       tenantId: appUser.tenantId,
       status: "PENDING",
+      ...activityVisibilityWhere,
     },
     select: {
       id: true,
@@ -62,5 +66,7 @@ export async function completeDashboardActivityAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard");
-  redirect(`/dashboard?message=${encodeMessage("Atividade concluída.")}`);
+  redirect(
+    `/dashboard?message=${encodeMessage(`Atividade "${activity.title}" concluída.`)}`,
+  );
 }

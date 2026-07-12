@@ -1,13 +1,10 @@
-import { readFile, readdir } from "fs/promises";
 import path from "path";
 import { readSheet } from "read-excel-file/node";
 
-import { getImportSettings } from "@/lib/imports/settings";
-
-export type ImportFileOption = {
+export type UploadedImportFile = {
   fileName: string;
   extension: string;
-  absolutePath: string;
+  content: Buffer;
 };
 
 export type RawSpreadsheetRow = {
@@ -33,41 +30,6 @@ const expectedHeaderTerms = [
   "acao",
   "ação",
 ];
-
-export async function listImportFiles() {
-  const settings = await getImportSettings();
-  const allowedExtensions = new Set(
-    settings.allowedExtensions.map((extension) => extension.toLowerCase()),
-  );
-
-  try {
-    const entries = await readdir(settings.spreadsheetImportPath, {
-      withFileTypes: true,
-    });
-
-    return entries
-      .filter((entry) => entry.isFile())
-      .map((entry) => {
-        const extension = path.extname(entry.name).toLowerCase();
-
-        return {
-          fileName: entry.name,
-          extension,
-          absolutePath: path.join(settings.spreadsheetImportPath, entry.name),
-        };
-      })
-      .filter((entry) => allowedExtensions.has(entry.extension))
-      .sort((first, second) => first.fileName.localeCompare(second.fileName));
-  } catch {
-    return [];
-  }
-}
-
-export async function getImportFile(fileName: string) {
-  const files = await listImportFiles();
-
-  return files.find((file) => file.fileName === fileName) ?? null;
-}
 
 function cellToText(value: unknown) {
   if (value instanceof Date) {
@@ -175,9 +137,24 @@ function rowsFromMatrix(matrix: unknown[][]) {
     );
 }
 
-export async function readSpreadsheetRows(file: ImportFileOption) {
+export function getUploadedFileMetadata(file: File): UploadedImportFile | null {
+  const fileName = path.basename(file.name).trim();
+  const extension = path.extname(fileName).toLowerCase();
+
+  if (!fileName || !new Set([".xlsx", ".csv"]).has(extension)) {
+    return null;
+  }
+
+  return {
+    fileName,
+    extension,
+    content: Buffer.alloc(0),
+  };
+}
+
+export async function readUploadedSpreadsheetRows(file: UploadedImportFile) {
   if (file.extension === ".csv") {
-    const content = await readFile(file.absolutePath, "utf8");
+    const content = file.content.toString("utf8");
     const lines = content.split(/\r?\n/).filter((line) => line.trim().length > 0);
     const separator =
       (lines[0]?.match(/;/g)?.length ?? 0) > (lines[0]?.match(/,/g)?.length ?? 0)
@@ -187,7 +164,7 @@ export async function readSpreadsheetRows(file: ImportFileOption) {
     return rowsFromMatrix(lines.map((line) => parseCsvLine(line, separator)));
   }
 
-  const rows = await readSheet(file.absolutePath, 1);
+  const rows = await readSheet(file.content, 1);
 
   return rowsFromMatrix(rows);
 }

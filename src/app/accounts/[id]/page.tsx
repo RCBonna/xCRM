@@ -3,7 +3,6 @@ import {
   BriefcaseBusiness,
   CalendarClock,
   Check,
-  CircleDollarSign,
   LogOut,
   Mail,
   MoveRight,
@@ -31,20 +30,27 @@ import {
 } from "@/app/accounts/actions";
 import { signOutAction } from "@/app/auth/actions";
 import { ActionDateTimeInput } from "@/components/action-date-time-input";
+import { AccountAddPanel } from "@/components/account-add-panel";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { AccountCompletedActivitiesPanel } from "@/components/account-completed-activities-panel";
 import { AccountContactsPanel } from "@/components/account-contacts-panel";
 import { AccountCustomerDataPanel } from "@/components/account-customer-data-panel";
 import { AccountHistoryPanel } from "@/components/account-history-panel";
+import { AccountSectionPanel } from "@/components/account-section-panel";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { CurrencyInput } from "@/components/currency-input";
 import { DirtySubmitButton } from "@/components/dirty-submit-button";
+import { TenantBrand } from "@/components/tenant-brand";
 import { UppercaseInput } from "@/components/uppercase-input";
 import { UserIdentityCard } from "@/components/user-identity-card";
 import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { BRAZILIAN_STATES } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getAccountVisibilityWhere } from "@/lib/visibility";
+import {
+  getAccountVisibilityWhere,
+  getActivityVisibilityWhere,
+} from "@/lib/visibility";
 
 const dateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
@@ -86,6 +92,14 @@ const opportunityStatusLabels: Record<string, string> = {
   WON: "Ganha",
   LOST: "Perdida",
   ARCHIVED: "Arquivada",
+};
+
+const roleLabels: Record<string, string> = {
+  OWNER: "Proprietário",
+  ADMIN: "Administrador",
+  MANAGER: "Líder",
+  SELLER: "Vendedor",
+  ASSISTANT: "Assistente",
 };
 
 const interactionSummaryLabels: Record<string, string> = {
@@ -152,7 +166,10 @@ export default async function AccountDetailPage({
 
   const { id } = await params;
   const feedback = await searchParams;
-  const visibilityWhere = await getAccountVisibilityWhere(appUser);
+  const [visibilityWhere, activityVisibilityWhere] = await Promise.all([
+    getAccountVisibilityWhere(appUser),
+    getActivityVisibilityWhere(appUser),
+  ]);
   const [account, defaultPipeline, unreadNotificationsCount] = await Promise.all([
     prisma.account.findFirst({
       where: {
@@ -191,6 +208,7 @@ export default async function AccountDetailPage({
           },
         },
         activities: {
+          where: activityVisibilityWhere,
           orderBy: [
             {
               scheduledAt: "asc",
@@ -245,7 +263,7 @@ export default async function AccountDetailPage({
 
   const userIdentity = appUser.name || user.email || "Usuário autenticado";
   const userEmail = appUser.email || user.email || "E-mail não informado";
-  const userRole = appUser.role.toLowerCase();
+  const userRole = roleLabels[appUser.role] ?? appUser.role;
   const canOpenCompanySettings = canManageCompanySettings(appUser.role);
   const canImportData = appUser.role === "OWNER";
   const primaryContact =
@@ -267,8 +285,31 @@ export default async function AccountDetailPage({
       ? dateTimeFormatter.format(activity.completedAt)
       : "Sem data de conclusão",
   }));
-  const visibleContacts = account.contacts.slice(0, 1);
-  const extraContacts = account.contacts.slice(1);
+  const nextPendingActivity = pendingActivities[0];
+  const nextActionLabel = nextPendingActivity
+    ? nextPendingActivity.scheduledAt
+      ? dateTimeFormatter.format(nextPendingActivity.scheduledAt)
+      : "Sem Data e Hora"
+    : "Nenhuma Ação Pendente";
+  const primaryContactLabel = primaryContact
+    ? primaryContact.name
+    : "Contato Principal não informado";
+  const primaryContactDetails = primaryContact
+    ? [
+        {
+          icon: BriefcaseBusiness,
+          label: primaryContact.title ?? "Função/Cargo não informado",
+        },
+        {
+          icon: Mail,
+          label: primaryContact.email ?? "E-mail não informado",
+        },
+        {
+          icon: Phone,
+          label: primaryContact.phone ?? "Telefone não informado",
+        },
+      ]
+    : [];
   const pipelineStages = defaultPipeline?.stages ?? [];
   const historyInteractions = account.interactions.map((interaction) => ({
     id: interaction.id,
@@ -279,8 +320,34 @@ export default async function AccountDetailPage({
       : null,
     body: interaction.body,
   }));
-  const renderContactEditor = (contact: (typeof account.contacts)[number]) => (
+  const renderContactEditor = (contact: (typeof account.contacts)[number]) => {
+    const deleteContactFormId = `delete-contact-${contact.id}`;
+
+    return (
     <div key={contact.id} className="grid gap-3 px-4 py-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            {contact.isPrimary ? (
+              <Star size={15} className="text-primary" aria-hidden />
+            ) : (
+              <UserPlus size={15} className="text-primary" aria-hidden />
+            )}
+            {contact.isPrimary ? "Contato Principal" : "Contato"}
+          </h3>
+          <p className="mt-1 text-sm leading-5 text-muted">
+            {contact.isPrimary
+              ? "Pessoa de referência para este Prospect."
+              : "Contato vinculado a este Prospect."}
+          </p>
+        </div>
+        {contact.isPrimary ? (
+          <span className="inline-flex h-8 w-fit items-center gap-2 rounded-md bg-surface-muted px-3 text-xs font-medium text-primary">
+            <Star size={13} aria-hidden />
+            Principal
+          </span>
+        ) : null}
+      </div>
       <form action={updateAccountContactAction} className="grid gap-3">
         <input type="hidden" name="accountId" value={account.id} />
         <input type="hidden" name="contactId" value={contact.id} />
@@ -326,37 +393,39 @@ export default async function AccountDetailPage({
             />
           </label>
         </div>
-        <DirtySubmitButton />
+        <DirtySubmitButton label="Salvar Contato" />
       </form>
       {contact.isPrimary ? (
-        <div className="grid gap-2 sm:grid-cols-2">
-          <span className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-surface-muted px-3 text-xs font-medium text-primary">
-            <Star size={14} aria-hidden />
-            Principal
-          </span>
-        </div>
+        null
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">
           <form action={setPrimaryAccountContactAction}>
             <input type="hidden" name="accountId" value={account.id} />
             <input type="hidden" name="contactId" value={contact.id} />
-            <button className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-surface-muted px-3 text-xs font-medium text-muted transition-colors hover:text-foreground">
+            <button className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-surface-muted px-3 text-sm font-medium text-muted transition-colors hover:text-foreground">
               <Star size={14} aria-hidden />
               Tornar Principal
             </button>
           </form>
-          <form action={deleteAccountContactAction}>
+          <form id={deleteContactFormId} action={deleteAccountContactAction}>
             <input type="hidden" name="accountId" value={account.id} />
             <input type="hidden" name="contactId" value={contact.id} />
-            <button className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-danger px-3 text-xs font-medium text-danger transition-colors hover:bg-danger hover:text-background">
+            <ConfirmSubmitButton
+              formId={deleteContactFormId}
+              title="Excluir Contato"
+              message={`Deseja excluir ${contact.name}? Esta ação remove o contato deste Prospect e não pode ser desfeita.`}
+              confirmLabel="Excluir Contato"
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-danger px-3 text-sm font-medium text-danger transition-colors hover:bg-danger hover:text-background"
+            >
               <Trash2 size={14} aria-hidden />
               Excluir
-            </button>
+            </ConfirmSubmitButton>
           </form>
         </div>
       )}
     </div>
-  );
+    );
+  };
   const newContactForm = (
     <form action={createAccountContactAction} className="grid gap-3 px-4 py-4">
       <input type="hidden" name="accountId" value={account.id} />
@@ -421,19 +490,14 @@ export default async function AccountDetailPage({
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-[0.12em] text-muted">
-              {appUser.tenant.name}
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">
-              {account.name}
-            </h1>
-            <p className="mt-2 text-sm leading-6 text-muted">
-              {accountStatusLabels[account.status]} -{" "}
-              {[account.city, account.state].filter(Boolean).join(" - ") ||
-                "Localização não informada"}
-            </p>
-          </div>
+          <TenantBrand
+            organizationName={appUser.tenant.name}
+            title={account.name}
+            subtitle={`${accountStatusLabels[account.status]} - ${
+              [account.city, account.state].filter(Boolean).join(" - ") ||
+              "Localização não informada"
+            }`}
+          />
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <UserIdentityCard
               name={userIdentity}
@@ -466,6 +530,8 @@ export default async function AccountDetailPage({
           <div className="md:flex md:justify-end">
             {(feedback.error || feedback.message) && (
               <div
+                role={feedback.error ? "alert" : "status"}
+                aria-live={feedback.error ? "assertive" : "polite"}
                 className={[
                   "w-full rounded-md border px-3 py-2 text-sm md:max-w-xl",
                   feedback.error
@@ -478,6 +544,84 @@ export default async function AccountDetailPage({
             )}
           </div>
         </div>
+
+        <section className="rounded-md border border-border bg-surface">
+          <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded bg-surface-muted px-2.5 py-1 text-xs font-semibold text-primary">
+                  {accountStatusLabels[account.status]}
+                </span>
+                <span className="rounded bg-surface-muted px-2.5 py-1 text-xs font-medium text-muted">
+                  {account.city || account.state
+                    ? [account.city, account.state].filter(Boolean).join(" - ")
+                    : "Localização não informada"}
+                </span>
+              </div>
+              <h2 className="mt-3 text-lg font-semibold">
+                Próxima decisão comercial
+              </h2>
+              <p className="mt-1 max-w-3xl text-sm leading-6 text-muted">
+                {nextPendingActivity
+                  ? `${nextPendingActivity.title} - ${nextActionLabel}`
+                  : `Sem ação pendente. Contato de referência: ${primaryContactLabel}.`}
+              </p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:min-w-80">
+              <Link
+                href={nextPendingActivity ? "#proximas-acoes" : "#contatos"}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground"
+              >
+                <CalendarClock size={16} aria-hidden />
+                {nextPendingActivity ? "Ver Próxima Ação" : "Criar Ação"}
+              </Link>
+              <Link
+                href="#contatos"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium text-muted transition-colors hover:border-primary hover:text-foreground"
+              >
+                <UserPlus size={16} aria-hidden />
+                Gerenciar Contatos
+              </Link>
+            </div>
+          </div>
+          <div className="grid border-t border-border sm:grid-cols-3">
+            <div className="border-b border-border px-4 py-3 sm:border-b-0 sm:border-r">
+              <p className="text-xs font-medium text-muted">Contato Principal</p>
+              <p className="mt-1 truncate text-sm font-semibold">
+                {primaryContactLabel}
+              </p>
+              {primaryContactDetails.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs leading-5 text-muted">
+                  {primaryContactDetails.map((detail) => {
+                    const DetailIcon = detail.icon;
+
+                    return (
+                      <span
+                        key={detail.label}
+                        className="inline-flex min-w-0 items-center gap-1.5"
+                      >
+                        <DetailIcon size={13} aria-hidden />
+                        <span className="truncate">{detail.label}</span>
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+            <div className="border-b border-border px-4 py-3 sm:border-b-0 sm:border-r">
+              <p className="text-xs font-medium text-muted">Ações Pendentes</p>
+              <p className="mt-1 text-sm font-semibold">
+                {pendingActivities.length}
+              </p>
+            </div>
+            <div className="px-4 py-3">
+              <p className="text-xs font-medium text-muted">Oportunidades</p>
+              <p className="mt-1 text-sm font-semibold">
+                {account.opportunities.length}
+              </p>
+            </div>
+          </div>
+        </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
           <form
@@ -585,63 +729,121 @@ export default async function AccountDetailPage({
                 />
               </label>
 
-              <DirtySubmitButton variant="primary" />
+              <DirtySubmitButton label="Salvar Dados Básicos" variant="primary" />
             </div>
           </form>
 
           <aside className="grid gap-6">
-            <section className="rounded-md border border-border bg-surface">
-              <div className="border-b border-border px-4 py-3">
-                <h2 className="text-base font-semibold">Contato Principal</h2>
-              </div>
-              <div className="px-4 py-4 text-sm text-muted">
-                {primaryContact ? (
-                  <div className="grid gap-2">
-                    <p className="font-medium text-foreground">
-                      {primaryContact.name}
-                    </p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs leading-5">
-                      <span className="inline-flex items-center gap-1.5">
-                        <BriefcaseBusiness size={13} aria-hidden />
-                        {primaryContact.title ?? "Função/Cargo não informado"}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <Mail size={13} aria-hidden />
-                        {primaryContact.email ?? "E-mail não informado"}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <Phone size={13} aria-hidden />
-                        {primaryContact.phone ?? "Telefone não informado"}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <p>Contato Principal ainda não informado.</p>
-                )}
-              </div>
-            </section>
-
             <AccountContactsPanel
+              contactCount={account.contacts.length}
               hasContacts={account.contacts.length > 0}
-              hasExtraContacts={extraContacts.length > 0}
-              extraContacts={extraContacts.map(renderContactEditor)}
               newContactForm={newContactForm}
             >
-              {visibleContacts.map(renderContactEditor)}
+              {account.contacts.map(renderContactEditor)}
             </AccountContactsPanel>
 
-            <section className="rounded-md border border-border bg-surface">
-              <div className="border-b border-border px-4 py-3">
-                <h2 className="flex items-center gap-2 text-base font-semibold">
-                  <CircleDollarSign
-                    size={18}
-                    className="text-primary"
-                    aria-hidden
-                  />
-                  Oportunidades
-                </h2>
-              </div>
-              <div className="divide-y divide-border">
+            <AccountSectionPanel
+              id="oportunidades"
+              title="Oportunidades"
+              icon="opportunities"
+              count={account.opportunities.length}
+              emptyContent={
+                <p className="px-4 py-4 text-sm text-muted">
+                  {account.opportunities.length > 0
+                    ? `${account.opportunities.length} oportunidade${
+                        account.opportunities.length === 1 ? "" : "s"
+                      } cadastrada${
+                        account.opportunities.length === 1 ? "" : "s"
+                      }. Use Ver Oportunidades para editar.`
+                    : "Nenhuma oportunidade registrada."}
+                </p>
+              }
+              actionContent={
+                <AccountAddPanel
+                  buttonLabel="Adicionar Oportunidade"
+                  expandedLabel="Recolher Oportunidade"
+                  contentId="account-new-opportunity-form"
+                >
+                  <form
+                    action={createAccountOpportunityAction}
+                    className="grid gap-3 border-t border-border px-4 py-4"
+                  >
+                    <input type="hidden" name="accountId" value={account.id} />
+                    <h3 className="flex items-center gap-2 text-sm font-semibold">
+                      <Plus size={16} className="text-primary" aria-hidden />
+                      Nova Oportunidade
+                    </h3>
+                    <label className="grid gap-1 text-sm">
+                      <span className="font-medium">Título</span>
+                      <input
+                        required
+                        name="opportunityTitle"
+                        type="text"
+                        className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+                      />
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="grid min-w-0 gap-1 text-sm">
+                        <span className="font-medium">Contato</span>
+                        <select
+                          name="contactId"
+                          defaultValue=""
+                          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                        >
+                          <option value="">Sem contato vinculado</option>
+                          {account.contacts.map((contact) => (
+                            <option key={contact.id} value={contact.id}>
+                              {contact.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="grid min-w-0 gap-1 text-sm">
+                        <span className="font-medium">Etapa</span>
+                        <select
+                          required
+                          name="stageId"
+                          defaultValue={pipelineStages[0]?.id ?? ""}
+                          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                        >
+                          {pipelineStages.map((stage) => (
+                            <option key={stage.id} value={stage.id}>
+                              {stage.position}. {stage.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="grid min-w-0 gap-1 text-sm">
+                        <span className="font-medium">Valor Estimado</span>
+                        <CurrencyInput
+                          name="amountEstimated"
+                          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                        />
+                      </label>
+                      <label className="grid min-w-0 gap-1 text-sm">
+                        <span className="font-medium">
+                          Previsão de Fechamento
+                        </span>
+                        <input
+                          name="expectedCloseDate"
+                          type="date"
+                          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                        />
+                      </label>
+                    </div>
+                    <button
+                      disabled={pipelineStages.length === 0}
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Plus size={16} aria-hidden />
+                      Salvar Oportunidade
+                    </button>
+                  </form>
+                </AccountAddPanel>
+              }
+            >
                 {account.opportunities.length === 0 ? (
                   <p className="px-4 py-4 text-sm text-muted">
                     Nenhuma oportunidade registrada.
@@ -720,106 +922,66 @@ export default async function AccountDetailPage({
                     </div>
                   ))
                 )}
+            </AccountSectionPanel>
 
-                <form
-                  action={createAccountOpportunityAction}
-                  className="grid gap-3 px-4 py-4"
+            <AccountSectionPanel
+              id="proximas-acoes"
+              title="Próximas Ações"
+              icon="actions"
+              count={pendingActivities.length}
+              emptyContent={
+                <p className="px-4 py-4 text-sm text-muted">
+                  {pendingActivities.length > 0
+                    ? `${pendingActivities.length} ação pendente${
+                        pendingActivities.length === 1 ? "" : "s"
+                      }. Use Ver Ações para editar.`
+                    : "Nenhuma ação pendente."}
+                </p>
+              }
+              actionContent={
+                <AccountAddPanel
+                  buttonLabel="Adicionar Ação"
+                  expandedLabel="Recolher Ação"
+                  contentId="account-new-action-form"
                 >
-                  <input type="hidden" name="accountId" value={account.id} />
-                  <h3 className="flex items-center gap-2 text-sm font-semibold">
-                    <Plus size={16} className="text-primary" aria-hidden />
-                    Nova Oportunidade
-                  </h3>
-                  <label className="grid gap-1 text-sm">
-                    <span className="font-medium">Título</span>
-                    <input
-                      required
-                      name="opportunityTitle"
-                      type="text"
-                      className="h-10 rounded-md border border-border bg-background px-3 text-sm"
-                    />
-                  </label>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="grid min-w-0 gap-1 text-sm">
-                      <span className="font-medium">Contato</span>
-                      <select
-                        name="contactId"
-                        defaultValue=""
-                        className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-                      >
-                        <option value="">Sem contato vinculado</option>
-                        {account.contacts.map((contact) => (
-                          <option key={contact.id} value={contact.id}>
-                            {contact.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="grid min-w-0 gap-1 text-sm">
-                      <span className="font-medium">Etapa</span>
-                      <select
-                        required
-                        name="stageId"
-                        defaultValue={pipelineStages[0]?.id ?? ""}
-                        className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-                      >
-                        {pipelineStages.map((stage) => (
-                          <option key={stage.id} value={stage.id}>
-                            {stage.position}. {stage.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="grid min-w-0 gap-1 text-sm">
-                      <span className="font-medium">Valor Estimado</span>
-                      <CurrencyInput
-                        name="amountEstimated"
-                        className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-                      />
-                    </label>
-                    <label className="grid min-w-0 gap-1 text-sm">
-                      <span className="font-medium">
-                        Previsão de Fechamento
-                      </span>
-                      <input
-                        name="expectedCloseDate"
-                        type="date"
-                        className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-                      />
-                    </label>
-                  </div>
-                  <button
-                    disabled={pipelineStages.length === 0}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                  <form
+                    action={createAccountActivityAction}
+                    className="grid gap-3 border-t border-border px-4 py-4"
                   >
-                    <Plus size={16} aria-hidden />
-                    Criar Oportunidade
-                  </button>
-                </form>
-              </div>
-            </section>
-
-            <section className="rounded-md border border-border bg-surface">
-              <div className="border-b border-border px-4 py-3">
-                <h2 className="flex items-center gap-2 text-base font-semibold">
-                  <CalendarClock size={18} className="text-primary" aria-hidden />
-                  Próximas Ações
-                </h2>
-              </div>
-              <div className="divide-y divide-border">
+                    <input type="hidden" name="accountId" value={account.id} />
+                    <label className="grid gap-1 text-sm">
+                      <span className="font-medium">Nova Ação</span>
+                      <input
+                        required
+                        name="nextActionTitle"
+                        type="text"
+                        placeholder="Retornar contato, agendar visita..."
+                        className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+                      />
+                    </label>
+                    <label className="grid gap-1 text-sm">
+                      <span className="font-medium">Data e Hora</span>
+                      <ActionDateTimeInput name="nextActionScheduledAt" />
+                    </label>
+                    <button className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
+                      <Plus size={16} aria-hidden />
+                      Salvar Ação
+                    </button>
+                  </form>
+                </AccountAddPanel>
+              }
+            >
                 <div>
                   {pendingActivities.length === 0 ? (
                     <p className="px-4 py-4 text-sm text-muted">
                       Nenhuma ação pendente.
                     </p>
                   ) : (
-                    pendingActivities.map((activity) => (
-                      <div
-                        key={activity.id}
-                        className="grid gap-3 px-4 py-4 text-sm"
-                      >
+                    pendingActivities.map((activity) => {
+                      const deleteActivityFormId = `delete-activity-${activity.id}`;
+
+                      return (
+                      <div key={activity.id} className="grid gap-3 px-4 py-4 text-sm">
                         <form
                           action={updateAccountActivityAction}
                           className="grid gap-3"
@@ -854,7 +1016,7 @@ export default async function AccountDetailPage({
                                 )}
                               />
                             </label>
-                            <DirtySubmitButton />
+                            <DirtySubmitButton label="Salvar Ação" />
                           </div>
                         </form>
                         <div className="grid gap-2 sm:grid-cols-2">
@@ -871,13 +1033,16 @@ export default async function AccountDetailPage({
                             />
                             <button
                               aria-label={`Concluir Ação ${activity.title}`}
-                              className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-border px-3 text-xs font-medium text-muted transition-colors hover:border-primary hover:text-foreground"
+                              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-border px-3 text-sm font-medium text-muted transition-colors hover:border-primary hover:text-foreground"
                             >
                               <Check size={14} aria-hidden />
                               Concluir
                             </button>
                           </form>
-                          <form action={deleteAccountActivityAction}>
+                          <form
+                            id={deleteActivityFormId}
+                            action={deleteAccountActivityAction}
+                          >
                             <input
                               type="hidden"
                               name="accountId"
@@ -888,47 +1053,24 @@ export default async function AccountDetailPage({
                               name="activityId"
                               value={activity.id}
                             />
-                            <button
-                              aria-label={`Excluir Ação ${activity.title}`}
-                              className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-danger px-3 text-xs font-medium text-danger transition-colors hover:bg-danger hover:text-danger-foreground"
+                            <ConfirmSubmitButton
+                              formId={deleteActivityFormId}
+                              title="Excluir Ação"
+                              message={`Deseja excluir a ação "${activity.title}"? Esta remoção não pode ser desfeita.`}
+                              confirmLabel="Excluir Ação"
+                              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-danger px-3 text-sm font-medium text-danger transition-colors hover:bg-danger hover:text-danger-foreground"
                             >
                               <Trash2 size={14} aria-hidden />
                               Excluir
-                            </button>
+                            </ConfirmSubmitButton>
                           </form>
                         </div>
                       </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
-                <form
-                  action={createAccountActivityAction}
-                  className="grid gap-3 px-4 py-4"
-                >
-                  <input type="hidden" name="accountId" value={account.id} />
-                  <label className="grid gap-1 text-sm">
-                    <span className="font-medium">Nova Ação</span>
-                    <input
-                      required
-                      name="nextActionTitle"
-                      type="text"
-                      placeholder="Retornar contato, agendar visita..."
-                      className="h-10 rounded-md border border-border bg-background px-3 text-sm"
-                    />
-                  </label>
-                  <label className="grid gap-1 text-sm">
-                    <span className="font-medium">Data e Hora</span>
-                    <ActionDateTimeInput
-                      name="nextActionScheduledAt"
-                    />
-                  </label>
-                  <button className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
-                    <Plus size={16} aria-hidden />
-                    Criar Ação
-                  </button>
-                </form>
-              </div>
-            </section>
+            </AccountSectionPanel>
           </aside>
         </section>
 

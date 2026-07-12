@@ -2,6 +2,7 @@ import { AlertTriangle, LogOut, Mail, Phone, UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/app/auth/actions";
+import { TenantBrand } from "@/components/tenant-brand";
 import {
   getAppUser,
   getDefaultRedirectPath,
@@ -45,13 +46,16 @@ export default async function TenantSuspendedPage() {
       <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col justify-center px-4 py-8 sm:px-6">
         <section className="rounded-md border border-border bg-surface">
           <div className="border-b border-border px-5 py-4">
-            <p className="text-sm font-medium uppercase tracking-[0.12em] text-muted">
-              {appUser.tenant.name}
-            </p>
-            <h1 className="mt-2 flex items-center gap-2 text-2xl font-semibold tracking-normal">
-              <AlertTriangle size={24} className="text-danger" aria-hidden />
-              Acesso Temporariamente Suspenso
-            </h1>
+            <TenantBrand
+              organizationName={appUser.tenant.name}
+              title={
+                <>
+                  <AlertTriangle size={24} className="text-danger" aria-hidden />
+                  Acesso Temporariamente Suspenso
+                </>
+              }
+              subtitle="Entre em contato com o responsável pela organização ou com o suporte."
+            />
           </div>
 
           <div className="grid gap-5 p-5">

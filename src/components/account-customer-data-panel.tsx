@@ -67,6 +67,7 @@ export function AccountCustomerDataPanel({
   const [neighborhood, setNeighborhood] = useState(district ?? "");
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [cepMessage, setCepMessage] = useState("");
+  const customerDataContentId = "account-customer-data-content";
 
   async function lookupCep() {
     const normalizedCep = normalizeCep(cep);
@@ -129,8 +130,9 @@ export function AccountCustomerDataPanel({
         <button
           type="button"
           aria-expanded={expanded}
+          aria-controls={customerDataContentId}
           onClick={() => setExpanded((current) => !current)}
-          className="inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-md border border-border px-2 text-xs font-medium text-muted transition-colors hover:text-foreground"
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-1 rounded-md border border-border px-3 text-sm font-medium text-muted transition-colors hover:text-foreground"
         >
           {expanded ? "Recolher" : "Abrir"}
           {expanded ? (
@@ -141,7 +143,10 @@ export function AccountCustomerDataPanel({
         </button>
       </div>
 
-      <div className={expanded ? "grid gap-3 p-3" : "hidden"}>
+      <div
+        id={customerDataContentId}
+        className={expanded ? "grid gap-3 p-3" : "hidden"}
+      >
         <label className="grid gap-1 text-sm">
           <span className="font-medium">Razão Social</span>
           <UppercaseInput
@@ -193,7 +198,11 @@ export function AccountCustomerDataPanel({
             Buscar
           </button>
         </div>
-        {cepMessage && <p className="text-xs text-muted">{cepMessage}</p>}
+        {cepMessage && (
+          <p role="status" aria-live="polite" className="text-sm text-muted">
+            {cepMessage}
+          </p>
+        )}
         <label className="grid gap-1 text-sm">
           <span className="font-medium">Endereço</span>
           <input

@@ -379,6 +379,7 @@ model ImportBatch {
   tenantId         String      @map("tenant_id") @db.Uuid
   uploadedByUserId String      @map("uploaded_by_user_id") @db.Uuid
   fileName         String      @map("file_name")
+  sourcePath       String?     @map("source_path")
   sourceType       String      @map("source_type")
   status           JobStatus   @default(QUEUED)
   totalRows        Int         @default(0) @map("total_rows")

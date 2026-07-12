@@ -16,6 +16,7 @@ import { createAccountAction } from "@/app/accounts/actions";
 import { signOutAction } from "@/app/auth/actions";
 import { ActionDateTimeInput } from "@/components/action-date-time-input";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
+import { TenantBrand } from "@/components/tenant-brand";
 import { UppercaseInput } from "@/components/uppercase-input";
 import { UserIdentityCard } from "@/components/user-identity-card";
 import type { Prisma } from "@/generated/prisma/client";
@@ -200,18 +201,11 @@ export default async function AccountsPage({
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-[0.12em] text-muted">
-              {appUser.tenant.name}
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">
-              Empresas/Prospects
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-              Cadastre a Base Comercial inicial e registre um Contato Principal
-              quando ele já estiver disponível.
-            </p>
-          </div>
+          <TenantBrand
+            organizationName={appUser.tenant.name}
+            title="Empresas/Prospects"
+            subtitle="Cadastre a Base Comercial inicial e registre um Contato Principal quando ele já estiver disponível."
+          />
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <UserIdentityCard
               name={userIdentity}
@@ -484,21 +478,18 @@ export default async function AccountsPage({
                     : "Sem Próxima Ação agendada";
 
                   return (
-                    <article
+                    <Link
                       key={account.id}
-                      className="grid gap-3 px-4 py-4 md:grid-cols-[1.4fr_1fr]"
+                      href={`/accounts/${account.id}`}
+                      className="group grid cursor-pointer gap-3 px-4 py-4 transition-colors hover:bg-surface-muted/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary md:grid-cols-[1.4fr_1fr]"
+                      aria-label={`Editar Empresa/Prospect ${account.name}`}
                     >
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-sm font-semibold">
-                            <Link
-                              href={`/accounts/${account.id}`}
-                              className="hover:text-primary"
-                            >
-                              {account.name}
-                            </Link>
+                          <h3 className="text-sm font-semibold transition-colors group-hover:text-primary">
+                            {account.name}
                           </h3>
-                          <span className="rounded bg-surface-muted px-2 py-1 text-[11px] font-medium text-muted">
+                          <span className="rounded bg-surface-muted px-2 py-1 text-xs font-medium text-muted">
                             {accountStatusLabels[account.status]}
                           </span>
                         </div>
@@ -542,7 +533,7 @@ export default async function AccountsPage({
                         </p>
                         <p>{primaryContact?.phone ?? "Telefone não informado"}</p>
                       </div>
-                    </article>
+                    </Link>
                   );
                 })}
               </div>

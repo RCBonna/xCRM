@@ -12,7 +12,10 @@ import { getAppUser } from "@/lib/auth";
 import { isBrazilianStateCode } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getAccountVisibilityWhere } from "@/lib/visibility";
+import {
+  getAccountVisibilityWhere,
+  getActivityVisibilityWhere,
+} from "@/lib/visibility";
 
 function encodeMessage(message: string) {
   return encodeURIComponent(message);
@@ -631,6 +634,7 @@ export async function updateAccountActivityAction(formData: FormData) {
       accountId: account.id,
       tenantId: appUser.tenantId,
       status: "PENDING",
+      ...(await getActivityVisibilityWhere(appUser)),
     },
     select: {
       id: true,
@@ -717,6 +721,7 @@ export async function completeAccountActivityAction(formData: FormData) {
       accountId: account.id,
       tenantId: appUser.tenantId,
       status: "PENDING",
+      ...(await getActivityVisibilityWhere(appUser)),
     },
     select: {
       id: true,
@@ -799,6 +804,7 @@ export async function deleteAccountActivityAction(formData: FormData) {
       accountId: account.id,
       tenantId: appUser.tenantId,
       status: "PENDING",
+      ...(await getActivityVisibilityWhere(appUser)),
     },
     select: {
       id: true,

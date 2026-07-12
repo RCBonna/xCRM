@@ -13,6 +13,7 @@ import {
 } from "@/app/settings/team/actions";
 import { signOutAction } from "@/app/auth/actions";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
+import { TenantBrand } from "@/components/tenant-brand";
 import { TeamAuditLogPanel } from "@/components/team-audit-log-panel";
 import { TeamLeadersTab } from "@/components/team-leaders-tab";
 import { TeamTeamsTab } from "@/components/team-teams-tab";
@@ -188,18 +189,11 @@ export default async function TeamSettingsPage({
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-[0.12em] text-muted">
-              {appUser.tenant.name}
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">
-              Equipes e Usuários
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-              Organize líderes, vendedores e vínculos de equipe para controlar
-              carteira, ações e oportunidades por nível operacional.
-            </p>
-          </div>
+          <TenantBrand
+            organizationName={appUser.tenant.name}
+            title="Equipes e Usuários"
+            subtitle="Organize líderes, vendedores e vínculos de equipe para controlar carteira, ações e oportunidades por nível operacional."
+          />
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <UserIdentityCard
               name={userIdentity}

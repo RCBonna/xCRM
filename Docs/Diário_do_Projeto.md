@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-07-02 18:50:59 -03:00
+Ultima modificacao: 2026-07-12 20:09:52 -03:00
 
 ## 2026-06-12
 
@@ -526,3 +526,144 @@ Ultima modificacao: 2026-07-02 18:50:59 -03:00
 - Criada a issue `#70` para ajustar o numero da etapa ao lado do nome no `Funil Padrão`.
 - Nos cards do `Funil Padrão`, o numero/posicao passou a ficar ao lado esquerdo do nome da etapa, por exemplo `1 Visitantes`.
 - Atualizada versao WIP para `2026-07-02 18:50:59`.
+
+## 2026-07-03
+
+### Resumo do dia
+
+- Confirmado com o usuario que a sincronizacao do OneDrive estava pausada antes das alteracoes.
+- Inicializado o Impeccable no projeto.
+- Criado `PRODUCT.md` com o registro do produto xCRM como SaaS operacional multiempresa para Owner, Admin, Gestor, Vendedor/Assistente e Platform Admin.
+- Definida a direcao de UX como clara, confiavel e operacional, evitando composicao de landing page, excesso decorativo e affordances fora do padrao.
+- Criada a configuracao `.impeccable/live/config.json` para live mode em Next.js App Router usando `src/app/layout.tsx`.
+- Verificado que nao ha CSP local bloqueando o helper do Impeccable.
+- Atualizada versao WIP para `2026-07-03 09:31:54`.
+- Criado `DESIGN.md` com o design system visual do xCRM no formato esperado pelo Impeccable/Stitch.
+- Criado `.impeccable/design.json` com metadados, regras, ramps de cor e componentes renderizaveis para o painel live do Impeccable.
+- A linguagem visual foi registrada como `Painel de Controle Confiável`, com UX clara, operacional e sobria.
+- Atualizada versao WIP para `2026-07-03 09:57:59`.
+- Criado o epico GitHub `#71` para evoluir a UX do Dashboard Owner/Admin.
+- Criadas as issues `#72`, `#73`, `#74`, `#75` e `#76` para acompanhar as prioridades levantadas na critica Impeccable.
+- Iniciada a issue `#72` com uma area superior de prioridade operacional no Dashboard.
+- O Dashboard agora escolhe a recomendacao principal conforme dados reais: atividades pendentes, base vazia, contatos ausentes, importacao para Owner ou acompanhamento da base comercial.
+- A area de prioridade mostra CTA direto e um resumo compacto de Atividades Pendentes, Empresas/Prospects e Contatos Vinculados.
+- A secao `Atividades Pendentes` ganhou ancora para o CTA superior levar o usuario ate o painel.
+- Atualizada versao WIP para `2026-07-03 10:50:37`.
+- Refinados os quatro cards de metricas do topo do Dashboard a partir do fluxo `$impeccable craft` e do print de referencia do usuario.
+- Os cards ganharam cabecalho separado por linha sutil, icone em area de apoio, valor com numeros tabulares e descricao centralizada.
+- O card `Atividades Pendentes` recebe destaque de borda e icone quando houver pendencias.
+- Atualizada versao WIP para `2026-07-03 15:52:09`.
+- Ajustados novamente os cards de metricas para ficarem mais proximos do mock aprovado: cards mais altos, icones maiores, titulo mais forte, divisor interno e valor/descricao alinhados a esquerda.
+- Atualizada versao WIP para `2026-07-03 15:59:39`.
+
+## 2026-07-09
+
+### Resumo do dia
+
+- Confirmado com o usuario que a sincronizacao do OneDrive estava pausada antes das alteracoes.
+- Reinicializado o contexto Impeccable para atualizar os registros estrategico e visual do xCRM.
+- Atualizado `PRODUCT.md` para o formato atual do Impeccable, com `Register: product`, `Platform: web`, posicionamento, principios e requisitos de acessibilidade.
+- Atualizado `DESIGN.md` por varredura do codigo atual, preservando o north star `Painel de Controle Confiável` e documentando os temas Sistema, Claro, Escuro, Azul e Verde.
+- Sincronizado o design system com o painel de prioridade, os cards altos de metricas, estados de processamento e o fluxo destrutivo de organizacoes.
+- Regenerado `.impeccable/design.json` com novos metadados de tema, tipografia, sombra de hover e componentes `Metric Card` e `Priority Panel` atualizados.
+- Atualizada versao WIP para `2026-07-09 21:15:15`.
+- Executado `$impeccable polish /dashboard` com avaliacao visual autenticada em desktop e mobile.
+- Removida a linguagem tecnica do cabecalho e adicionados rotulos em Portugues-BR para os perfis.
+- Substituida a lista passiva `Proximas Acoes` por `Acessos Rapidos` reais e condicionados por permissao.
+- Ajustados cabecalho, metricas e Funil para reduzir rolagem e evitar cortes entre 320px e 1440px.
+- Melhorados estado vazio, previa recolhida, alvo de toque e associacao acessivel no painel de atividades.
+- Adicionado fechamento do menu superior pela tecla `Esc` e ampliados alvos de toque internos.
+- Atualizada versao WIP para `2026-07-09 22:09:19`.
+- Alinhado o contador de notificacoes a escala tipografica documentada (`text-xs`) apos alerta do detector Impeccable.
+- Atualizada versao WIP para `2026-07-09 22:10:44`.
+- Executado `$impeccable audit /dashboard` depois do polish, com testes autenticados nos temas Sistema, Claro, Escuro, Azul e Verde.
+- O audit recebeu nota `16/20 (Good)`, sem P0/P1 e com tres P2: retorno de foco do menu, textos de 12px no mobile e grade generica de hero metrics.
+- Salvo o relatorio em `.impeccable/audit/2026-07-09T22-14-24-03-00__dashboard.md`.
+- Atualizada versao WIP para `2026-07-09 22:14:24`.
+- Fechadas as issues `#73` (atalhos admin) e `#74` (copy tecnica) apos validacao.
+- Criadas as issues `#77` (retorno de foco do menu) e `#78` (legibilidade mobile), vinculadas ao epico `#71`.
+- Atualizadas as issues `#72` e `#76` com o resultado do polish e do audit.
+- Atualizada versao WIP para `2026-07-09 22:16:36`.
+
+## 2026-07-12
+
+### Resumo do dia
+
+- Confirmado com o usuario que a sincronizacao do OneDrive estava pausada antes das alteracoes.
+- Avaliado alerta de seguranca `RLS Disabled in Public` para `public.notifications` e `public.platform_admins`.
+- Criada a migration `prisma/20260712070221_enable_rls_platform_admin_notifications.sql` para habilitar RLS nas duas tabelas.
+- Adicionada policy de leitura do proprio `Platform Admin` ativo em `public.platform_admins`.
+- Adicionada policy de leitura de `public.notifications` apenas pelo destinatario autenticado, seja usuario operacional ativo ou `Platform Admin` ativo.
+- Mantidas mutacoes de notificacoes e administradores restritas ao backend/Prisma, sem policies de escrita para PostgREST.
+- Criada a issue GitHub `#79` para documentar o alerta e a correcao.
+- Aplicada a migration no banco via script Node com `pg` e `DIRECT_URL`, apos timeout do `npx prisma db execute`.
+- Validado no catalogo PostgreSQL que `public.notifications` e `public.platform_admins` estao com RLS ativo e policies `SELECT` para `authenticated`.
+- Atualizada versao WIP para `2026-07-12 07:07:19`.
+- Carregado o contexto da skill Impeccable pelo caminho `C:\Users\rcbon\.agents\skills\impeccable\SKILL.md` e confirmado `Register: product` para app web.
+- Executado o detector local do Impeccable sobre os arquivos de UI alterados do Dashboard/menu/identidade/atividades; resultado `[]`, sem achados deterministicos.
+- Revisadas as alteracoes funcionais de importacao: historicos importados com corpo passam a gerar atividade concluida e proximas acoes usam descricao como titulo preferencial.
+- Documentados os comportamentos de importacao em `Docs/Documentacao_Tecnica.md` e `Docs/Manual_do_Usuario.md`.
+- Atualizada versao WIP para `2026-07-12 07:50:10`.
+- Usado o snapshot `.impeccable/critique/2026-07-12T11-49-57Z__src-app-accounts-id-page-tsx.md` para aplicar correcoes na tela de detalhe de Empresa/Prospect.
+- Criada faixa de decisão comercial no topo do detalhe com Status, próxima ação, Contato Principal, Ações Pendentes e Oportunidades.
+- Removida a duplicação visual do Contato Principal, mantendo a edição dentro do painel `Contatos`.
+- Recolhido o fluxo de novo contato atrás de `Adicionar Contato` e adicionada contagem em `Ver N Contatos`.
+- Renomeados botões de salvamento por escopo: `Salvar Dados Básicos`, `Salvar Contato` e `Salvar Ação`.
+- Adicionada confirmação para exclusão de contato e de ação pendente.
+- Reforçados `aria-controls`, live region de CEP e alvos de toque em painéis recolhíveis da tela de detalhe.
+- Atualizada versao WIP para `2026-07-12 09:15:43`.
+- Acrescentados Função/Cargo, E-mail e Telefone do Contato Principal na faixa superior do detalhe de Empresa/Prospect.
+- Criado `AccountSectionPanel` para padronizar `Ver N ...`/`Recolher` em Contatos, Oportunidades e Próximas Ações.
+- O quadro `Contatos` agora mantém o Contato Principal dentro da área recolhível, lista todos os contatos ao expandir e deixa `Adicionar Contato` fora do recolhimento.
+- O atalho `Gerenciar Contatos` passa a expandir automaticamente o quadro de Contatos e posicionar a tela nessa seção.
+- Oportunidades e Próximas Ações passaram a seguir o mesmo padrão de expandir/recolher, mantendo os formulários de criação fora da área recolhível.
+- Atualizada versao WIP para `2026-07-12 15:28:57`.
+- Ajustado `Contatos` para não abrir automaticamente quando a página carrega com hash antigo; a expansão agora depende de clique em `Ver Contatos` ou `Gerenciar Contatos`.
+- Criado `AccountAddPanel` para manter os formulários de `Adicionar Oportunidade` e `Adicionar Ação` recolhidos por padrão, abrindo apenas após clique explícito.
+- Renomeados os CTAs de criação no detalhe para `Adicionar Oportunidade` e `Adicionar Ação`, com envio pelos botões `Salvar Oportunidade` e `Salvar Ação`.
+- Atualizada versao WIP para `2026-07-12 15:53:06`.
+- Adicionado icone `+` ao botao `Adicionar Contato`, alinhando o padrao visual com `Adicionar Oportunidade` e `Adicionar Ação`.
+- Gerado asset leve `public/brand/scientiam-mark.jpg` a partir do logo anexado, com cerca de 4 KB.
+- Criado `TenantBrand` e aplicado o logo compacto ao lado do nome da organização nos cabeçalhos autenticados do tenant.
+- Atualizada versao WIP para `2026-07-12 16:19:34`.
+- Refeito `TenantBrand` para remover o texto do tenant na primeira linha, exibir `xCRM` e posicionar título/subtítulo à direita do logo inteiro da Scientiam.
+- Regenerado `public/brand/scientiam-mark.jpg` com a logo inteira em 192x192, mantendo o asset leve com cerca de 6,7 KB.
+- Atualizada versao WIP para `2026-07-12 16:32:32`.
+- Ajustado `TenantBrand` para restaurar a Organização do Tenant na primeira linha, com mais presença que antes, enquanto o título da tela permanece como destaque principal em escala ligeiramente menor no desktop.
+- Atualizada versao WIP para `2026-07-12 16:48:07`.
+- Compactadas as três linhas do `TenantBrand`, reduzindo margens verticais e entrelinha para aproximar a altura do bloco textual da altura do logo.
+- Atualizada versao WIP para `2026-07-12 16:58:21`.
+- Ajustada a lista da `Base Comercial` para que o card inteiro da Empresa/Prospect tenha realce no hover e seja clicável para abrir a tela de edição, não apenas o nome da empresa.
+- Atualizada versao WIP para `2026-07-12 17:11:55`.
+- Ajustado o CTA `Ver Atividades` do Dashboard para, além de navegar até `Atividades Pendentes`, expandir automaticamente o painel quando houver pendências.
+- Atualizada versao WIP para `2026-07-12 17:35:02`.
+- Criada a issue GitHub `#89` para implementar a Agenda de Atividades com visibilidade por equipe.
+- Criada a rota `/agenda` com visoes Dia, Semana, Lista e Mes, iniciando pela Semana.
+- A Agenda organiza atividades em grade de periodo e trilho operacional para `Sem Agendamento` e `Atrasadas`.
+- Adicionados filtros de Data de Referencia, Responsavel e Status; atividades concluidas ficam ocultas por padrao.
+- A edicao e a conclusao da atividade ocorrem na propria Agenda, dentro do escopo permitido para o perfil.
+- Centralizada a visibilidade de atividades por responsavel: Owner/Admin veem o tenant, Lider ve a propria equipe e Vendedor/Assistente veem apenas as proprias atividades.
+- Aplicada a mesma regra no Dashboard e nas acoes de Empresa/Prospect para evitar consulta ou mutacao fora do escopo permitido.
+- Adicionado acesso `Agenda de Atividades` no menu e alterado o CTA `Ver Atividades` do Dashboard para abrir a nova pagina.
+- Atualizada versao WIP para `2026-07-12 18:22:36`.
+- Criada a issue GitHub `#90` para remover a dependencia de pasta fixa na Importacao Temporaria.
+- Substituida a lista de arquivos do servidor por seletor nativo de arquivo no navegador.
+- A Importacao agora recebe planilha XLSX ou CSV enviada pelo Owner, de qualquer disco ou pasta acessivel no dispositivo, com limite de 10 MB.
+- Removidos `config/import-settings.json`, `src/lib/imports/settings.ts` e a logica de enumeracao/leitura por caminho absoluto no servidor.
+- Atualizada versao WIP para `2026-07-12 19:19:50`.
+- Criada a issue GitHub `#91` para alinhar o upload e eliminar repeticoes no resumo da carga.
+- Alinhados o seletor de arquivo e o botao `Carregar Planilha` na mesma linha em telas medias e grandes.
+- Adicionado o campo opcional `Caminho de Origem`, informado manualmente pelo Owner e salvo em `imports.source_path`; o navegador nao permite preencher o caminho absoluto automaticamente.
+- Mantidos nome, caminho informado, linhas, pendentes, importadas e rejeitadas no resumo superior da carga.
+- Removidos do painel lateral o nome do arquivo, a quantidade total de linhas e a contagem de pendencias duplicados.
+- Criada a migration `prisma/20260712192500_add_import_source_path.sql` para o novo campo de banco.
+- Aplicada a migration de `imports.source_path` no Supabase remoto e validada a existencia da coluna.
+- Atualizada versao WIP para `2026-07-12 19:57:15`.
+- Criada a issue GitHub `#92` para reposicionar o descarte e incluir busca de prospects na Importacao Temporaria.
+- Movido `Descartar Carga` para o resumo superior, junto a identificacao e as metricas da carga.
+- Substituido o espaco anterior do descarte no painel lateral por busca compacta de Empresa/Prospect, preservando o filtro de status.
+- A busca considera Nome Fantasia/Empresa e Razao Social normalizados, sem diferenciar maiusculas, minusculas ou acentos.
+- Atualizada versao WIP para `2026-07-12 20:03:23`.
+- Criada a issue GitHub `#93` para alinhar `Descartar Carga` na faixa de resumo da Importacao Temporaria.
+- Reposicionado `Descartar Carga` para uma celula compacta imediatamente antes da metrica `Linhas`, sem criar nova linha no resumo desktop.
+- Atualizada versao WIP para `2026-07-12 20:09:52`.

@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-07-02 18:50:59 -03:00
+Ultima modificacao: 2026-07-12 20:09:52 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -72,7 +72,7 @@ Atualizar quando houver mudancas em:
 - `src/app/imports`: tela Owner-only de carga temporaria de planilhas, revisao por linha e importacao individual para tabelas definitivas.
 - `src/app/imports/actions.ts`: Server Actions para iniciar carga, salvar/aprovar/rejeitar/importar linha e descartar carga.
 - `src/lib/imports/settings.ts`: leitura de parametros de importacao a partir de `config/import-settings.json`.
-- `src/lib/imports/spreadsheet.ts`: listagem da pasta parametrizada, leitura de `.xlsx` com `read-excel-file` e leitura de `.csv` com parser local simples.
+- `src/lib/imports/spreadsheet.ts`: leitura de conteudo enviado pelo navegador, usando `read-excel-file` para `.xlsx` e parser local simples para `.csv`; nao depende de caminho local do servidor.
 - `src/lib/imports/normalizer.ts`: normalizacao heuristica inicial para separar Empresa, Contato, Historico e Proxima Acao.
 - `config/import-settings.json`: parametro local da pasta de importacao e extensoes permitidas.
 - `src/lib/brazilian-states.ts`: lista local de UFs brasileiras e helper de validacao.
@@ -83,7 +83,10 @@ Atualizar quando houver mudancas em:
 - `src/components/dashboard-pending-activities-panel.tsx`: painel expansivel do Dashboard para exibir/recolher e concluir atividades pendentes do tenant.
 - `src/components/platform-tenant-delete-form.tsx`: fluxo cliente da exclusao completa de organizacao, com confirmacao textual, dois modais e painel de processamento visual.
 - `src/components/account-history-panel.tsx`: painel expansivel do historico de Empresa/Prospect.
-- `src/components/account-contacts-panel.tsx`: painel expansivel de contatos no detalhe da Empresa/Prospect.
+- `src/components/account-section-panel.tsx`: painel cliente reutilizavel de expandir/recolher usado em Contatos, Oportunidades e Proximas Acoes no detalhe da Empresa/Prospect.
+- `src/components/account-add-panel.tsx`: painel cliente reutilizavel para manter formularios de criacao recolhidos atras de botoes `Adicionar ...`.
+- `src/components/account-contacts-panel.tsx`: painel expansivel de contatos no detalhe da Empresa/Prospect, mantendo o botao `Adicionar Contato` fora do conteudo recolhivel.
+- `src/components/tenant-brand.tsx`: bloco de marca dos cabeçalhos autenticados, com logo inteiro da Scientiam à esquerda e linhas compactas de Organização do Tenant, título da tela e subtítulo à direita.
 - `src/components/account-customer-data-panel.tsx`: painel recolhível de Dados do Cliente, com CEP, endereço e busca via ViaCEP.
 - `src/components/datetime-local-defaults.tsx`: comportamento global para inicializar campos `datetime-local` vazios com data atual às 09:00 e normalizar horários para intervalos de 15 minutos.
 - `src/components/dirty-submit-button.tsx`: botão cliente que habilita `Salvar Alterações` apenas quando o formulário tem mudança real.
@@ -94,6 +97,10 @@ Atualizar quando houver mudancas em:
 - `src/app/dashboard`: painel autenticado inicial.
 - `src/components/version-banner.tsx`: banner global de versao WIP.
 - `src/lib/app-version.ts`: valor unico da versao exibida no topo.
+- `PRODUCT.md`: registro de produto usado pelo Impeccable, definindo o xCRM como SaaS CRM operacional multiempresa com direcao clara, confiavel e operacional.
+- `DESIGN.md`: design system visual do xCRM no formato Impeccable/Stitch, com tokens, regras de uso, componentes e anti-padroes.
+- `.impeccable/design.json`: sidecar do Impeccable com metadados de cor, tipografia, sombras, movimento e componentes renderizaveis no painel live.
+- `.impeccable/live/config.json`: configuracao local do Impeccable live mode para injetar o helper em `src/app/layout.tsx` quando uma sessao live for iniciada.
 - `src/components/currency-input.tsx`: Client Component para entrada monetaria em formato `R$` no padrao pt-BR.
 - `prisma/schema.prisma`: modelo de dados multi tenant.
 - `prisma/truncate_all_tables.SQL-Truncated`: script local e ignorado pelo Git para truncate total das tabelas publicas do app, criado para uso manual/controlado e nao executado automaticamente.
@@ -409,19 +416,22 @@ Fluxo inicial implementado:
 63. O detalhe da Empresa/Prospect usa `accounts.name` como Nome Fantasia/Empresa, `accounts.legalName` como Razão Social, `accounts.document` como CNPJ, `accounts.postalCode` como CEP, `accounts.address` como Endereço, `accounts.addressNumber` como Número, `accounts.addressComplement` como Complemento e `accounts.district` como Bairro.
 64. `CnpjInput` mostra o documento no padrão `AA.AAA.AAA/AAAA-00`, mas `updateAccountAction` normaliza para letras maiúsculas e números sem pontuação antes de persistir.
 65. `AccountCustomerDataPanel` fica recolhido por padrão e consulta `https://viacep.com.br/ws/{CEP}/json/` para preencher Endereço, Bairro, Cidade e UF quando o CEP possui 8 dígitos.
-66. `PlatformAdmin` é um usuário administrativo global, fora do tenant operacional, vinculado ao Supabase Auth por `platform_admins.auth_user_id`.
-67. `Notification` registra mensagens internas para usuários do tenant ou para `Platform Admin`; o primeiro uso é notificar login em tenant suspenso.
-68. `RecordStatus.SUSPENDED` em `tenants.status` bloqueia as rotas operacionais e redireciona usuários para `/tenant-suspended`.
-69. `/platform` permite ao `Platform Admin` listar tenants, suspender/reativar acesso e marcar notificações como lidas.
-70. `/tenant-suspended` exibe mensagem distinta para Owner e usuários operacionais: Owner recebe canais do SAC, demais usuários devem procurar a gerência.
-71. A lista de clientes em `/platform` exibe resumo total/ativos/suspensos, status por tenant, contadores de Usuários, Prospects e Contatos, e ação de suspensão ou reativação em bloco separado.
-72. `/platform` possui a área restrita `Exclusão de Organização`, exibida somente para `Platform Admin`, para excluir completamente um tenant selecionado.
-73. `deleteTenantAction` exige confirmação textual no formato `EXCLUIR Nome da Organização` e executa a exclusão dentro de uma transação Prisma.
-74. A exclusão remove explicitamente dados por `tenantId` em entidades dependentes antes de remover `users` e `tenants`, cobrindo ações, histórico, anexos, IA, importações, oportunidades, contatos, empresas/prospects, equipes, funis, notificações e usuários.
-75. Antes de excluir usuários, notificações globais que apontem para usuários do tenant como ator são desvinculadas com `actorUserId = null`.
-76. A exclusão registra uma notificação global `TENANT_DELETED` para o `Platform Admin` executor, sem `tenantId`, com resumo dos dados removidos no `metadata`.
-77. `PlatformTenantDeleteForm` controla a confirmacao no cliente: primeiro modal confere a organizacao, segundo modal reforca a exclusao permanente e, durante o submit, mostra painel de processamento com etapas visuais.
-78. `PlatformTenantDeleteForm` usa `formId` deterministico baseado no `tenantId`, evitando ids gerados com caracteres especiais no vinculo entre o botao final do modal e o formulario.
+66. A faixa superior do detalhe da Empresa/Prospect mostra o Contato Principal com Nome, Função/Cargo, E-mail e Telefone quando existir.
+67. O botao `Gerenciar Contatos` usa ancora para `#contatos`; o painel cliente expande automaticamente ao receber o hash ou clique de ancora, exibindo todos os contatos cadastrados, inclusive o Contato Principal.
+68. Os paineis `Contatos`, `Oportunidades` e `Próximas Ações` usam o mesmo comportamento de `Ver N ...` e `Recolher`; os formularios de criacao ficam recolhidos por padrao atras de `Adicionar Contato`, `Adicionar Oportunidade` e `Adicionar Ação`.
+69. `PlatformAdmin` é um usuário administrativo global, fora do tenant operacional, vinculado ao Supabase Auth por `platform_admins.auth_user_id`.
+70. `Notification` registra mensagens internas para usuários do tenant ou para `Platform Admin`; o primeiro uso é notificar login em tenant suspenso.
+71. `RecordStatus.SUSPENDED` em `tenants.status` bloqueia as rotas operacionais e redireciona usuários para `/tenant-suspended`.
+72. `/platform` permite ao `Platform Admin` listar tenants, suspender/reativar acesso e marcar notificações como lidas.
+73. `/tenant-suspended` exibe mensagem distinta para Owner e usuários operacionais: Owner recebe canais do SAC, demais usuários devem procurar a gerência.
+74. A lista de clientes em `/platform` exibe resumo total/ativos/suspensos, status por tenant, contadores de Usuários, Prospects e Contatos, e ação de suspensão ou reativação em bloco separado.
+75. `/platform` possui a área restrita `Exclusão de Organização`, exibida somente para `Platform Admin`, para excluir completamente um tenant selecionado.
+76. `deleteTenantAction` exige confirmação textual no formato `EXCLUIR Nome da Organização` e executa a exclusão dentro de uma transação Prisma.
+77. A exclusão remove explicitamente dados por `tenantId` em entidades dependentes antes de remover `users` e `tenants`, cobrindo ações, histórico, anexos, IA, importações, oportunidades, contatos, empresas/prospects, equipes, funis, notificações e usuários.
+78. Antes de excluir usuários, notificações globais que apontem para usuários do tenant como ator são desvinculadas com `actorUserId = null`.
+79. A exclusão registra uma notificação global `TENANT_DELETED` para o `Platform Admin` executor, sem `tenantId`, com resumo dos dados removidos no `metadata`.
+80. `PlatformTenantDeleteForm` controla a confirmacao no cliente: primeiro modal confere a organizacao, segundo modal reforca a exclusao permanente e, durante o submit, mostra painel de processamento com etapas visuais.
+81. `PlatformTenantDeleteForm` usa `formId` deterministico baseado no `tenantId`, evitando ids gerados com caracteres especiais no vinculo entre o botao final do modal e o formulario.
 
 Validacoes atuais:
 
@@ -525,6 +535,8 @@ Observacoes de seguranca:
 - `/imports` possui acao em lote `importApprovedRowsAction`, que importa todas as linhas `APPROVED` da carga ativa e mantem a importacao individual como alternativa por linha.
 - O Owner pode selecionar uma equipe ativa com líder definido antes da importacao em lote; nesse caso, `accounts.ownerUserId`, contatos e proximas acoes importadas ficam sob responsabilidade do líder.
 - O encaminhamento em lote cria notificação `PROSPECTS_ASSIGNED_TO_TEAM` para o líder, contendo carga, equipe, totais e ate 20 prospects no `metadata`.
+- Na importacao definitiva, cada historico importado com corpo preenchido tambem gera uma `activity` concluida do tipo `FOLLOW_UP`, preservando o registro na lista operacional/historica do prospect.
+- Proximas acoes importadas usam `description` como titulo preferencial quando existir, com fallback para `title` e depois `Próxima Ação Importada`.
 - As telas principais usam `UserIdentityCard` com contador de `notifications` não lidas para sinalizar pendências próximas ao nome do usuário.
 - Linhas aprovadas com erro durante o lote passam para `JobStatus.FAILED`; esse status entra na contagem de inválidas e fica disponível no filtro `Falharam`.
 - `GlobalPendingCursor` e renderizado no layout global e escuta cliques em links internos e submits de formularios para aplicar `data-app-pending="true"` no `html`.
@@ -533,6 +545,53 @@ Observacoes de seguranca:
 - Quando `legalName` nao vem da planilha, a revisao temporaria usa `company.name` como fallback para Razão Social.
 - A grade da ficha de revisao usa breakpoint `lg`, maior espacamento horizontal e inputs `w-full` para evitar estouro lateral de campos compactos.
 - Linhas com status `IMPORTED` desabilitam as acoes de salvar, aprovar, importar e rejeitar na ficha temporaria.
+- O Impeccable foi inicializado com registro de produto em `PRODUCT.md` e live mode configurado para Next.js App Router via `.impeccable/live/config.json`.
+- A deteccao de CSP do Impeccable retornou `shape: null`, portanto nao houve necessidade de patch de Content Security Policy.
+- O design system do Impeccable foi documentado em `DESIGN.md` com o north star `Painel de Controle Confiável`, preservando densidade operacional, tokens existentes e uso restrito de acento.
+- O sidecar `.impeccable/design.json` acompanha o `DESIGN.md` e fornece componentes auto-contidos para o painel live do Impeccable.
+- O Dashboard calcula uma recomendacao principal de operacao com base em dados reais do tenant: atividades pendentes primeiro, depois ausencia de Empresas/Prospects, ausencia de Contatos, importacao para Owner ou acompanhamento da Base Comercial.
+- O CTA da recomendacao principal pode apontar para `#atividades-pendentes`, `/accounts` ou `/imports`, conforme o estado atual e permissoes do usuario.
+- A secao de atividades pendentes possui o id `atividades-pendentes` para navegacao interna a partir do bloco de prioridade.
+- Os cards de metricas do topo do Dashboard usam estrutura interna com cabecalho, divisoria sutil e valor em numeros tabulares para melhorar leitura operacional.
+- A versao visual dos cards de metricas segue o mock aprovado no `$impeccable craft`: maior altura, icone de 48px, titulo `text-base`, divisor interno e valor/descricao alinhados a esquerda.
+- O card `Atividades Pendentes` recebe destaque condicional quando `activityCount > 0`, usando borda primaria e icone com fundo primario.
+- `PRODUCT.md` segue o formato atual do Impeccable e declara o xCRM como registro `product` para plataforma `web`, com posicionamento, principios operacionais e requisitos de acessibilidade.
+- `DESIGN.md` documenta os cinco temas disponiveis (`Sistema`, `Claro`, `Escuro`, `Azul` e `Verde`) e os padroes atuais do Dashboard, incluindo painel de prioridade, cards de metricas e feedback de processamento.
+- `.impeccable/design.json` usa `schemaVersion: 2` e espelha os tokens, metadados e componentes representativos do sistema visual para o painel live.
+- O polish do Dashboard substitui linguagem tecnica de tenant/Auth/RLS por perfil e organizacao, usando rotulos localizados para os papeis.
+- `Acessos Rápidos` expoe links operacionais conforme permissao para `/accounts`, `/imports`, `/settings/team` e `/settings/company`.
+- Os cards de metricas usam grade autoajustavel e escala compacta abaixo de `xl`; o Funil usa colunas `auto-fit` para reduzir rolagem em mobile sem overflow.
+- O cabecalho mobile mantem a identidade em largura total e agrupa Menu/Sair na linha seguinte; controles interativos essenciais usam alvo minimo de 44px.
+- O painel de atividades oculta o controle de expansao no estado vazio, antecipa a proxima atividade quando recolhido e associa `aria-controls` ao conteudo.
+- Mensagens do Dashboard usam `role` e `aria-live`; a conclusao informa o titulo da atividade concluida.
+- O audit tecnico de `/dashboard` foi salvo em `.impeccable/audit/2026-07-09T22-14-24-03-00__dashboard.md`, com nota `16/20` e tres achados P2.
+- Em 2026-07-12, o detector local do Impeccable foi executado sobre `src/app/dashboard/page.tsx`, `src/components/app-settings-menu.tsx`, `src/components/dashboard-pending-activities-panel.tsx` e `src/components/user-identity-card.tsx`, retornando `[]` sem achados deterministicos.
+- A critica Impeccable da tela de detalhe de Empresa/Prospect foi salva em `.impeccable/critique/2026-07-12T11-49-57Z__src-app-accounts-id-page-tsx.md`.
+- A tela `src/app/accounts/[id]/page.tsx` passou a exibir uma faixa de decisão comercial com Status, localização, próxima ação, Contato Principal, Ações Pendentes e Oportunidades.
+- A edição de contatos removeu a duplicação visual entre resumo de `Contato Principal` e edição do primeiro contato; o contato principal agora aparece dentro do painel `Contatos`.
+- O painel `Contatos` recolhe `Adicionar Contato` por padrão e usa contagem em `Ver N Contatos` quando há contatos extras.
+- Botões de salvar da tela de detalhe usam rótulos por escopo, como `Salvar Dados Básicos`, `Salvar Contato` e `Salvar Ação`.
+- Exclusões de contato e ação pendente passam por `ConfirmSubmitButton`, reaproveitando o padrão de confirmação já usado na importação.
+- Paineis recolhíveis da tela de detalhe passaram a associar `aria-expanded` a `aria-controls`, e mensagens do CEP usam live region.
+- A migration `prisma/20260712070221_enable_rls_platform_admin_notifications.sql` habilita RLS em `public.platform_admins` e `public.notifications`.
+- Via PostgREST, `platform_admins` permite leitura apenas do proprio `Platform Admin` ativo vinculado ao `auth.uid()`.
+- Via PostgREST, `notifications` permite leitura apenas do destinatario autenticado: usuario operacional ativo em `users.auth_user_id` ou `Platform Admin` ativo em `platform_admins.auth_user_id`.
+- Nao ha policies de `insert`, `update` ou `delete` para `authenticated` nessas duas tabelas; mutacoes seguem concentradas nas Server Actions via Prisma.
+- A aplicacao da migration foi validada no banco por consulta a `pg_class.relrowsecurity` e `pg_policies`.
+- Em `/accounts`, cada item da lista `Base Comercial` e renderizado como link de linha inteira para `/accounts/[id]`, com estado de hover, foco visivel e `aria-label` indicando a acao de editar a Empresa/Prospect.
+- `DashboardPendingActivitiesPanel` escuta o hash `#atividades-pendentes` e cliques em links para essa ancora; quando ha atividades pendentes, o painel expande automaticamente ao receber esse direcionamento.
+- `src/app/agenda/page.tsx` e a pagina autenticada de Agenda de Atividades, com periodo controlado por URL, filtros de responsavel/status e visoes Dia, Semana, Lista e Mes.
+- `src/components/agenda-calendar.tsx` renderiza a grade temporal, o trilho de `Sem Agendamento` e `Atrasadas`, avatares com tooltip de responsavel e o painel inline de edicao/conclusao.
+- `src/app/agenda/actions.ts` valida e atualiza atividades somente apos conferir o escopo do responsavel; as mutacoes tambem registram interacao de historico quando houver Empresa/Prospect associado.
+- `src/lib/visibility.ts` expoe `getVisibleWorkOwnerIds` e `getActivityVisibilityWhere`, reutilizados por Agenda, Dashboard e acoes de Empresa/Prospect. Owner/Admin recebem escopo total do tenant; Lider recebe o proprio usuario e os membros das equipes que lidera; demais perfis recebem apenas o proprio usuario.
+- O Dashboard passou a contar/listar/concluir apenas atividades no escopo visivel, e seu CTA `Ver Atividades` aponta para `/agenda`.
+- `AppSettingsMenu` sempre oferece `Agenda de Atividades`, inclusive para perfis sem permissao administrativa.
+- A Importacao Temporaria recebe o arquivo por `input type="file"` em `/imports`. A Server Action valida extensao (`.xlsx` ou `.csv`), tamanho maximo de 10 MB e processa o `arrayBuffer` recebido, sem enumerar diretorios do servidor.
+- `ImportBatch.sourcePath` armazena o `Caminho de Origem` opcional informado manualmente pelo Owner; navegadores nao expoem o caminho absoluto do arquivo selecionado, por isso esse valor nao pode ser preenchido automaticamente.
+- A migration `prisma/20260712192500_add_import_source_path.sql` foi aplicada no Supabase remoto e a coluna `public.imports.source_path` foi validada.
+- O resumo superior da carga e a fonte unica para arquivo, caminho informado e contagens. O painel lateral mantem apenas acoes de descarte, filtro, encaminhamento e importacao.
+- `Descartar Carga` fica no resumo superior e continua usando `ConfirmSubmitButton`; o painel lateral usa uma busca por `query` combinada ao filtro de status, com parametros preservados nos links das linhas e do filtro.
+- No desktop, `Descartar Carga` ocupa uma celula propria na mesma grade do resumo, imediatamente antes de `Linhas`; em telas estreitas, a grade volta a empilhar os itens para preservar leitura e alvos de toque.
 
 ## Versao WIP no topo
 
@@ -544,7 +603,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-07-02 18:50:59`
+- Valor: `2026-07-12 20:09:52`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

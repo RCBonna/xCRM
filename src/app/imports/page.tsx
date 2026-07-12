@@ -6,6 +6,7 @@ import {
   FileUp,
   LogOut,
   Save,
+  Search,
   Trash2,
   Upload,
   UsersRound,
@@ -27,11 +28,10 @@ import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { CnpjInput } from "@/components/cnpj-input";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { ImportStatusFilter } from "@/components/import-status-filter";
+import { TenantBrand } from "@/components/tenant-brand";
 import { UserIdentityCard } from "@/components/user-identity-card";
 import type { JobStatus } from "@/generated/prisma/client";
 import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
-import { getImportSettings } from "@/lib/imports/settings";
-import { listImportFiles } from "@/lib/imports/spreadsheet";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -41,6 +41,7 @@ type ImportsPageProps = {
     message?: string;
     row?: string;
     status?: string;
+    query?: string;
   }>;
 };
 
@@ -130,6 +131,41 @@ function getRawJson(value: unknown) {
   return JSON.stringify(value ?? {}, null, 2);
 }
 
+function normalizeSearchValue(value?: string | null) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
+    .trim();
+}
+
+function getImportsHref({
+  status,
+  row,
+  query,
+}: {
+  status?: string;
+  row?: string;
+  query?: string;
+}) {
+  const search = new URLSearchParams();
+
+  if (status && status !== "ALL") {
+    search.set("status", status);
+  }
+
+  if (query) {
+    search.set("query", query);
+  }
+
+  if (row) {
+    search.set("row", row);
+  }
+
+  const value = search.toString();
+  return value ? `/imports?${value}` : "/imports";
+}
+
 export default async function ImportsPage({ searchParams }: ImportsPageProps) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -158,14 +194,10 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
 
   const params = await searchParams;
   const [
-    settings,
-    files,
     activeImport,
     activeTeamsWithLeader,
     unreadNotificationsCount,
   ] = await Promise.all([
-    getImportSettings(),
-    listImportFiles(),
     prisma.importBatch.findFirst({
       where: {
         tenantId: appUser.tenantId,
@@ -223,11 +255,22 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
   )
     ? params.status!
     : "ALL";
+  const currentSearchQuery = params.query?.trim() ?? "";
+  const normalizedSearchQuery = normalizeSearchValue(currentSearchQuery);
   const filteredRows =
     activeImport?.rows.filter(
       (row) => currentStatusFilter === "ALL" || row.status === currentStatusFilter,
     ) ?? [];
-  const visibleRows = filteredRows;
+  const visibleRows = filteredRows.filter((row) => {
+    if (!normalizedSearchQuery) {
+      return true;
+    }
+
+    const rowJson = getReviewJson(row.normalizedJson);
+    return [rowJson.company?.name, rowJson.company?.legalName].some((value) =>
+      normalizeSearchValue(value).includes(normalizedSearchQuery),
+    );
+  });
   const nextReviewRow = visibleRows.find((row) =>
     ["REVIEWING", "APPROVED"].includes(row.status),
   );
@@ -250,7 +293,10 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
     "Todas";
   const statusFilterOptions = rowStatusFilters.map((filter) => ({
     label: filter.label,
-    href: filter.value === "ALL" ? "/imports" : `/imports?status=${filter.value}`,
+    href: getImportsHref({
+      status: filter.value,
+      query: currentSearchQuery || undefined,
+    }),
     isActive: currentStatusFilter === filter.value,
   }));
   const isImportedRow = selectedRow?.status === "IMPORTED";
@@ -262,17 +308,11 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-[0.12em] text-muted">
-              {appUser.tenant.name}
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">
-              Importação Temporária
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-              Revise e corrija cada linha antes de enviar para a base definitiva.
-            </p>
-          </div>
+          <TenantBrand
+            organizationName={appUser.tenant.name}
+            title="Importação Temporária"
+            subtitle="Revise e corrija cada linha antes de enviar para a base definitiva."
+          />
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <UserIdentityCard
               name={userIdentity}
@@ -311,7 +351,7 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
         )}
 
         <section className="rounded-md border border-border bg-surface">
-          <div className="grid gap-0 divide-y divide-border lg:grid-cols-[minmax(0,1.8fr)_repeat(4,minmax(8rem,0.45fr))] lg:divide-x lg:divide-y-0">
+          <div className="grid gap-0 divide-y divide-border lg:grid-cols-[minmax(0,1.8fr)_auto_repeat(4,minmax(8rem,0.45fr))] lg:divide-x lg:divide-y-0">
             <div className="min-w-0 px-4 py-3">
               <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">
                 Origem da Carga
@@ -319,9 +359,32 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
               <p className="mt-1 truncate text-sm font-medium">
                 {activeImport?.fileName ?? "Nenhuma carga ativa"}
               </p>
-              <p className="mt-1 truncate text-xs text-muted">
-                {settings.spreadsheetImportPath}
+              <p className="mt-1 truncate text-xs text-muted" title={activeImport?.sourcePath ?? undefined}>
+                {activeImport?.sourcePath ?? "Caminho de origem não informado."}
               </p>
+            </div>
+            <div className="flex items-center justify-center px-3 py-3">
+              {activeImport ? (
+                <>
+                  <form
+                    id="discard-import-batch-form"
+                    action={discardImportBatchAction}
+                    className="hidden"
+                  >
+                    <input type="hidden" name="batchId" value={activeImport.id} />
+                  </form>
+                  <ConfirmSubmitButton
+                    formId="discard-import-batch-form"
+                    title="Descartar Carga Temporária"
+                    message="Esta ação marca a carga atual como descartada e libera o tenant para iniciar outra importação. Linhas já importadas para a base definitiva não serão apagadas."
+                    confirmLabel="Descartar Carga"
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-danger px-3 text-xs font-medium text-danger"
+                  >
+                    <Trash2 size={14} aria-hidden />
+                    Descartar Carga
+                  </ConfirmSubmitButton>
+                </>
+              ) : null}
             </div>
             <div className="px-4 py-3 text-center">
               <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">
@@ -371,29 +434,39 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
               <FileSpreadsheet size={22} className="text-primary" aria-hidden />
             </div>
 
-            <form action={startImportBatchAction} className="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
+            <form action={startImportBatchAction} className="mt-5 grid gap-3">
               <label className="grid gap-1 text-sm">
-                <span className="font-medium">Arquivo da Pasta Parametrizada</span>
-                <select
-                  required
-                  name="fileName"
-                  className="h-10 rounded-md border border-border bg-background px-3 text-sm"
-                  defaultValue=""
-                >
-                  <option value="" disabled>
-                    Selecione um arquivo
-                  </option>
-                  {files.map((file) => (
-                    <option key={file.fileName} value={file.fileName}>
-                      {file.fileName}
-                    </option>
-                  ))}
-                </select>
+                <span className="font-medium">Arquivo da Planilha</span>
+                <span className="flex flex-col gap-2 md:flex-row md:items-center">
+                  <input
+                    required
+                    name="file"
+                    type="file"
+                    accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+                    className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-sm"
+                  />
+                  <button className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
+                    <Upload size={16} aria-hidden />
+                    Carregar Planilha
+                  </button>
+                </span>
+                <span className="text-xs text-muted">
+                  Selecione uma planilha XLSX ou CSV do seu dispositivo, com até 10 MB.
+                </span>
               </label>
-              <button className="inline-flex h-10 items-center justify-center gap-2 self-end rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
-                <Upload size={16} aria-hidden />
-                Carregar
-              </button>
+              <label className="grid gap-1 text-sm">
+                <span className="font-medium">Caminho de Origem <span className="font-normal text-muted">(Opcional)</span></span>
+                <input
+                  name="sourcePath"
+                  type="text"
+                  maxLength={1000}
+                  placeholder="Cole o caminho completo do arquivo, se precisar registrá-lo"
+                  className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+                />
+                <span className="text-xs text-muted">
+                  O navegador não informa esse caminho automaticamente. O arquivo é enviado mesmo sem preenchê-lo.
+                </span>
+              </label>
             </form>
           </section>
         )}
@@ -401,27 +474,7 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
         {activeImport && (
           <section className="grid gap-5 lg:grid-cols-[20rem_1fr]">
             <aside className="overflow-hidden rounded-md border border-border bg-surface">
-              <div className="border-b border-border px-4 py-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="truncate text-sm font-semibold">
-                      {activeImport.fileName}
-                    </h2>
-                    <p className="mt-1 text-xs text-muted">
-                      {pendingRows} pendentes na fila
-                    </p>
-                  </div>
-                  <span className="rounded bg-surface-muted px-2 py-1 text-xs text-primary">
-                    {activeImport.totalRows}
-                  </span>
-                </div>
-                <form
-                  id="discard-import-batch-form"
-                  action={discardImportBatchAction}
-                  className="hidden"
-                >
-                  <input type="hidden" name="batchId" value={activeImport.id} />
-                </form>
+              <div className="p-3">
                 <form
                   id="import-approved-rows-form"
                   action={importApprovedRowsAction}
@@ -429,17 +482,31 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                 >
                   <input type="hidden" name="batchId" value={activeImport.id} />
                 </form>
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <ConfirmSubmitButton
-                    formId="discard-import-batch-form"
-                    title="Descartar Carga Temporária"
-                    message="Esta ação marca a carga atual como descartada e libera o tenant para iniciar outra importação. Linhas já importadas para a base definitiva não serão apagadas."
-                    confirmLabel="Descartar Carga"
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-danger px-3 text-xs font-medium text-danger"
-                  >
-                    <Trash2 size={14} aria-hidden />
-                    Descartar Carga
-                  </ConfirmSubmitButton>
+                <div className="flex items-center gap-2">
+                  <form action="/imports" className="min-w-0 flex flex-1 items-center gap-1">
+                    {currentStatusFilter !== "ALL" ? (
+                      <input type="hidden" name="status" value={currentStatusFilter} />
+                    ) : null}
+                    <label className="sr-only" htmlFor="import-prospect-search">
+                      Buscar Empresa ou Prospect
+                    </label>
+                    <input
+                      id="import-prospect-search"
+                      name="query"
+                      type="search"
+                      defaultValue={currentSearchQuery}
+                      placeholder="Buscar Prospect"
+                      className="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-xs"
+                    />
+                    <button
+                      type="submit"
+                      aria-label="Buscar Empresa ou Prospect"
+                      title="Buscar Empresa ou Prospect"
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border text-muted"
+                    >
+                      <Search size={14} aria-hidden />
+                    </button>
+                  </form>
                   <ImportStatusFilter
                     label={selectedFilterLabel}
                     options={statusFilterOptions}
@@ -452,7 +519,7 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                         <UsersRound size={14} className="text-primary" aria-hidden />
                         Encaminhar Para Equipe
                       </p>
-                      <p className="mt-1 text-[11px] leading-4 text-muted">
+                      <p className="mt-1 text-xs leading-4 text-muted">
                         O líder recebe os prospects e uma notificação para distribuir.
                       </p>
                     </div>
@@ -490,16 +557,17 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
               <div className="max-h-[41rem] overflow-auto p-2">
                 {visibleRows.length === 0 && (
                   <div className="rounded border border-dashed border-border px-3 py-6 text-center text-xs leading-5 text-muted">
-                    Nenhuma linha encontrada para o filtro {selectedFilterLabel}.
+                    Nenhuma linha encontrada para os filtros aplicados.
                   </div>
                 )}
                 {visibleRows.map((row) => {
                   const rowJson = getReviewJson(row.normalizedJson);
                   const isSelected = row.id === selectedRow?.id;
-                  const rowHref =
-                    currentStatusFilter === "ALL"
-                      ? `/imports?row=${row.id}`
-                      : `/imports?status=${currentStatusFilter}&row=${row.id}`;
+                  const rowHref = getImportsHref({
+                    status: currentStatusFilter,
+                    row: row.id,
+                    query: currentSearchQuery || undefined,
+                  });
 
                   return (
                     <Link
@@ -516,7 +584,7 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                         <span className="text-xs font-semibold">
                           Linha {row.rowNumber}
                         </span>
-                        <span className="rounded bg-background px-2 py-0.5 text-[10px] text-muted">
+                        <span className="rounded bg-background px-2 py-0.5 text-xs text-muted">
                           {statusLabels[row.status]}
                         </span>
                       </div>

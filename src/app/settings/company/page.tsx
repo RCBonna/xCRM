@@ -6,6 +6,7 @@ import { signOutAction } from "@/app/auth/actions";
 import { updateCompanySettingsAction } from "@/app/settings/company/actions";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { CnpjInput } from "@/components/cnpj-input";
+import { TenantBrand } from "@/components/tenant-brand";
 import { UppercaseInput } from "@/components/uppercase-input";
 import { UserIdentityCard } from "@/components/user-identity-card";
 import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
@@ -70,18 +71,11 @@ export default async function CompanySettingsPage({
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-[0.12em] text-muted">
-              {appUser.tenant.name}
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">
-              Configurações da Empresa
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-              Atualize os dados do tenant usados no cabeçalho, permissões e
-              visão administrativa do xCRM.
-            </p>
-          </div>
+          <TenantBrand
+            organizationName={appUser.tenant.name}
+            title="Configurações da Empresa"
+            subtitle="Atualize os dados do tenant usados no cabeçalho, permissões e visão administrativa do xCRM."
+          />
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <UserIdentityCard
               name={userIdentity}
