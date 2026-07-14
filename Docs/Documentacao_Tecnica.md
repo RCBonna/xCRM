@@ -592,6 +592,17 @@ Observacoes de seguranca:
 - O resumo superior da carga e a fonte unica para arquivo, caminho informado e contagens. O painel lateral mantem apenas acoes de descarte, filtro, encaminhamento e importacao.
 - `Descartar Carga` fica no resumo superior e continua usando `ConfirmSubmitButton`; o painel lateral usa uma busca por `query` combinada ao filtro de status, com parametros preservados nos links das linhas e do filtro.
 - No desktop, `Descartar Carga` ocupa uma celula propria na mesma grade do resumo, imediatamente antes de `Linhas`; em telas estreitas, a grade volta a empilhar os itens para preservar leitura e alvos de toque.
+- A tela `/platform` usa `PlatformTenantManagement` como superficie mestre-detalhe: busca e filtro escolhem uma organização, e o detalhe concentra visão operacional, acesso, auditoria e zona de risco sem repetir a lista de tenants.
+- `TenantStatusEvent` registra no banco toda suspensão ou reativação com status, motivo, data/hora e `PlatformAdmin` responsável. A migration `prisma/20260713111500_add_tenant_status_events.sql` foi aplicada e validada no Supabase remoto.
+- `suspendTenantAction` exige motivo; suspensão e reativação criam o evento de auditoria na mesma transação que altera `Tenant.status`.
+- Os diálogos de suspensão, reativação e exclusão usam o elemento HTML nativo `dialog`, que fornece modalidade, foco inicial, aprisionamento de foco, fechamento por `Esc` e devolução de foco ao invocador. A exclusão usa estado `Processando...` sem simular etapas de servidor.
+- O detalhe operacional da organização mantém o selo de Status ao lado do nome e mostra Proprietário, e-mail e telefone imediatamente após os indicadores, usando o telefone já carregado do usuário `OWNER`.
+- Os indicadores operacionais reservam altura mínima para o rótulo e usam grade de duas, três ou cinco colunas conforme a largura; assim, rótulos longos não deslocam os valores numéricos. Nome, e-mail e telefone do Proprietário usam ícones Lucide e truncamento com `title` para preservar a leitura em espaços estreitos.
+- O rótulo visível do indicador de contas usa `Empresa/ Prospects`, com espaço após a barra para favorecer leitura e quebra de linha.
+- `UserIdentityCard` centraliza a tradução dos papéis técnicos (`OWNER`, `ADMIN`, `MANAGER`, `SELLER` e `ASSISTANT`) para rótulos localizados em Português-BR, evitando que cabeçalhos exibam valores do enum.
+- A tradução de papéis normaliza o valor com `toUpperCase()`, cobrindo tanto valores de enum quanto representações recebidas em minúsculas, como `owner`.
+- `LoginInfoPanel` roda mensagens informativas a cada 8 segundos somente quando não há mensagem de erro/sucesso, o usuário não está interagindo e `prefers-reduced-motion` não está ativo. Os indicadores são botões acessíveis para seleção manual da mensagem.
+- `/platform` usa a mesma marca bitmap Scientiam dos cabeçalhos autenticados, preservando a distinção textual de `Platform Admin` por não pertencer a um tenant.
 
 ## Versao WIP no topo
 
@@ -603,7 +614,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-07-12 20:09:52`
+- Valor: `2026-07-13 21:00:52`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

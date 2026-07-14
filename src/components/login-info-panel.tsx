@@ -3,6 +3,8 @@
 import { CircleAlert, CircleCheck, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 
+const rotationIntervalMs = 8000;
+
 const slides = [
   {
     title: "CRM multiempresa desde o primeiro acesso",
@@ -29,20 +31,38 @@ type LoginInfoPanelProps = {
 
 export function LoginInfoPanel({ error, message }: LoginInfoPanelProps) {
   const [slideIndex, setSlideIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const activeSlide = slides[slideIndex];
   const hasSystemMessage = Boolean(error || message);
 
   useEffect(() => {
-    if (hasSystemMessage) {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
+
+    updatePreference();
+    mediaQuery.addEventListener("change", updatePreference);
+
+    return () => mediaQuery.removeEventListener("change", updatePreference);
+  }, []);
+
+  useEffect(() => {
+    if (hasSystemMessage || isPaused || prefersReducedMotion) {
       return;
     }
 
     const timer = window.setInterval(() => {
       setSlideIndex((current) => (current + 1) % slides.length);
-    }, 30000);
+    }, rotationIntervalMs);
 
     return () => window.clearInterval(timer);
-  }, [hasSystemMessage]);
+  }, [hasSystemMessage, isPaused, prefersReducedMotion]);
+
+  function handleBlurCapture(event: React.FocusEvent<HTMLDivElement>) {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      setIsPaused(false);
+    }
+  }
 
   if (error || message) {
     const Icon = error ? CircleAlert : CircleCheck;
@@ -62,7 +82,13 @@ export function LoginInfoPanel({ error, message }: LoginInfoPanelProps) {
   }
 
   return (
-    <div className="min-h-28 rounded-md border border-border bg-surface px-4 py-4">
+    <div
+      className="min-h-28 rounded-md border border-border bg-surface px-4 py-4"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocusCapture={() => setIsPaused(true)}
+      onBlurCapture={handleBlurCapture}
+    >
       <div className="flex items-start gap-3">
         <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-muted text-primary">
           <Sparkles size={16} aria-hidden />
@@ -74,13 +100,17 @@ export function LoginInfoPanel({ error, message }: LoginInfoPanelProps) {
           </p>
         </div>
       </div>
-      <div className="mt-3 flex gap-1.5" aria-hidden>
+      <div className="mt-3 flex gap-1.5" aria-label="Mensagens sobre o xCRM">
         {slides.map((slide, index) => (
-          <span
+          <button
             key={slide.title}
+            type="button"
+            onClick={() => setSlideIndex(index)}
+            aria-label={`Mostrar: ${slide.title}`}
+            aria-pressed={index === slideIndex}
             className={[
-              "h-1.5 rounded-full transition-all",
-              index === slideIndex ? "w-6 bg-primary" : "w-1.5 bg-border",
+              "h-2 rounded-full transition-all",
+              index === slideIndex ? "w-6 bg-primary" : "w-2 bg-border",
             ].join(" ")}
           />
         ))}

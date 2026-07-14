@@ -543,3 +543,22 @@ A opcao `Agenda de Atividades` fica disponivel no menu superior. Ela concentra a
 - Atividades sem Data e Hora permanecem no quadro `Sem Agendamento`; atividades pendentes de periodos anteriores aparecem no quadro `Atrasadas`.
 - Clique em uma atividade para abrir a edicao no proprio painel. E possivel ajustar titulo, tipo, Data e Hora, prioridade e descricao, ou concluir uma pendencia.
 - O Proprietario e o Administrador veem as atividades de toda a organizacao. O Lider ve as proprias atividades e as dos membros das equipes que lidera. Vendedor e Assistente veem somente as atividades sob sua responsabilidade.
+
+## Administração da Plataforma
+
+Esta area e exclusiva do `Platform Admin`. Use a busca e o filtro de Status para localizar uma organização; ao selecioná-la, a tela apresenta os dados operacionais, o acesso e o histórico mais recente de suspensão ou reativação.
+
+O selo de Status aparece ao lado do nome da organização. Abaixo dos indicadores operacionais, a tela informa o Proprietário, e-mail e telefone vinculados ao tenant.
+
+Os indicadores mantêm os números alinhados mesmo quando um título é mais longo. O indicador `Empresa/ Prospects` usa espaço após a barra para facilitar a leitura. Ícones identificam nome, e-mail e telefone do Proprietário.
+
+Nos cabeçalhos, os papéis aparecem em Português-BR, como `Proprietário`, `Administrador`, `Líder`, `Vendedor` e `Assistente`, mesmo quando o sistema recebe o papel técnico em letras minúsculas. A Administração da Plataforma também mostra a marca Scientiam para manter o padrão de identidade das telas autenticadas.
+
+## Painel Informativo do Login
+
+Quando a tela de login não exibe um aviso de erro ou sucesso, o painel informativo troca a mensagem a cada 8 segundos. Passe o mouse ou use o teclado nos indicadores para pausar a rotação e selecionar diretamente a mensagem desejada. Pessoas que usam redução de movimento no sistema veem o painel sem troca automática.
+
+- Para suspender uma organização, clique em `Suspender Organização`, informe o motivo obrigatório e confirme a operação. A equipe perde o acesso operacional até que a organização seja reativada.
+- Para reativar, clique em `Reativar Organização`, revise o impacto e confirme. Um motivo pode ser registrado para auditoria.
+- A `Zona de Risco` reúne a exclusão permanente. Ela exige a confirmação textual `EXCLUIR Nome da Organização` e remove todos os dados vinculados. Durante o envio, a tela mostra apenas `Processando...` até receber a resposta do sistema.
+- A última alteração de acesso mostra quem executou a ação, quando e o motivo informado.

@@ -43,6 +43,10 @@ export async function suspendTenantAction(formData: FormData) {
     redirect("/platform?error=Tenant%20nao%20informado.");
   }
 
+  if (!reason) {
+    redirect("/platform?error=Informe%20o%20motivo%20da%20suspensao.");
+  }
+
   const tenant = await prisma.tenant.findUnique({
     where: {
       id: tenantId,
@@ -64,6 +68,15 @@ export async function suspendTenantAction(formData: FormData) {
       },
       data: {
         status: "SUSPENDED",
+      },
+    });
+
+    await tx.tenantStatusEvent.create({
+      data: {
+        tenantId: tenant.id,
+        status: "SUSPENDED",
+        reason,
+        changedByPlatformAdminId: platformAdmin.id,
       },
     });
 
@@ -92,6 +105,7 @@ export async function suspendTenantAction(formData: FormData) {
 export async function reactivateTenantAction(formData: FormData) {
   const platformAdmin = await requirePlatformAdmin();
   const tenantId = normalizeText(formData.get("tenantId"));
+  const reason = normalizeText(formData.get("reason"));
 
   if (!tenantId) {
     redirect("/platform?error=Tenant%20nao%20informado.");
@@ -118,6 +132,15 @@ export async function reactivateTenantAction(formData: FormData) {
       },
       data: {
         status: "ACTIVE",
+      },
+    });
+
+    await tx.tenantStatusEvent.create({
+      data: {
+        tenantId: tenant.id,
+        status: "ACTIVE",
+        reason: reason || null,
+        changedByPlatformAdminId: platformAdmin.id,
       },
     });
 

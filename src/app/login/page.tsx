@@ -38,7 +38,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
               Acesso inicial com Supabase Auth. Depois do cadastro, o primeiro
-              usuário cria a empresa e assume o perfil owner do tenant.
+              usuário cria a empresa e assume o perfil de proprietário do tenant.
             </p>
           </div>
 

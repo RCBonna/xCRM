@@ -22,7 +22,7 @@ type TeamUsersTabProps = {
 };
 
 const roleLabels: Record<string, string> = {
-  OWNER: "Owner",
+  OWNER: "Proprietário",
   ADMIN: "Admin",
   MANAGER: "Líder",
   SELLER: "Vendedor",

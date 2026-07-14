@@ -1132,3 +1132,39 @@ Decisao:
 - A coluna e opcional, pois o upload continua valido sem caminho informado.
 - O valor vem do campo `Caminho de Origem` preenchido pelo Owner; ele nao e deduzido do navegador.
 - A aplicacao foi realizada com `pg`, usando `DIRECT_URL` e SSL compativel com Supabase; uma consulta a `information_schema.columns` confirmou `public.imports.source_path`.
+
+## 2026-07-13 11:15:00 -03:00 - Auditoria de Status das Organizacoes
+
+Status: Migration aplicada e validada no Supabase remoto
+
+Objetivo:
+
+- Registrar de forma consultável as suspensões e reativações executadas por Platform Admin.
+- Preservar status, justificativa, responsável e data/hora para exibição na administração da plataforma.
+
+Arquivo criado:
+
+```text
+prisma/20260713111500_add_tenant_status_events.sql
+```
+
+Comando SQL:
+
+```sql
+create table if not exists public.tenant_status_events (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id uuid not null references public.tenants(id) on delete cascade,
+  status public."RecordStatus" not null,
+  reason text,
+  changed_by_platform_admin_id uuid not null references public.platform_admins(id) on delete restrict,
+  created_at timestamptz(6) not null default now()
+);
+
+create index if not exists tenant_status_events_tenant_created_idx
+  on public.tenant_status_events (tenant_id, created_at desc);
+```
+
+Validacao:
+
+- Aplicada via `pg` com `DIRECT_URL` e SSL compativel com Supabase.
+- Consulta de catalogo confirmou a tabela `public.tenant_status_events` e seus dois índices (chave primária e índice por tenant/data).

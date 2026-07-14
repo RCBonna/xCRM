@@ -31,6 +31,7 @@ model Tenant {
   stages         PipelineStage[]
   pipelines      Pipeline[]
   stageMovements StageMovement[]
+  statusEvents   TenantStatusEvent[]
   teamMembers    TeamMember[]
   teams          Team[]
   users          User[]
@@ -47,9 +48,24 @@ model PlatformAdmin {
   createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   notifications Notification[] @relation("NotificationRecipientPlatformAdmin")
+  statusEvents  TenantStatusEvent[] @relation("TenantStatusEventActor")
 
   @@index([status])
   @@map("platform_admins")
+}
+
+model TenantStatusEvent {
+  id                       String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId                 String        @map("tenant_id") @db.Uuid
+  status                   RecordStatus
+  reason                   String?
+  changedByPlatformAdminId String        @map("changed_by_platform_admin_id") @db.Uuid
+  createdAt                DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant                   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  changedByPlatformAdmin   PlatformAdmin @relation("TenantStatusEventActor", fields: [changedByPlatformAdminId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, createdAt], map: "tenant_status_events_tenant_created_idx")
+  @@map("tenant_status_events")
 }
 
 model User {

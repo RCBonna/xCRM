@@ -1,5 +1,13 @@
 import { UserRound } from "lucide-react";
 
+const roleLabels: Record<string, string> = {
+  OWNER: "Proprietário",
+  ADMIN: "Administrador",
+  MANAGER: "Líder",
+  SELLER: "Vendedor",
+  ASSISTANT: "Assistente",
+};
+
 type UserIdentityCardProps = {
   name: string;
   email: string;
@@ -15,6 +23,7 @@ export function UserIdentityCard({
 }: UserIdentityCardProps) {
   const badgeLabel =
     unreadNotificationsCount > 99 ? "99+" : String(unreadNotificationsCount);
+  const roleLabel = roleLabels[role.toUpperCase()] ?? role;
 
   return (
     <div className="relative flex h-12 w-full min-w-0 items-center gap-2 rounded-md border border-border bg-surface px-3 text-left">
@@ -24,7 +33,7 @@ export function UserIdentityCard({
       <div className="min-w-0">
         <p className="truncate text-sm font-medium leading-4">{name}</p>
         <p className="truncate text-xs leading-4 text-muted">
-          {email} - {role}
+          {email} - {roleLabel}
         </p>
       </div>
       {unreadNotificationsCount > 0 ? (

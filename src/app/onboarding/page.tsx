@@ -45,7 +45,7 @@ export default async function OnboardingPage({
             Crie a empresa inicial do xCRM
           </h1>
           <p className="mt-3 text-sm leading-6 text-muted">
-            Esta etapa cria o tenant, vincula seu login como owner, cria o
+            Esta etapa cria o tenant, vincula seu login como proprietário, cria o
             funil comercial padrão e adiciona uma primeira tarefa interna.
           </p>
         </section>

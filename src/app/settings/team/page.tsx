@@ -33,7 +33,7 @@ const tabs: Array<{ value: TeamTab; label: string }> = [
 ];
 
 const roleLabels: Record<string, string> = {
-  OWNER: "Owner",
+  OWNER: "Proprietário",
   ADMIN: "Admin",
   MANAGER: "Líder",
   SELLER: "Vendedor",

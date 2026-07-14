@@ -1,7 +1,26 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-07-12 20:09:52 -03:00
+Ultima modificacao: 2026-07-13 21:00:52 -03:00
+
+## 2026-07-13
+
+### Gestão de Organizações da Plataforma
+
+- Implementada a issue `#95`, reorganizando `/platform` como lista única de organizações com busca, filtro de status e painel de detalhes.
+- A suspensão passou a exigir motivo obrigatório e confirmação em diálogo antes de bloquear o acesso da organização.
+- A reativação também passou a usar confirmação e permite registrar contexto opcional.
+- Criada a tabela `tenant_status_events` para registrar status, motivo, data/hora e Platform Admin responsável por suspensão ou reativação.
+- A exclusão foi concentrada na `Zona de Risco` da organização selecionada, preservando confirmação textual e removendo o progresso visual temporizado que não refletia o servidor.
+- Diálogos foram migrados para o elemento nativo `dialog`, com comportamento modal, fechamento por `Esc` e retorno de foco ao controle de origem.
+- Aplicada e validada no Supabase a migration `prisma/20260713111500_add_tenant_status_events.sql`.
+- Ajustada a apresentação de organizações para manter o selo de Status junto ao nome e exibir Proprietário, e-mail e telefone logo abaixo dos indicadores operacionais.
+- A grade de indicadores passou a reservar altura uniforme para rótulos e usar colunas responsivas, preservando o alinhamento dos números; o bloco de Proprietário recebeu ícones de nome, e-mail e telefone.
+- Ajustado o rótulo do indicador para `Empresa/ Prospects`, facilitando a leitura e a quebra de linha.
+- Padronizada a apresentação de papéis no cartão de identidade: `OWNER` agora aparece como `Proprietário` em todos os cabeçalhos que reutilizam o componente.
+- Incluída a marca Scientiam no cabeçalho da Administração da Plataforma, que era a única superfície autenticada sem o padrão visual de identidade.
+- Corrigida a tradução de papéis recebidos em minúsculas, garantindo que `owner` e `OWNER` apareçam como `Proprietário`.
+- Criada a issue `#96` e ajustado o painel informativo do login: a rotação passou de 30 para 8 segundos, pausa durante interação, respeita redução de movimento e permite escolher a mensagem pelos indicadores.
 
 ## 2026-06-12
 
