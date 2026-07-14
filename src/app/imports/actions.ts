@@ -94,6 +94,12 @@ function normalizeOptionalPhone(value: FormDataEntryValue | null) {
   return normalizeOptionalText(value)?.replace(/[^\d+]/g, "") ?? null;
 }
 
+function normalizeOptionalEmail(value: unknown) {
+  const email = String(value ?? "").trim().toLocaleLowerCase("pt-BR");
+
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+}
+
 function parseOptionalDateTime(value: FormDataEntryValue | null) {
   const text = normalizeOptionalText(value);
 
@@ -322,6 +328,17 @@ async function importReviewedRow({
       });
     }
 
+    let accountHasPrimaryContact = Boolean(
+      await tx.contact.findFirst({
+        where: {
+          tenantId: appUser.tenantId,
+          accountId: account.id,
+          isPrimary: true,
+        },
+        select: { id: true },
+      }),
+    );
+
     for (const contact of reviewJson.contacts) {
       if (!contact.name && !contact.email && !contact.phone) {
         continue;
@@ -340,7 +357,17 @@ async function importReviewedRow({
           })
         : null;
 
-      if (!duplicateContact) {
+      if (duplicateContact) {
+        if (contact.isPrimary && !accountHasPrimaryContact) {
+          await tx.contact.update({
+            where: { id: duplicateContact.id },
+            data: { isPrimary: true },
+          });
+          accountHasPrimaryContact = true;
+        }
+      } else {
+        const isPrimary = !accountHasPrimaryContact;
+
         await tx.contact.create({
           data: {
             tenantId: appUser.tenantId,
@@ -350,9 +377,13 @@ async function importReviewedRow({
             title: contact.role,
             email: contact.email,
             phone: contact.phone,
-            isPrimary: contact.isPrimary,
+            isPrimary,
           },
         });
+
+        if (isPrimary) {
+          accountHasPrimaryContact = true;
+        }
       }
     }
 
@@ -437,25 +468,113 @@ async function importReviewedRow({
   });
 }
 
+function getReviewContactsFromForm(formData: FormData) {
+  const fallbackContact = {
+    name: normalizeOptionalText(formData.get("contactName")),
+    email: normalizeOptionalEmail(formData.get("contactEmail")),
+    phone: normalizeOptionalPhone(formData.get("contactPhone")),
+    role: normalizeOptionalText(formData.get("contactRole")),
+    isPrimary: true,
+  };
+  const rawContacts = formData.get("contactsJson");
+
+  if (typeof rawContacts !== "string") {
+    return {
+      contacts:
+        fallbackContact.name || fallbackContact.email || fallbackContact.phone
+          ? [
+              {
+                ...fallbackContact,
+                name: fallbackContact.name || "Contato a Revisar",
+              },
+            ]
+          : [],
+      warnings: [],
+    };
+  }
+
+  try {
+    const parsedContacts: unknown = JSON.parse(rawContacts);
+
+    if (!Array.isArray(parsedContacts)) {
+      throw new Error("Formato inválido");
+    }
+
+    const seenEmails = new Set<string>();
+    const warnings: string[] = [];
+    const contacts = parsedContacts.flatMap((rawContact) => {
+      if (!rawContact || typeof rawContact !== "object") {
+        return [];
+      }
+
+      const contact = rawContact as Record<string, unknown>;
+      const rawEmail = String(contact.email ?? "").trim();
+      const email = normalizeOptionalEmail(rawEmail);
+      const name = normalizeOptionalText(String(contact.name ?? ""));
+      const phone = normalizeOptionalPhone(String(contact.phone ?? ""));
+
+      if (rawEmail && !email) {
+        warnings.push(`O e-mail "${rawEmail}" não é válido e foi removido.`);
+      }
+
+      if (!name && !email && !phone) {
+        return [];
+      }
+
+      if (email && seenEmails.has(email)) {
+        warnings.push(`O e-mail duplicado "${email}" foi ignorado.`);
+        return [];
+      }
+
+      if (email) {
+        seenEmails.add(email);
+      }
+
+      return [
+        {
+          name: name || "Contato a Revisar",
+          email,
+          phone,
+          role: normalizeOptionalText(String(contact.role ?? "")),
+          isPrimary: Boolean(contact.isPrimary),
+        },
+      ];
+    });
+    const primaryIndex = contacts.findIndex((contact) => contact.isPrimary);
+
+    return {
+      contacts: contacts.map((contact, index) => ({
+        ...contact,
+        isPrimary: index === (primaryIndex >= 0 ? primaryIndex : 0),
+      })),
+      warnings,
+    };
+  } catch {
+    return {
+      contacts: [],
+      warnings: ["Não foi possível ler os contatos revisados desta linha."],
+    };
+  }
+}
+
 function getReviewRowFromForm(formData: FormData): ReviewRowJson {
   const companyName = normalizeOptionalUppercase(formData.get("companyName"));
   const legalName =
     normalizeOptionalUppercase(formData.get("legalName")) ?? companyName;
-  const contactName = normalizeOptionalText(formData.get("contactName"));
+  const contactResult = getReviewContactsFromForm(formData);
   const historyBody = normalizeOptionalText(formData.get("historyBody"));
   const nextActionDescription = normalizeOptionalText(
     formData.get("nextActionDescription"),
   );
   const warnings = [
     companyName ? null : "Empresa/Prospect sem nome identificado.",
-    contactName ||
-    normalizeOptionalText(formData.get("contactEmail")) ||
-    normalizeOptionalText(formData.get("contactPhone"))
+    contactResult.contacts.length > 0
       ? null
       : "Nenhum contato claro foi identificado nesta linha.",
     nextActionDescription
       ? null
       : "Nenhuma próxima ação futura foi identificada.",
+    ...contactResult.warnings,
   ].filter(Boolean) as string[];
 
   return {
@@ -471,22 +590,7 @@ function getReviewRowFromForm(formData: FormData): ReviewRowJson {
       mainSupplier: normalizeOptionalUppercase(formData.get("mainSupplier")),
       notes: normalizeOptionalText(formData.get("notes")),
     },
-    contacts:
-      contactName ||
-      normalizeOptionalText(formData.get("contactEmail")) ||
-      normalizeOptionalText(formData.get("contactPhone"))
-        ? [
-            {
-              name: contactName || "Contato a Revisar",
-              email:
-                normalizeOptionalText(formData.get("contactEmail"))?.toLowerCase() ??
-                null,
-              phone: normalizeOptionalPhone(formData.get("contactPhone")),
-              role: normalizeOptionalText(formData.get("contactRole")),
-              isPrimary: true,
-            },
-          ]
-        : [],
+    contacts: contactResult.contacts,
     history: historyBody
       ? [
           {
@@ -515,6 +619,88 @@ function getReviewRowFromForm(formData: FormData): ReviewRowJson {
       warnings,
     },
   };
+}
+
+function getRawSpreadsheetValues(rawJson: Prisma.JsonValue) {
+  if (!rawJson || typeof rawJson !== "object" || Array.isArray(rawJson)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(rawJson).map(([key, value]) => [key, String(value ?? "")]),
+  );
+}
+
+export async function reprocessImportRowContactsAction(formData: FormData) {
+  const appUser = await getOwnerUser();
+  const rowId = normalizeOptionalText(formData.get("rowId"));
+
+  if (!rowId) {
+    redirect("/imports?error=Linha%20nao%20informada.");
+  }
+
+  const row = await prisma.importRow.findFirst({
+    where: {
+      id: rowId,
+      tenantId: appUser.tenantId,
+      status: "REVIEWING",
+      import: { status: { in: activeImportStatuses } },
+    },
+    select: {
+      id: true,
+      importId: true,
+      rowNumber: true,
+      rawJson: true,
+      normalizedJson: true,
+    },
+  });
+
+  if (!row?.normalizedJson) {
+    redirect("/imports?error=Linha%20temporaria%20nao%20encontrada.");
+  }
+
+  const reprocessed = normalizeSpreadsheetRow({
+    rowNumber: row.rowNumber,
+    values: getRawSpreadsheetValues(row.rawJson),
+  });
+  const currentReview = row.normalizedJson as ReviewRowJson;
+  const preservedWarnings = currentReview.aiSuggestion.warnings.filter(
+    (warning) =>
+      !warning.toLocaleLowerCase("pt-BR").includes("contato") &&
+      !warning.toLocaleLowerCase("pt-BR").includes("e-mail"),
+  );
+  const nextWarnings = [
+    ...preservedWarnings,
+    ...reprocessed.aiSuggestion.warnings,
+  ].filter((warning, index, warnings) => warnings.indexOf(warning) === index);
+  const nextReview: ReviewRowJson = {
+    ...currentReview,
+    contacts: reprocessed.contacts,
+    aiSuggestion: {
+      ...currentReview.aiSuggestion,
+      mode: "owner-review",
+      explanation:
+        "Contatos reprocessados a partir dos Dados Originais da Planilha.",
+      confidence: nextWarnings.length === 0 ? 1 : 0.75,
+      warnings: nextWarnings,
+    },
+  };
+
+  await prisma.importRow.update({
+    where: { id: row.id },
+    data: {
+      normalizedJson: nextReview as Prisma.InputJsonValue,
+      errorMessage: nextWarnings.length > 0 ? nextWarnings.join(" ") : null,
+    },
+  });
+
+  await refreshImportCounts(row.importId, appUser.tenantId);
+  revalidatePath("/imports");
+  redirect(
+    `/imports?row=${row.id}&message=${encodeMessage(
+      `${reprocessed.contacts.length} contato(s) reprocessado(s) a partir da planilha.`,
+    )}`,
+  );
 }
 
 export async function startImportBatchAction(formData: FormData) {

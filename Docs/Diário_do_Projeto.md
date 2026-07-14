@@ -1,7 +1,18 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-07-13 21:00:52 -03:00
+Ultima modificacao: 2026-07-14 18:11:14 -03:00
+
+## 2026-07-14
+
+### Importação de Múltiplos Contatos
+
+- Implementada a issue `#97`: a normalização da planilha passou a extrair cada e-mail válido presente na mesma célula e criar um contato por endereço.
+- Contatos duplicados na mesma célula são ignorados e geram aviso na revisão; texto sem e-mail reconhecível também gera aviso para conferência.
+- A primeira pessoa detectada permanece como Contato Principal; nomes associados a formatos como `Nome <email>` são preservados e os demais casos usam `Contato a Revisar` sem inferência insegura.
+- A tela de revisão substituiu o formulário único por uma lista editável de contatos, com definição de Principal, inclusão, remoção e preservação de todos os registros ao salvar.
+- A importação definitiva impede conflito de contato principal quando a Empresa/Prospect já possui um contato marcado como principal.
+- Reaberta a issue `#97` após identificar que cargas temporárias criadas antes da mudança mantinham a normalização antiga. Adicionado `Reprocessar Contatos` por linha, com confirmação, para reconstruir a lista a partir dos Dados Originais sem alterar Empresa/Prospect, ações ou observações.
 
 ## 2026-07-13
 

@@ -558,6 +558,16 @@ Nos cabeçalhos, os papéis aparecem em Português-BR, como `Proprietário`, `Ad
 
 Quando a tela de login não exibe um aviso de erro ou sucesso, o painel informativo troca a mensagem a cada 8 segundos. Passe o mouse ou use o teclado nos indicadores para pausar a rotação e selecionar diretamente a mensagem desejada. Pessoas que usam redução de movimento no sistema veem o painel sem troca automática.
 
+## Importação de Contatos Múltiplos
+
+Quando uma célula de e-mail contém mais de um endereço, o xCRM cria um contato separado para cada e-mail reconhecido. O primeiro contato é marcado como Principal e os demais aparecem na revisão da linha.
+
+- Revise a lista `Contatos` antes de aprovar: ajuste nome, Função/Cargo, e-mail e telefone conforme necessário.
+- Use `Definir Principal` para escolher a pessoa de referência da Empresa/Prospect.
+- Use `Adicionar Contato` ou o ícone de remoção para completar ou corrigir a lista.
+- Endereços repetidos na mesma célula são ignorados, e o sistema avisa quando não consegue reconhecer um e-mail válido.
+- Para uma carga temporária criada antes desta melhoria, abra a linha e use `Reprocessar Contatos`. Confirme a operação para recriar a lista usando os Dados Originais da Planilha. A Empresa/Prospect, ações e observações permanecem como estavam; apenas edições manuais da lista de contatos serão substituídas.
+
 - Para suspender uma organização, clique em `Suspender Organização`, informe o motivo obrigatório e confirme a operação. A equipe perde o acesso operacional até que a organização seja reativada.
 - Para reativar, clique em `Reativar Organização`, revise o impacto e confirme. Um motivo pode ser registrado para auditoria.
 - A `Zona de Risco` reúne a exclusão permanente. Ela exige a confirmação textual `EXCLUIR Nome da Organização` e remove todos os dados vinculados. Durante o envio, a tela mostra apenas `Processando...` até receber a resposta do sistema.

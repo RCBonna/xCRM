@@ -602,6 +602,10 @@ Observacoes de seguranca:
 - `UserIdentityCard` centraliza a tradução dos papéis técnicos (`OWNER`, `ADMIN`, `MANAGER`, `SELLER` e `ASSISTANT`) para rótulos localizados em Português-BR, evitando que cabeçalhos exibam valores do enum.
 - A tradução de papéis normaliza o valor com `toUpperCase()`, cobrindo tanto valores de enum quanto representações recebidas em minúsculas, como `owner`.
 - `LoginInfoPanel` roda mensagens informativas a cada 8 segundos somente quando não há mensagem de erro/sucesso, o usuário não está interagindo e `prefers-reduced-motion` não está ativo. Os indicadores são botões acessíveis para seleção manual da mensagem.
+- `normalizeSpreadsheetRow` extrai todos os e-mails válidos da célula de e-mail e gera uma entrada por endereço no array `contacts`. A extração aceita separadores comuns e preserva nomes no padrão `Nome <email>`; duplicidades na mesma célula e conteúdo sem endereço válido entram como avisos de revisão.
+- `ImportReviewContacts` é o componente cliente da revisão de importação. Ele serializa a lista editável em `contactsJson`, permitindo adicionar/remover contatos e definir um único Principal sem perder registros ao enviar a Server Action.
+- `getReviewRowFromForm` valida, deduplica e normaliza `contactsJson`; `importReviewedRow` evita criar um segundo contato principal para a mesma Empresa/Prospect e promove o contato duplicado marcado como principal quando necessário.
+- `reprocessImportRowContactsAction` atende linhas `REVIEWING` de cargas temporárias existentes: relê `rawJson`, aplica o normalizador atual apenas aos contatos e preserva os demais dados revisados. O botão usa confirmação porque substitui somente a lista de contatos editada manualmente.
 - `/platform` usa a mesma marca bitmap Scientiam dos cabeçalhos autenticados, preservando a distinção textual de `Platform Admin` por não pertencer a um tenant.
 
 ## Versao WIP no topo
@@ -614,7 +618,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-07-13 21:00:52`
+- Valor: `2026-07-14 18:11:14`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

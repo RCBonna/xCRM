@@ -58,6 +58,13 @@ const columnAliases = {
   channel: ["presencial/email/telefone", "canal", "origem"],
 };
 
+const emailPattern = /[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi;
+
+type ContactExtraction = {
+  contacts: NormalizedContact[];
+  warnings: string[];
+};
+
 function normalizeKey(key: string) {
   return key
     .normalize("NFD")
@@ -116,8 +123,108 @@ function normalizeDate(value: string | null) {
   return parsedDate.toISOString();
 }
 
-function buildWarnings(row: NormalizedImportRow) {
-  const warnings: string[] = [];
+function normalizeContactName(value: string) {
+  const name = value
+    .replace(/[<>()[\]{}"']/g, " ")
+    .replace(/[;,/|]+/g, " ")
+    .replace(/\b(e-?mails?|contatos?)\s*:?/gi, " ")
+    .replace(/[\s-]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return name.length > 1 ? name : null;
+}
+
+function extractContactsFromEmailCell({
+  emailCell,
+  contactName,
+  phone,
+}: {
+  emailCell: string | null;
+  contactName: string | null;
+  phone: string | null;
+}): ContactExtraction {
+  if (!emailCell) {
+    return {
+      contacts:
+        contactName || phone
+          ? [
+              {
+                name: contactName || "Contato a Revisar",
+                email: null,
+                phone,
+                role: null,
+                isPrimary: true,
+              },
+            ]
+          : [],
+      warnings: [],
+    };
+  }
+
+  const matches = Array.from(emailCell.matchAll(emailPattern));
+
+  if (matches.length === 0) {
+    return {
+      contacts:
+        contactName || phone
+          ? [
+              {
+                name: contactName || "Contato a Revisar",
+                email: null,
+                phone,
+                role: null,
+                isPrimary: true,
+              },
+            ]
+          : [],
+      warnings: [
+        "Nenhum e-mail válido foi reconhecido na célula de e-mail; revise o conteúdo original.",
+      ],
+    };
+  }
+
+  const seenEmails = new Set<string>();
+  const contacts: NormalizedContact[] = [];
+  let cursor = 0;
+  let ignoredDuplicates = false;
+
+  for (const match of matches) {
+    const email = match[0].toLocaleLowerCase("pt-BR");
+    const segmentBeforeEmail = emailCell.slice(cursor, match.index ?? 0);
+    cursor = (match.index ?? 0) + match[0].length;
+
+    if (seenEmails.has(email)) {
+      ignoredDuplicates = true;
+      continue;
+    }
+
+    seenEmails.add(email);
+    const inlineName = normalizeContactName(segmentBeforeEmail);
+    const isFirstContact = contacts.length === 0;
+
+    contacts.push({
+      name:
+        inlineName ??
+        (isFirstContact ? contactName : null) ??
+        "Contato a Revisar",
+      email,
+      phone: isFirstContact ? phone : null,
+      role: null,
+      isPrimary: isFirstContact,
+    });
+  }
+
+  return {
+    contacts,
+    warnings: ignoredDuplicates
+      ? ["Endereços de e-mail duplicados na mesma célula foram ignorados."]
+      : [],
+  };
+}
+
+function buildWarnings(row: NormalizedImportRow, extractionWarnings: string[]) {
+  const warnings = [...extractionWarnings];
 
   if (!row.company.name) {
     warnings.push("Empresa/Prospect sem nome identificado.");
@@ -146,12 +253,17 @@ export function normalizeSpreadsheetRow(row: RawSpreadsheetRow): NormalizedImpor
     normalizeUppercase(findValue(row.values, columnAliases.legalName)) ??
     companyName;
   const contactName = findValue(row.values, columnAliases.contactName);
-  const email = findValue(row.values, columnAliases.email)?.toLowerCase() ?? null;
+  const emailCell = findValue(row.values, columnAliases.email);
   const phone = normalizePhone(findValue(row.values, columnAliases.phone));
   const action = findValue(row.values, columnAliases.action);
   const nextAction = findValue(row.values, columnAliases.nextAction);
   const nextActionDate = normalizeDate(nextAction);
   const channel = findValue(row.values, columnAliases.channel);
+  const contactExtraction = extractContactsFromEmailCell({
+    emailCell,
+    contactName,
+    phone,
+  });
 
   const normalizedRow: NormalizedImportRow = {
     company: {
@@ -168,18 +280,7 @@ export function normalizeSpreadsheetRow(row: RawSpreadsheetRow): NormalizedImpor
       ),
       notes: action || channel || null,
     },
-    contacts:
-      contactName || email || phone
-        ? [
-            {
-              name: contactName || "Contato a Revisar",
-              email,
-              phone,
-              role: null,
-              isPrimary: true,
-            },
-          ]
-        : [],
+    contacts: contactExtraction.contacts,
     history: action
       ? [
           {
@@ -210,7 +311,7 @@ export function normalizeSpreadsheetRow(row: RawSpreadsheetRow): NormalizedImpor
     },
   };
 
-  const warnings = buildWarnings(normalizedRow);
+  const warnings = buildWarnings(normalizedRow, contactExtraction.warnings);
   const confidenceSignals = [
     Boolean(normalizedRow.company.name),
     normalizedRow.contacts.length > 0,

@@ -5,6 +5,7 @@ import {
   FileSpreadsheet,
   FileUp,
   LogOut,
+  RefreshCw,
   Save,
   Search,
   Trash2,
@@ -20,6 +21,7 @@ import {
   importApprovedRowsAction,
   importSingleRowAction,
   rejectImportRowAction,
+  reprocessImportRowContactsAction,
   startImportBatchAction,
   updateImportRowAction,
 } from "@/app/imports/actions";
@@ -28,6 +30,7 @@ import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { CnpjInput } from "@/components/cnpj-input";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { ImportStatusFilter } from "@/components/import-status-filter";
+import { ImportReviewContacts } from "@/components/import-review-contacts";
 import { TenantBrand } from "@/components/tenant-brand";
 import { UserIdentityCard } from "@/components/user-identity-card";
 import type { JobStatus } from "@/generated/prisma/client";
@@ -63,6 +66,7 @@ type ReviewRowJson = {
     email?: string | null;
     phone?: string | null;
     role?: string | null;
+    isPrimary?: boolean;
   }>;
   history?: Array<{
     body?: string | null;
@@ -280,7 +284,6 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
     visibleRows[0] ??
     null;
   const reviewJson = getReviewJson(selectedRow?.normalizedJson);
-  const primaryContact = reviewJson.contacts?.[0];
   const history = reviewJson.history?.[0];
   const futureAction = reviewJson.futureActions?.[0];
   const warnings = (reviewJson.aiSuggestion?.warnings ?? []).filter(
@@ -710,44 +713,10 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                     </label>
                   </div>
 
-                  <div className="grid gap-x-7 gap-y-3 border-b border-border px-4 py-3 lg:grid-cols-12">
-                    <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-muted lg:col-span-12">
-                      Contato Principal
-                    </h3>
-                    <label className="grid min-w-0 gap-1 text-sm lg:col-span-3">
-                      <span className="text-xs font-medium">Contato Principal</span>
-                      <input
-                        name="contactName"
-                        defaultValue={primaryContact?.name ?? ""}
-                        className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
-                      />
-                    </label>
-                    <label className="grid min-w-0 gap-1 text-sm lg:col-span-3">
-                      <span className="text-xs font-medium">Cargo do Contato</span>
-                      <input
-                        name="contactRole"
-                        defaultValue={primaryContact?.role ?? ""}
-                        className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
-                      />
-                    </label>
-                    <label className="grid min-w-0 gap-1 text-sm lg:col-span-4">
-                      <span className="text-xs font-medium">E-mail do Contato</span>
-                      <input
-                        name="contactEmail"
-                        type="email"
-                        defaultValue={primaryContact?.email ?? ""}
-                        className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
-                      />
-                    </label>
-                    <label className="grid w-full max-w-56 gap-1 text-sm lg:col-span-2">
-                      <span className="text-xs font-medium">Telefone do Contato</span>
-                      <input
-                        name="contactPhone"
-                        defaultValue={primaryContact?.phone ?? ""}
-                        className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
-                      />
-                    </label>
-                  </div>
+                  <ImportReviewContacts
+                    key={selectedRow.id}
+                    contacts={reviewJson.contacts ?? []}
+                  />
 
                   <div className="grid gap-x-7 gap-y-3 px-4 py-3 lg:grid-cols-12">
                     <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-muted lg:col-span-12">
@@ -800,6 +769,14 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                   </div>
                 </form>
 
+                <form
+                  id="reprocess-import-row-contacts-form"
+                  action={reprocessImportRowContactsAction}
+                  className="hidden"
+                >
+                  <input type="hidden" name="rowId" value={selectedRow.id} />
+                </form>
+
                 <div className="sticky bottom-0 flex flex-wrap justify-start gap-2 border-t border-border bg-surface/95 px-4 py-3">
                   <button
                     form="review-import-row-form"
@@ -811,6 +788,17 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                     <Save size={14} aria-hidden />
                     Salvar Revisão
                   </button>
+                  <ConfirmSubmitButton
+                    formId="reprocess-import-row-contacts-form"
+                    title="Reprocessar Contatos da Planilha"
+                    message="O xCRM recriará a lista de contatos desta linha usando a célula original de e-mail. Alterações manuais feitas somente na lista de contatos desta revisão serão substituídas. Dados da Empresa/Prospect, ações e observações serão preservados."
+                    confirmLabel="Reprocessar Contatos"
+                    disabled={isImportedRow}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border px-3 text-xs font-medium text-muted disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    <RefreshCw size={14} aria-hidden />
+                    Reprocessar Contatos
+                  </ConfirmSubmitButton>
                   <button
                     form="review-import-row-form"
                     name="intent"
