@@ -151,56 +151,66 @@ Ao confirmar, o sistema cria:
 
 Depois disso, o usuario vai para `/dashboard`.
 
-## Dashboard Inicial
+## Dashboard Principal
 
-O dashboard inicial esta disponivel em `/dashboard`.
+O Dashboard principal está disponível em `/dashboard` e aparece logo após a
+entrada no xCRM. Ele separa a Base de Prospects do Pipeline de Oportunidades para
+não apresentar números ou valores comerciais que não existem nos dados.
 
-Ele mostra:
+No cabeçalho, o xCRM informa a Organização do Tenant, o título da tela, o escopo
+do perfil, o usuário autenticado, o menu e a saída. O conteúdo respeita as
+permissões:
 
-- Nome da Empresa atual.
-- Nome, e-mail e perfil do usuario logado.
-- Uma area superior de prioridade operacional com a acao recomendada para o momento.
-- Metricas reais do tenant.
-- Etapas do Funil Padrao.
-- Acessos Rapidos conforme a permissao do usuario.
-- Botao de Sair.
-- Seletor de temas.
+- Proprietário e Administrador veem toda a organização.
+- Líder vê a própria carteira e os membros das equipes que lidera.
+- Vendedor e Assistente veem somente registros sob sua responsabilidade.
 
-No cabecalho do dashboard, o bloco do usuario logado, o seletor de temas e o botao de sair usam a mesma altura visual.
+Use o controle de período para alternar entre 7, 30 e 90 dias. O período altera
+os números de criação, movimentação, ganho, perda e conclusão; o Pipeline aberto
+continua representando o estado atual.
 
-O dashboard mostra `Acessos Rápidos` para Base Comercial, Importacao de Dados,
-Equipes e Usuarios e Configuracoes da Empresa, respeitando as permissoes do
-perfil. O menu superior permanece disponivel para temas e opcoes secundarias.
+A faixa `Atenção Agora` prioriza Atividades atrasadas. Quando não houver atraso,
+ela aponta Oportunidades sem Previsão de Fechamento ou sem Valor Estimado. Se
+nenhuma dessas condições existir, informa que a operação está em dia.
 
-Nas telas autenticadas do tenant, o cabeçalho mostra o logo inteiro da
-Scientiam à esquerda e, à direita, a Organização do Tenant, o título da tela e
-o subtítulo operacional em linhas compactas. O título da tela continua sendo a
-linha de maior destaque.
+O bloco `Pipeline de Oportunidades` mostra:
 
-No topo do conteudo, o Dashboard mostra uma prioridade operacional. Essa area
-usa os dados atuais do tenant para sugerir a proxima acao: concluir atividades
-pendentes, cadastrar a primeira Empresa/Prospect, adicionar contatos, abrir a
-importacao ou acompanhar a Base Comercial. O botao da area leva diretamente para
-o ponto indicado.
+- Prospects Ativos.
+- Prospects sem Oportunidade aberta.
+- Quantidade de Oportunidades abertas.
+- Valor Estimado em Andamento.
+- Quantidade e Valor Estimado em cada Etapa aberta do Funil.
+- Oportunidades Ganhas e Perdidas dentro do período selecionado.
 
-Os cards de metricas do topo mostram icone maior, titulo, valor e descricao em
-blocos separados para facilitar a leitura. Quando houver atividades pendentes, o card
-`Atividades Pendentes` recebe destaque visual discreto.
+Os quadros `Ganhas` e `Perdidas` seguem a mesma ordem das demais Etapas:
+título, quantidade, valor e texto auxiliar. Neles, o texto final informa o
+período selecionado.
 
-O Dashboard possui a secao `Atividades Pendentes` no final da tela. Quando ha
-atividades, o painel oferece `Expandir` e `Recolher` e antecipa a proxima tarefa
-quando estiver fechado. O botao `Ver Atividades`, no bloco de prioridade, leva
-ate essa secao e ja abre a lista de atividades. Quando nao ha pendencias, mostra
-um estado vazio direto, sem oferecer uma expansao sem conteudo. A tarefa
-automatica criada na configuracao inicial aparece como `Atividade Geral` e pode
-ser encerrada pelo botao `Concluir`.
+Os nomes das Etapas são apresentados por extenso. Quando a tela não comportar
+toda a sequência, os quadros continuam nas linhas seguintes, sem barra de
+rolagem horizontal. O quadro `Fora do Pipeline` permanece compacto ao final do
+bloco.
 
-Quando uma atividade estiver vinculada a uma Empresa/Prospect, a mesma seção mostra o nome da Empresa/Prospect como link para abrir o detalhe.
+`Atividades que Exigem Atenção` lista até cinco pendências vencidas e abre a
+Empresa/Prospect correspondente ou a Agenda. `Movimentação nos Últimos N Dias`
+resume novos Prospects, Oportunidades criadas, Valor Estimado criado, ganhos,
+perdas e Atividades concluídas.
 
-O menu superior concentra Configurações e Preferências. Todos
-os perfis podem alterar o tema por esse menu. Para usuarios Owner/Admin, o menu
-tambem mostra `Configurações da Empresa`, `Cadastro Prospects/Clientes` e
-`Equipes e Usuários`.
+Os valores monetários do Dashboard são estimativas cadastradas nas
+Oportunidades. Eles não representam faturamento realizado.
+
+## Dashboard Anterior
+
+O painel anterior permanece disponível em `/dashboard-anterior`. Use
+`Dashboard Anterior` no menu para consultar a composição antiga com prioridade
+operacional, cards gerais, Funil Padrão, Acessos Rápidos e painel recolhível de
+Atividades Pendentes. A conclusão de uma atividade nessa tela retorna ao próprio
+Dashboard Anterior.
+
+O menu superior oferece `Dashboard Principal`, `Dashboard Anterior` e `Agenda de
+Atividades` para todos os perfis. Configurações da Empresa, Cadastro
+Prospects/Clientes, Equipes e Usuários e Importação continuam condicionados às
+permissões existentes.
 
 ## Configurações da Empresa
 

@@ -608,6 +608,24 @@ Observacoes de seguranca:
 - `reprocessImportRowContactsAction` atende linhas `REVIEWING` de cargas temporárias existentes: relê `rawJson`, aplica o normalizador atual apenas aos contatos e preserva os demais dados revisados. O botão usa confirmação porque substitui somente a lista de contatos editada manualmente.
 - `/platform` usa a mesma marca bitmap Scientiam dos cabeçalhos autenticados, preservando a distinção textual de `Platform Admin` por não pertencer a um tenant.
 
+## Dashboard Principal Quantificado
+
+- A issue `#99` redesenha `/dashboard` como painel operacional adaptativo e preserva a implementação anterior em `/dashboard-anterior`.
+- `AppSettingsMenu` oferece `Dashboard Principal` e `Dashboard Anterior` para todos os perfis autenticados; a Agenda permanece no mesmo grupo de navegação.
+- O novo Dashboard reutiliza `getVisibleWorkOwnerIds`, `getAccountVisibilityWhere` e `getActivityVisibilityWhere`. Owner/Admin recebem o tenant, Líder recebe o próprio usuário e membros das equipes lideradas, e Vendedor/Assistente recebem somente o próprio usuário.
+- A visibilidade de Oportunidades usa `ownerUserId`; quando uma Oportunidade legada não possui responsável, o Dashboard usa o responsável da Empresa/Prospect como fallback de escopo.
+- O estado atual do Pipeline considera Oportunidades `OPEN` agrupadas por `stageId`, com `_count` e `_sum.amountEstimated`. Prospects sem Oportunidade aberta são contados separadamente e não entram nas Etapas.
+- O seletor por URL aceita `period=7`, `30` ou `90`, com 30 dias como padrão. O período afeta novos Prospects, Oportunidades criadas, Atividades concluídas e movimentos para Etapas `isWon` ou `isLost`.
+- Ganhos e perdas são derivados de `StageMovement.changedAt`, deduplicados por Oportunidade. Os valores continuam usando `amountEstimated`, pois o schema não possui receita efetivamente realizada.
+- `Atenção Agora` prioriza Atividades `PENDING` vencidas, depois Oportunidades abertas sem `expectedCloseDate` e sem `amountEstimated`.
+- O Dashboard não executa mutações. A lista de atrasos abre a Agenda ou a Empresa/Prospect; a conclusão inline continua disponível somente no Dashboard Anterior e revalida as duas rotas.
+- `.dashboard-pipeline-strip` usa grade responsiva sem rolagem horizontal: uma coluna na menor largura, duas a partir de `30rem`, três a partir de `48rem`, quatro a partir de `64rem` e a sequência completa a partir de `96rem`.
+- As setas de progressão aparecem somente quando todas as Etapas cabem na mesma linha. O resumo `Fora do Pipeline` usa uma coluna compacta de `9.5rem` no desktop e largura máxima de `11rem` quando empilhado.
+- Todos os segmentos usam a sequência título, quantidade, valor e texto auxiliar. Para `Ganhas` e `Perdidas`, o texto auxiliar identifica o período selecionado; o quadro `Fora do Pipeline` remove o ícone e encurta a descrição para preservar altura equivalente.
+- O plano de produto, regras das métricas, estados e referências visuais aprovadas estão em `Docs/plano_dash.md` e `Docs/assets`.
+- Nenhuma migration foi necessária para o redesenho.
+- A validação técnica executou ESLint, `prisma validate`, build Next.js e detectores Impeccable de layout/tipografia sem achados; `/dashboard` e `/dashboard-anterior` preservam o redirecionamento anônimo para `/login`.
+
 ## Versao WIP no topo
 
 Enquanto o projeto estiver em desenvolvimento, toda tela deve exibir no topo:
@@ -618,7 +636,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-07-14 18:11:14`
+- Valor: `2026-07-15 20:23:09`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

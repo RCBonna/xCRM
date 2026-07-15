@@ -5,6 +5,8 @@ import {
   Building2,
   CalendarDays,
   DatabaseZap,
+  History,
+  LayoutDashboard,
   Menu,
   Monitor,
   Moon,
@@ -138,9 +140,25 @@ export function AppSettingsMenu({
 
           <div className="border-b border-border p-2">
             <Link
-              href="/agenda"
+              href="/dashboard"
               onClick={() => setIsOpen(false)}
               className="flex h-11 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
+            >
+              <LayoutDashboard size={16} className="text-primary" aria-hidden />
+              Dashboard Principal
+            </Link>
+            <Link
+              href="/dashboard-anterior"
+              onClick={() => setIsOpen(false)}
+              className="mt-1 flex h-11 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
+            >
+              <History size={16} className="text-primary" aria-hidden />
+              Dashboard Anterior
+            </Link>
+            <Link
+              href="/agenda"
+              onClick={() => setIsOpen(false)}
+              className="mt-1 flex h-11 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
             >
               <CalendarDays size={16} className="text-primary" aria-hidden />
               Agenda de Atividades

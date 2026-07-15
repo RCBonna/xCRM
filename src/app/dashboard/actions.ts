@@ -31,7 +31,7 @@ export async function completeDashboardActivityAction(formData: FormData) {
   const activityId = String(formData.get("activityId") ?? "").trim();
 
   if (!activityId) {
-    redirect("/dashboard?error=Atividade%20nao%20informada.");
+    redirect("/dashboard-anterior?error=Atividade%20nao%20informada.");
   }
 
   const activityVisibilityWhere = await getActivityVisibilityWhere(appUser);
@@ -51,7 +51,7 @@ export async function completeDashboardActivityAction(formData: FormData) {
 
   if (!activity) {
     redirect(
-      `/dashboard?error=${encodeMessage("Atividade pendente não encontrada.")}`,
+      `/dashboard-anterior?error=${encodeMessage("Atividade pendente não encontrada.")}`,
     );
   }
 
@@ -66,7 +66,8 @@ export async function completeDashboardActivityAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard-anterior");
   redirect(
-    `/dashboard?message=${encodeMessage(`Atividade "${activity.title}" concluída.`)}`,
+    `/dashboard-anterior?message=${encodeMessage(`Atividade "${activity.title}" concluída.`)}`,
   );
 }

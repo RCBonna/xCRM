@@ -1,7 +1,23 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-07-14 18:11:14 -03:00
+Ultima modificacao: 2026-07-15 20:23:09 -03:00
+
+## 2026-07-15
+
+### Redesenho do Dashboard Principal
+
+- Criada a issue `#99` para substituir métricas dispersas por um Dashboard adaptativo e quantificado.
+- A revisão com Impeccable confirmou que `Etapas do Funil` mede configuração, não desempenho, e que Empresas/Prospects não podem ser tratados automaticamente como Oportunidades.
+- Aprovada a direção visual com Funil horizontal, quantidade e Valor Estimado por etapa, Prospects sem Oportunidade aberta separados e bloco `Atenção Agora`.
+- Preservado o Dashboard existente em `/dashboard-anterior`; o menu passou a oferecer `Dashboard Principal` e `Dashboard Anterior`.
+- O novo `/dashboard` aplica visibilidade por perfil, usa períodos de 7, 30 e 90 dias e mostra Pipeline aberto, ganhos/perdas do período, atividades atrasadas e qualidade dos dados das Oportunidades.
+- Refinada a faixa do Pipeline para exibir `Oportunidades` por extenso, manter `Últimos N Dias` em uma linha e compactar `Fora do Pipeline`.
+- Removida a rolagem horizontal do Funil; em larguras menores, as Etapas agora quebram para novas linhas em uma grade responsiva de uma a quatro colunas.
+- Uniformizada a anatomia dos blocos: `Ganhas` e `Perdidas` agora mostram título, quantidade, valor e período nessa ordem, sem alterar seus destaques; `Fora do Pipeline` foi compactado para acompanhar a altura das Etapas.
+- Salvo o plano detalhado e as referências aprovadas em `Docs/plano_dash.md` e `Docs/assets`.
+- Nenhuma migration foi necessária; os indicadores usam os modelos atuais de Empresa/Prospect, Oportunidade, Etapa, Movimentação e Atividade.
+- Validados lint, schema Prisma, build de produção e detectores Impeccable de layout e tipografia; as duas rotas autenticadas responderam corretamente com redirecionamento para Login em sessão anônima.
 
 ## 2026-07-14
 
