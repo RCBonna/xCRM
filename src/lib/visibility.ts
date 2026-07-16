@@ -72,3 +72,31 @@ export async function getAccountVisibilityWhere(
     },
   };
 }
+
+export async function getOpportunityVisibilityWhere(
+  appUser: AppUserForVisibility,
+): Promise<Prisma.OpportunityWhereInput> {
+  const ownerIds = await getVisibleWorkOwnerIds(appUser);
+
+  if (!ownerIds) {
+    return {};
+  }
+
+  return {
+    OR: [
+      {
+        ownerUserId: {
+          in: ownerIds,
+        },
+      },
+      {
+        ownerUserId: null,
+        account: {
+          ownerUserId: {
+            in: ownerIds,
+          },
+        },
+      },
+    ],
+  };
+}

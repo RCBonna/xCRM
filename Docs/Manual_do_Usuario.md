@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-07-12 20:09:52 -03:00
+Ultima modificacao: 2026-07-16 18:14:55 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -191,6 +191,15 @@ toda a sequência, os quadros continuam nas linhas seguintes, sem barra de
 rolagem horizontal. O quadro `Fora do Pipeline` permanece compacto ao final do
 bloco.
 
+Quando um quadro do Funil possui quantidade maior que zero, passe o mouse para
+realçá-lo e clique para abrir a Base Comercial já filtrada. Quadros com zero
+permanecem somente informativos. O filtro `Funil` permite trocar entre Etapas,
+Ganhas, Perdidas e Fora do Pipeline ou limpar a seleção.
+
+Nos filtros por Etapa, Ganhas ou Perdidas, o Dashboard conta Oportunidades,
+enquanto a Base Comercial apresenta uma linha por Empresa/Prospect. Uma empresa
+com duas Oportunidades correspondentes ocupa uma linha na lista.
+
 `Atividades que Exigem Atenção` lista até cinco pendências vencidas e abre a
 Empresa/Prospect correspondente ou a Agenda. `Movimentação nos Últimos N Dias`
 resume novos Prospects, Oportunidades criadas, Valor Estimado criado, ganhos,
@@ -198,6 +207,11 @@ perdas e Atividades concluídas.
 
 Os valores monetários do Dashboard são estimativas cadastradas nas
 Oportunidades. Eles não representam faturamento realizado.
+
+Enquanto os indicadores são consultados, o xCRM mantém a estrutura da tela
+visível e informa `Carregando os indicadores comerciais...`. Se a consulta
+falhar, use `Tentar Novamente`; o botão `Abrir Dashboard Anterior` mantém uma
+rota alternativa de consulta sem alterar os dados.
 
 ## Dashboard Anterior
 
@@ -261,9 +275,14 @@ Importante:
 
 ## Empresas/Prospects
 
-A tela `/accounts` permite cadastrar a Base Comercial inicial do tenant.
+A tela `/accounts` inicia sempre na aba `Base Comercial` e oferece a aba
+`Nova Empresa/Prospect` quando um novo cadastro for necessário.
 
 No cabecalho, a tela mostra discretamente o usuario logado, e-mail e perfil atual.
+
+Busca, Status, Funil e período permanecem preservados quando o usuário alterna
+entre as abas. Se houver dados preenchidos ainda não cadastrados, a troca para
+`Base Comercial` solicita confirmação antes de descartá-los.
 
 Campos disponiveis para empresa/prospect:
 
@@ -277,6 +296,7 @@ Campos disponiveis para empresa/prospect:
 Tambem e possivel informar um Contato Principal opcional com:
 
 - Nome.
+- Função/Cargo, opcional.
 - E-mail.
 - Telefone, limitado a 15 caracteres.
 
@@ -287,6 +307,11 @@ Tambem e possivel informar uma Proxima Acao opcional, com:
 
 Quando a Empresa/Prospect e cadastrada, o sistema grava automaticamente um Historico de criacao. Se um contato for informado, ele nasce como Contato Principal. Se a Proxima Acao for informada, ela fica registrada como atividade pendente.
 
+Depois do cadastro, o usuário permanece na aba `Nova Empresa/Prospect`, recebe
+a confirmação de sucesso e encontra o formulário limpo para um eventual novo
+cadastro. O botão `Cancelar` retorna à Base Comercial e também confirma o
+descarte quando houver campos alterados.
+
 A tela lista a Base Comercial disponivel para o usuario e mostra o Contato Principal quando existir.
 
 Na base comercial, o usuario pode:
@@ -294,6 +319,9 @@ Na base comercial, o usuario pode:
 - Buscar por empresa/prospect, cidade, UF, site, fornecedor principal, origem ou contato.
 - Filtrar por status: todos, prospects, clientes, perdidos e arquivados.
 - Limpar filtros para voltar a lista geral.
+- Encontrar o botão `Limpar` sempre visível, mesmo quando nenhum filtro estiver aplicado.
+- Reconhecer ações `Limpar` pelo texto acompanhado do ícone de limpeza.
+- Ver os hints `Aplicar Filtros` e `Limpar Filtros` ao manter o mouse sobre os respectivos controles.
 - Ver o Ultimo Historico registrado.
 - Ver a Proxima Acao pendente quando houver.
 - Abrir o detalhe de uma Empresa/Prospect clicando em qualquer ponto do card do registro; o card fica iluminado quando o mouse passa por cima.

@@ -27,7 +27,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   getAccountVisibilityWhere,
   getActivityVisibilityWhere,
-  getVisibleWorkOwnerIds,
+  getOpportunityVisibilityWhere,
 } from "@/lib/visibility";
 
 const roleLabels: Record<string, string> = {
@@ -130,25 +130,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   periodStart.setHours(0, 0, 0, 0);
 
   const now = new Date();
-  const [visibleOwnerIds, accountVisibilityWhere, activityVisibilityWhere] =
+  const [
+    opportunityVisibilityWhere,
+    accountVisibilityWhere,
+    activityVisibilityWhere,
+  ] =
     await Promise.all([
-      getVisibleWorkOwnerIds(appUser),
+      getOpportunityVisibilityWhere(appUser),
       getAccountVisibilityWhere(appUser),
       getActivityVisibilityWhere(appUser),
     ]);
-
-  const opportunityVisibilityWhere: Prisma.OpportunityWhereInput =
-    visibleOwnerIds
-      ? {
-          OR: [
-            { ownerUserId: { in: visibleOwnerIds } },
-            {
-              ownerUserId: null,
-              account: { ownerUserId: { in: visibleOwnerIds } },
-            },
-          ],
-        }
-      : {};
 
   const openOpportunityWhere: Prisma.OpportunityWhereInput = {
     tenantId: appUser.tenantId,
@@ -631,12 +622,27 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                       : segment.kind === "lost"
                         ? "border-danger text-danger"
                         : "border-primary text-foreground";
+                  const filterParams = new URLSearchParams({
+                    pipeline:
+                      segment.kind === "open"
+                        ? `stage:${segment.id}`
+                        : segment.kind,
+                  });
 
-                  return (
-                    <li
-                      key={segment.id}
-                      className={`relative min-h-32 border-t-2 bg-surface-muted px-3 py-3 ${toneClass}`}
-                    >
+                  if (segment.kind !== "open") {
+                    filterParams.set("period", String(periodDays));
+                  }
+
+                  const segmentHref =
+                    segment.count > 0
+                      ? `/accounts?${filterParams.toString()}#base-comercial`
+                      : null;
+                  const segmentAriaLabel =
+                    segment.kind === "open"
+                      ? `Ver Empresas/Prospects com Oportunidades na Etapa ${segment.name}`
+                      : `Ver Empresas/Prospects com Oportunidades ${segment.name} nos Últimos ${periodDays} Dias`;
+                  const segmentContent = (
+                    <>
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="whitespace-nowrap text-sm font-medium">
@@ -666,6 +672,27 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                           Últimos {segment.periodLabel}
                         </p>
                       ) : null}
+                    </>
+                  );
+
+                  return (
+                    <li
+                      key={segment.id}
+                      className={`relative min-h-32 border-t-2 bg-surface-muted ${toneClass}`}
+                    >
+                      {segmentHref ? (
+                        <Link
+                          href={segmentHref}
+                          aria-label={segmentAriaLabel}
+                          className="block min-h-32 px-3 py-3 transition-colors hover:bg-background hover:ring-1 hover:ring-inset hover:ring-primary/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+                        >
+                          {segmentContent}
+                        </Link>
+                      ) : (
+                        <div className="min-h-32 px-3 py-3">
+                          {segmentContent}
+                        </div>
+                      )}
                     </li>
                   );
                 })}
@@ -676,16 +703,36 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </div>
             )}
 
-            <aside className="min-h-32 w-full max-w-44 border border-dashed border-border bg-background p-3 xl:max-w-none">
-              <h3 className="whitespace-nowrap text-sm font-medium text-foreground">
-                Fora do Pipeline
-              </h3>
-              <p className="mt-4 font-mono text-3xl font-semibold tabular-nums leading-none">
-                {numberFormatter.format(prospectsWithoutOpenOpportunity)}
-              </p>
-              <p className="mt-2 text-sm leading-5 text-muted">
-                Sem Oportunidade aberta
-              </p>
+            <aside className="min-h-32 w-full max-w-44 border border-dashed border-border bg-background xl:max-w-none">
+              {prospectsWithoutOpenOpportunity > 0 ? (
+                <Link
+                  href="/accounts?pipeline=outside#base-comercial"
+                  aria-label="Ver Prospects Fora do Pipeline na Base Comercial"
+                  className="block min-h-32 p-3 transition-colors hover:bg-surface-muted hover:ring-1 hover:ring-inset hover:ring-primary/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+                >
+                  <h3 className="whitespace-nowrap text-sm font-medium text-foreground">
+                    Fora do Pipeline
+                  </h3>
+                  <p className="mt-4 font-mono text-3xl font-semibold tabular-nums leading-none">
+                    {numberFormatter.format(prospectsWithoutOpenOpportunity)}
+                  </p>
+                  <p className="mt-2 text-sm leading-5 text-muted">
+                    Sem Oportunidade aberta
+                  </p>
+                </Link>
+              ) : (
+                <div className="min-h-32 p-3">
+                  <h3 className="whitespace-nowrap text-sm font-medium text-foreground">
+                    Fora do Pipeline
+                  </h3>
+                  <p className="mt-4 font-mono text-3xl font-semibold tabular-nums leading-none">
+                    {numberFormatter.format(prospectsWithoutOpenOpportunity)}
+                  </p>
+                  <p className="mt-2 text-sm leading-5 text-muted">
+                    Sem Oportunidade aberta
+                  </p>
+                </div>
+              )}
             </aside>
           </div>
         </section>

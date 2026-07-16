@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, RotateCcw, Save, UsersRound } from "lucide-react";
+import { BrushCleaning, Plus, Save, UsersRound } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -84,7 +84,7 @@ export function TeamTeamsTab({ teams }: TeamTeamsTabProps) {
               onClick={clearForm}
               className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border px-3 text-xs font-medium text-muted transition-colors hover:border-primary hover:text-foreground"
             >
-              <RotateCcw size={14} aria-hidden />
+              <BrushCleaning size={14} aria-hidden />
               Limpar
             </button>
           ) : null}

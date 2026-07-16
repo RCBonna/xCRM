@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-07-12 20:09:52 -03:00
+Ultima modificacao: 2026-07-16 18:14:55 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -81,6 +81,7 @@ Atualizar quando houver mudancas em:
 - `src/components/login-info-panel.tsx`: painel de mensagens e textos rotativos da tela de acesso.
 - `src/components/pending-submit-button.tsx`: botao de submit com `useFormStatus`, exibindo `Processando...` e icone girando durante Server Actions.
 - `src/components/dashboard-pending-activities-panel.tsx`: painel expansivel do Dashboard para exibir/recolher e concluir atividades pendentes do tenant.
+- `src/components/accounts-tabs.tsx`: navegação por abas de `/accounts`, detecção de formulário alterado e ações do cadastro.
 - `src/components/platform-tenant-delete-form.tsx`: fluxo cliente da exclusao completa de organizacao, com confirmacao textual, dois modais e painel de processamento visual.
 - `src/components/account-history-panel.tsx`: painel expansivel do historico de Empresa/Prospect.
 - `src/components/account-section-panel.tsx`: painel cliente reutilizavel de expandir/recolher usado em Contatos, Oportunidades e Proximas Acoes no detalhe da Empresa/Prospect.
@@ -354,12 +355,15 @@ Fluxo inicial implementado:
 1. Usuario autenticado acessa `/accounts`.
 2. A rota valida sessao Supabase Auth e usuario de app via `getAppUser`.
 3. `createAccountAction` cria uma empresa/prospect em `accounts` vinculada ao `tenantId` e ao usuario logado.
-4. Se informado, o contato principal e criado em `contacts` no mesmo tenant e vinculado a empresa/prospect com `isPrimary` ativo.
+4. Se informado, o contato principal e criado em `contacts` no mesmo tenant e vinculado a empresa/prospect com `isPrimary` ativo, incluindo Função/Cargo opcional.
 5. A tela lista ate 50 empresas/prospects do tenant conforme busca e filtro aplicados, incluindo o contato principal quando existir.
 6. O dashboard possui atalho para `/accounts`.
 7. O cabecalho da tela mostra a sessao atual com nome, e-mail e perfil do usuario.
 8. A consulta aceita busca textual em empresa, cidade, UF, site, fornecedor principal, origem e dados do primeiro contato.
 9. A consulta aceita filtro por status: prospect, cliente, perdido e arquivado.
+9.1. A rota aceita `tab=base|new`; valores ausentes ou inválidos iniciam em `Base Comercial`.
+9.2. `AccountsTabsNavigation` preserva busca, Status, Funil e período nos links das abas e confirma o descarte quando a serialização atual do formulário difere do retrato inicial. O campo técnico `returnTo` não participa da comparação.
+9.3. `createAccountAction` valida o retorno local informado pelo formulário, força `tab=new` e preserva somente os parâmetros permitidos após erro ou sucesso.
 10. A visibilidade em `/accounts` usa `getAccountVisibilityWhere`: Owner/Admin veem a base do tenant, Líder vê a própria carteira e membros das equipes que lidera, e demais perfis veem apenas registros com `ownerUserId` igual ao proprio usuario.
 11. Ao cadastrar empresa/prospect, `createAccountAction` grava uma `interaction` automatica com canal `MANUAL_NOTE`, direcao `INTERNAL`, usuario logado e entidade criada.
 12. O formulario permite informar uma proxima acao opcional; quando preenchida, a action cria uma `activity` pendente do tipo `FOLLOW_UP`, vinculada a empresa/prospect e ao contato principal quando existir.
@@ -371,6 +375,9 @@ Fluxo inicial implementado:
 18. O painel `Historico` no detalhe usa um Client Component para exibir apenas a ultima interacao por padrao e expandir os demais registros sob demanda.
 19. A lista de Empresas/Prospects exibe o ultimo evento como `Ultimo Historico: ...` para diferenciar auditoria/historico de status cadastral.
 20. Rotulos compostos visiveis seguem capitalizacao em estilo titulo, mantendo conectivos/preposicoes curtas em minusculo quando fizer sentido em Portugues-BR.
+20.1. Ações textuais `Limpar` usam o ícone Lucide `BrushCleaning`; o ícone `X` é reservado para cancelar, fechar ou remover.
+20.2. Os controles de filtro da Base Comercial expõem `title` e `aria-label` como `Aplicar Filtros` e `Limpar Filtros`.
+20.3. O controle `Limpar` da Base Comercial permanece visível sem filtros ativos e sempre direciona para a rota sem parâmetros de filtro.
 21. Os itens do painel `Historico` usam espacamento compacto entre titulo, data/usuario e descricao.
 22. No detalhe da Empresa/Prospect, `createAccountActivityAction` cria uma nova atividade pendente do tipo `FOLLOW_UP` e registra uma `interaction` com resumo `Ação Criada`.
 23. No detalhe da Empresa/Prospect, `updateAccountActivityAction` edita descrição, Data e Hora de atividades pendentes da mesma Empresa/Prospect e tenant, e registra uma `interaction` com resumo `Ação Atualizada`.
@@ -622,6 +629,12 @@ Observacoes de seguranca:
 - `.dashboard-pipeline-strip` usa grade responsiva sem rolagem horizontal: uma coluna na menor largura, duas a partir de `30rem`, três a partir de `48rem`, quatro a partir de `64rem` e a sequência completa a partir de `96rem`.
 - As setas de progressão aparecem somente quando todas as Etapas cabem na mesma linha. O resumo `Fora do Pipeline` usa uma coluna compacta de `9.5rem` no desktop e largura máxima de `11rem` quando empilhado.
 - Todos os segmentos usam a sequência título, quantidade, valor e texto auxiliar. Para `Ganhas` e `Perdidas`, o texto auxiliar identifica o período selecionado; o quadro `Fora do Pipeline` remove o ícone e encurta a descrição para preservar altura equivalente.
+- `src/app/dashboard/loading.tsx` é o fallback de rota durante consultas e usa esqueleto estático, sem animação ou alteração dimensional dos blocos.
+- `src/app/dashboard/error.tsx` é o limite de erro cliente da rota; registra o erro no console, executa `reset()` em nova tentativa e oferece acesso ao Dashboard Anterior.
+- Segmentos com quantidade maior que zero geram links para `/accounts?pipeline=<filtro>#base-comercial`; segmentos zerados não expõem affordance de clique. Ganhos e perdas também enviam `period`.
+- `/accounts` valida o parâmetro `pipeline`: `stage:<uuid>` filtra Oportunidades abertas na Etapa, `won` e `lost` consultam movimentações no período e `outside` seleciona Prospects sem Oportunidade aberta.
+- A Base Comercial continua listando uma linha por Empresa/Prospect. Por isso, o total de linhas pode ser menor que a quantidade do segmento quando uma empresa possui mais de uma Oportunidade correspondente.
+- `getOpportunityVisibilityWhere` centraliza o escopo de Oportunidades e é reutilizado pelo Dashboard e pelos filtros da Base Comercial.
 - O plano de produto, regras das métricas, estados e referências visuais aprovadas estão em `Docs/plano_dash.md` e `Docs/assets`.
 - Nenhuma migration foi necessária para o redesenho.
 - A validação técnica executou ESLint, `prisma validate`, build Next.js e detectores Impeccable de layout/tipografia sem achados; `/dashboard` e `/dashboard-anterior` preservam o redirecionamento anônimo para `/login`.
@@ -636,7 +649,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-07-15 20:23:09`
+- Valor: `2026-07-16 18:03:35`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

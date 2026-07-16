@@ -1,7 +1,28 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-07-15 20:23:09 -03:00
+Ultima modificacao: 2026-07-16 18:14:55 -03:00
+
+## 2026-07-16
+
+### Validação Funcional do Dashboard Principal
+
+- Retomado o desenvolvimento da issue `#99` com os serviços locais e o Supabase hospedado.
+- Adicionado `src/app/dashboard/loading.tsx` com esqueleto estático que preserva a estrutura do cabeçalho, indicadores, Pipeline e blocos operacionais durante as consultas.
+- Adicionado `src/app/dashboard/error.tsx` com mensagem segura, tentativa de recuperação e acesso ao `Dashboard Anterior`, sem sugerir perda ou alteração de dados.
+- Os quadros do Pipeline com quantidade maior que zero passaram a abrir a Base Comercial com o filtro correspondente e realce completo no hover/foco; quadros zerados permanecem informativos e não clicáveis.
+- A Base Comercial passou a aceitar o filtro `pipeline` para Etapas abertas, ganhos, perdas e Prospects Fora do Pipeline, preservando o período de 7, 30 ou 90 dias quando aplicável.
+- O filtro do Funil fica visível e editável na tela, com explicação de que o Dashboard conta Oportunidades enquanto a lista agrupa Empresas/Prospects.
+- Extraída `getOpportunityVisibilityWhere` para manter Dashboard e Base Comercial alinhados ao escopo de Proprietário, Administrador, Líder e Vendedor/Assistente.
+- `/accounts` passou a usar as abas `Base Comercial` e `Nova Empresa/Prospect`, iniciando sempre pela Base Comercial e mantendo o estado em `tab=base|new`.
+- Busca, Status, Funil e período são preservados ao alternar abas; após cadastrar, o usuário permanece na aba de cadastro com o formulário limpo e mensagem de sucesso.
+- A troca para a Base Comercial e o botão `Cancelar` solicitam confirmação apenas quando o formulário possui alterações não cadastradas.
+- O cadastro passou a ocupar painel próprio com largura controlada, agrupamento responsivo e ações `Cancelar` e `Cadastrar Empresa/Prospect` separadas no rodapé.
+- Criada a issue `#100` após a confirmação de descarte ser exibida com o cadastro vazio; eventos técnicos do campo `Data e Hora` estavam sendo interpretados como edição.
+- A detecção passou a comparar o conteúdo atual com um retrato inicial serializado, ignorando `returnTo`; o aviso agora depende de alteração efetiva nos dados.
+- Padronizado o ícone `BrushCleaning` nas ações visíveis `Limpar` da Base Comercial e das abas de Equipes, Líderes e Usuários; `X` permanece reservado para cancelar, fechar ou remover.
+- Adicionados hints `Aplicar Filtros` e `Limpar Filtros` nos controles da Base Comercial, com os mesmos nomes acessíveis.
+- Mantida a issue aberta para validação autenticada com dados reais, perfis, temas e larguras de tela.
 
 ## 2026-07-15
 
@@ -713,3 +734,6 @@ Ultima modificacao: 2026-07-15 20:23:09 -03:00
 - Criada a issue GitHub `#93` para alinhar `Descartar Carga` na faixa de resumo da Importacao Temporaria.
 - Reposicionado `Descartar Carga` para uma celula compacta imediatamente antes da metrica `Linhas`, sem criar nova linha no resumo desktop.
 - Atualizada versao WIP para `2026-07-12 20:09:52`.
+- Incluído o campo opcional `Função/Cargo` no Contato Principal do cadastro de Nova Empresa/Prospect, com persistência em `contacts.title`.
+- Mantido o botão `Limpar` visível na Base Comercial mesmo sem filtros aplicados, direcionando para a lista geral.
+- Atualizada versao WIP para `2026-07-16 18:14:55`.

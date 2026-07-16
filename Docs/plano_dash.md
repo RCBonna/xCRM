@@ -1,7 +1,7 @@
 # Plano do Dashboard Principal do xCRM
 
 Criado em: 2026-07-15 19:06:07 -03:00  
-Última modificação: 2026-07-15 20:23:09 -03:00
+Última modificação: 2026-07-16 17:44:12 -03:00
 
 Issue de acompanhamento: `#99 - P1: Redesenhar Dashboard Principal com Pipeline Quantificado`
 
@@ -110,9 +110,17 @@ não possui campo de receita realizada; a interface deve declarar essa limitaç�
 - Segmentos do Pipeline quebram para novas linhas em telas estreitas e usam
   alvos compatíveis com toque, sem rolagem horizontal.
 - Pipeline sem etapas mostra orientação objetiva, sem gráfico vazio.
+- Carregamento preserva a estrutura da tela com esqueleto estático.
+- Falha de consulta oferece nova tentativa e acesso ao Dashboard Anterior.
 - Lista sem atividades atrasadas mostra estado positivo e não oferece expansão
   vazia.
 - Contagens zeradas continuam visíveis para preservar comparação entre etapas.
+- Segmentos com dados abrem a Base Comercial com filtro visível e editável;
+  segmentos zerados não aparentam interação.
+- O filtro preserva o período para ganhos e perdas e leva a tela diretamente ao
+  bloco `Base Comercial`.
+- `/accounts` inicia na aba `Base Comercial`; o cadastro fica em aba separada,
+  preserva os filtros e confirma o descarte de alterações não cadastradas.
 - Links levam à Agenda ou Base Comercial; o Dashboard não altera dados.
 - Foco por teclado, contraste WCAG AA e redução de movimento seguem os tokens e
   regras globais do xCRM.

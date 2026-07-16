@@ -21,6 +21,37 @@ function encodeMessage(message: string) {
   return encodeURIComponent(message);
 }
 
+function getCreateAccountRedirect(
+  formData: FormData,
+  feedbackType: "error" | "message",
+  feedback: string,
+) {
+  const returnTo = String(formData.get("returnTo") ?? "").trim();
+  const params = new URLSearchParams();
+
+  if (returnTo) {
+    try {
+      const returnUrl = new URL(returnTo, "http://xcrm.local");
+
+      if (returnUrl.pathname === "/accounts") {
+        for (const name of ["q", "status", "pipeline", "period"]) {
+          const value = returnUrl.searchParams.get(name);
+
+          if (value && value.length <= 200) {
+            params.set(name, value);
+          }
+        }
+      }
+    } catch {
+      // A rota segura abaixo é usada quando o retorno informado é inválido.
+    }
+  }
+
+  params.set("tab", "new");
+  params.set(feedbackType, feedback);
+  return `/accounts?${params.toString()}`;
+}
+
 function normalizeOptionalText(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
   return text.length > 0 ? text : null;
@@ -236,6 +267,7 @@ export async function createAccountAction(formData: FormData) {
   const mainSupplier = normalizeOptionalText(formData.get("mainSupplier"));
   const source = normalizeOptionalText(formData.get("source"));
   const contactName = normalizeOptionalText(formData.get("contactName"));
+  const contactTitle = normalizeOptionalText(formData.get("contactTitle"));
   const contactEmail = normalizeOptionalText(formData.get("contactEmail"));
   const contactPhone = normalizeOptionalText(formData.get("contactPhone"));
   const nextActionTitle = normalizeOptionalText(formData.get("nextActionTitle"));
@@ -245,21 +277,31 @@ export async function createAccountAction(formData: FormData) {
 
   if (accountName.length < 2) {
     redirect(
-      `/accounts?error=${encodeMessage(
+      getCreateAccountRedirect(
+        formData,
+        "error",
         "Informe o nome da Empresa/Prospect.",
-      )}`,
+      ),
     );
   }
 
   if (state && !isBrazilianStateCode(state)) {
-    redirect(`/accounts?error=${encodeMessage("Selecione uma UF válida.")}`);
+    redirect(
+      getCreateAccountRedirect(
+        formData,
+        "error",
+        "Selecione uma UF válida.",
+      ),
+    );
   }
 
   if (contactPhone && contactPhone.length > 15) {
     redirect(
-      `/accounts?error=${encodeMessage(
+      getCreateAccountRedirect(
+        formData,
+        "error",
         "Telefone deve ter no máximo 15 caracteres.",
-      )}`,
+      ),
     );
   }
 
@@ -278,9 +320,11 @@ export async function createAccountAction(formData: FormData) {
 
   if (existingAccount) {
     redirect(
-      `/accounts?error=${encodeMessage(
+      getCreateAccountRedirect(
+        formData,
+        "error",
         "Esta Empresa/Prospect já existe neste tenant.",
-      )}`,
+      ),
     );
   }
 
@@ -307,6 +351,7 @@ export async function createAccountAction(formData: FormData) {
           accountId: account.id,
           ownerUserId: appUser.id,
           name: contactName,
+          title: contactTitle,
           email: contactEmail,
           phone: contactPhone,
           isPrimary: true,
@@ -347,7 +392,13 @@ export async function createAccountAction(formData: FormData) {
 
   revalidatePath("/accounts");
   revalidatePath("/dashboard");
-  redirect(`/accounts?message=${encodeMessage("Empresa/Prospect cadastrada.")}`);
+  redirect(
+    getCreateAccountRedirect(
+      formData,
+      "message",
+      "Empresa/Prospect cadastrada.",
+    ),
+  );
 }
 
 export async function updateAccountAction(formData: FormData) {

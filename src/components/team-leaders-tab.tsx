@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, Save, ShieldCheck } from "lucide-react";
+import { BrushCleaning, Save, ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { assignTeamManagerAction } from "@/app/settings/team/actions";
@@ -85,7 +85,7 @@ export function TeamLeadersTab({ teams, managers }: TeamLeadersTabProps) {
               onClick={clearForm}
               className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border px-3 text-xs font-medium text-muted transition-colors hover:border-primary hover:text-foreground"
             >
-              <RotateCcw size={14} aria-hidden />
+              <BrushCleaning size={14} aria-hidden />
               Limpar
             </button>
           ) : null}

@@ -1,4 +1,5 @@
 import {
+  BrushCleaning,
   Building2,
   CalendarClock,
   Filter,
@@ -7,7 +8,6 @@ import {
   Plus,
   Search,
   UserRound,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -15,6 +15,10 @@ import { redirect } from "next/navigation";
 import { createAccountAction } from "@/app/accounts/actions";
 import { signOutAction } from "@/app/auth/actions";
 import { ActionDateTimeInput } from "@/components/action-date-time-input";
+import {
+  AccountCreateActions,
+  AccountsTabsNavigation,
+} from "@/components/accounts-tabs";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { TenantBrand } from "@/components/tenant-brand";
 import { UppercaseInput } from "@/components/uppercase-input";
@@ -24,7 +28,10 @@ import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { BRAZILIAN_STATES } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getAccountVisibilityWhere } from "@/lib/visibility";
+import {
+  getAccountVisibilityWhere,
+  getOpportunityVisibilityWhere,
+} from "@/lib/visibility";
 
 const accountStatusOptions = [
   { value: "", label: "Todos" },
@@ -40,6 +47,24 @@ const accountStatusLabels: Record<string, string> = {
   LOST: "Perdido",
   ARCHIVED: "Arquivado",
 };
+
+const dashboardPeriodOptions = [7, 30, 90] as const;
+
+type PipelineStageOption = {
+  id: string;
+  name: string;
+};
+
+type PipelineFilter =
+  | {
+      type: "stage";
+      stage: PipelineStageOption;
+      value: string;
+    }
+  | {
+      type: "won" | "lost" | "outside";
+      value: string;
+    };
 
 const dateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
@@ -63,6 +88,63 @@ function getStatusFilter(value?: string) {
   return accountStatusOptions.find((option) => option.value === value)?.value;
 }
 
+function getPeriodDays(value?: string) {
+  const parsed = Number(value);
+  return dashboardPeriodOptions.includes(
+    parsed as (typeof dashboardPeriodOptions)[number],
+  )
+    ? (parsed as (typeof dashboardPeriodOptions)[number])
+    : 30;
+}
+
+function getPipelineFilter(
+  value: string | undefined,
+  stages: PipelineStageOption[],
+): PipelineFilter | null {
+  const normalizedValue = String(value ?? "").trim();
+
+  if (normalizedValue.startsWith("stage:")) {
+    const stageId = normalizedValue.slice("stage:".length);
+    const stage = stages.find((item) => item.id === stageId);
+
+    if (stage) {
+      return {
+        type: "stage",
+        stage,
+        value: normalizedValue,
+      };
+    }
+  }
+
+  if (["won", "lost", "outside"].includes(normalizedValue)) {
+    return {
+      type: normalizedValue as "won" | "lost" | "outside",
+      value: normalizedValue,
+    };
+  }
+
+  return null;
+}
+
+function getPipelineFilterLabel(
+  filter: PipelineFilter,
+  periodDays: number,
+) {
+  if (filter.type === "stage") {
+    return `Etapa: ${filter.stage.name}`;
+  }
+
+  if (filter.type === "won") {
+    return `Ganhas nos Últimos ${periodDays} Dias`;
+  }
+
+  if (filter.type === "lost") {
+    return `Perdidas nos Últimos ${periodDays} Dias`;
+  }
+
+  return "Fora do Pipeline";
+}
+
 function canManageCompanySettings(role: string) {
   return ["OWNER", "ADMIN"].includes(role);
 }
@@ -73,6 +155,9 @@ type AccountsPageProps = {
     message?: string;
     q?: string;
     status?: string;
+    pipeline?: string;
+    period?: string;
+    tab?: string;
   }>;
 };
 
@@ -103,34 +188,108 @@ export default async function AccountsPage({
   const params = await searchParams;
   const searchQuery = String(params.q ?? "").trim();
   const selectedStatus = getStatusFilter(params.status);
-  const visibilityWhere = await getAccountVisibilityWhere(appUser);
+  const periodDays = getPeriodDays(params.period);
+  const periodStart = new Date();
+  periodStart.setDate(periodStart.getDate() - periodDays + 1);
+  periodStart.setHours(0, 0, 0, 0);
+
+  const [visibilityWhere, opportunityVisibilityWhere, pipelineStages] =
+    await Promise.all([
+      getAccountVisibilityWhere(appUser),
+      getOpportunityVisibilityWhere(appUser),
+      prisma.pipelineStage.findMany({
+        where: {
+          tenantId: appUser.tenantId,
+          pipeline: { isDefault: true },
+          isWon: false,
+          isLost: false,
+        },
+        orderBy: { position: "asc" },
+        select: {
+          id: true,
+          name: true,
+        },
+      }),
+    ]);
+
+  const selectedPipeline = getPipelineFilter(params.pipeline, pipelineStages);
+  const accountFilters: Prisma.AccountWhereInput[] = [visibilityWhere];
+
+  if (selectedStatus) {
+    accountFilters.push({ status: selectedStatus });
+  }
+
+  if (selectedPipeline?.type === "stage") {
+    accountFilters.push({
+      opportunities: {
+        some: {
+          tenantId: appUser.tenantId,
+          status: "OPEN",
+          stageId: selectedPipeline.stage.id,
+          ...opportunityVisibilityWhere,
+        },
+      },
+    });
+  } else if (
+    selectedPipeline?.type === "won" ||
+    selectedPipeline?.type === "lost"
+  ) {
+    accountFilters.push({
+      opportunities: {
+        some: {
+          tenantId: appUser.tenantId,
+          ...opportunityVisibilityWhere,
+          stageMovements: {
+            some: {
+              tenantId: appUser.tenantId,
+              changedAt: { gte: periodStart },
+              toStage:
+                selectedPipeline.type === "won"
+                  ? { isWon: true }
+                  : { isLost: true },
+            },
+          },
+        },
+      },
+    });
+  } else if (selectedPipeline?.type === "outside") {
+    accountFilters.push({
+      status: "PROSPECT",
+      opportunities: {
+        none: {
+          status: "OPEN",
+        },
+      },
+    });
+  }
+
+  if (searchQuery) {
+    accountFilters.push({
+      OR: [
+        { name: { contains: searchQuery, mode: "insensitive" } },
+        { city: { contains: searchQuery, mode: "insensitive" } },
+        { state: { contains: searchQuery, mode: "insensitive" } },
+        { website: { contains: searchQuery, mode: "insensitive" } },
+        { mainSupplier: { contains: searchQuery, mode: "insensitive" } },
+        { source: { contains: searchQuery, mode: "insensitive" } },
+        {
+          contacts: {
+            some: {
+              OR: [
+                { name: { contains: searchQuery, mode: "insensitive" } },
+                { email: { contains: searchQuery, mode: "insensitive" } },
+                { phone: { contains: searchQuery, mode: "insensitive" } },
+              ],
+            },
+          },
+        },
+      ],
+    });
+  }
+
   const accountsWhere: Prisma.AccountWhereInput = {
     tenantId: appUser.tenantId,
-    ...visibilityWhere,
-    ...(selectedStatus ? { status: selectedStatus } : {}),
-    ...(searchQuery
-      ? {
-          OR: [
-            { name: { contains: searchQuery, mode: "insensitive" } },
-            { city: { contains: searchQuery, mode: "insensitive" } },
-            { state: { contains: searchQuery, mode: "insensitive" } },
-            { website: { contains: searchQuery, mode: "insensitive" } },
-            { mainSupplier: { contains: searchQuery, mode: "insensitive" } },
-            { source: { contains: searchQuery, mode: "insensitive" } },
-            {
-              contacts: {
-                some: {
-                  OR: [
-                    { name: { contains: searchQuery, mode: "insensitive" } },
-                    { email: { contains: searchQuery, mode: "insensitive" } },
-                    { phone: { contains: searchQuery, mode: "insensitive" } },
-                  ],
-                },
-              },
-            },
-          ],
-        }
-      : {}),
+    AND: accountFilters,
   };
   const [
     accounts,
@@ -193,7 +352,40 @@ export default async function AccountsPage({
   const userIdentity = appUser.name || user.email || "Usuário autenticado";
   const userEmail = appUser.email || user.email || "E-mail não informado";
   const userRole = appUser.role.toLowerCase();
-  const hasActiveFilters = Boolean(searchQuery || selectedStatus);
+  const hasActiveFilters = Boolean(
+    searchQuery || selectedStatus || selectedPipeline,
+  );
+  const pipelineFilterLabel = selectedPipeline
+    ? getPipelineFilterLabel(selectedPipeline, periodDays)
+    : null;
+  const activeTab = params.tab === "new" ? "new" : "base";
+  const preservedParams = new URLSearchParams();
+
+  if (searchQuery) {
+    preservedParams.set("q", searchQuery);
+  }
+
+  if (selectedStatus) {
+    preservedParams.set("status", selectedStatus);
+  }
+
+  if (selectedPipeline) {
+    preservedParams.set("pipeline", selectedPipeline.value);
+
+    if (
+      selectedPipeline.type === "won" ||
+      selectedPipeline.type === "lost"
+    ) {
+      preservedParams.set("period", String(periodDays));
+    }
+  }
+
+  const baseTabParams = new URLSearchParams(preservedParams);
+  baseTabParams.set("tab", "base");
+  const newTabParams = new URLSearchParams(preservedParams);
+  newTabParams.set("tab", "new");
+  const baseTabHref = `/accounts?${baseTabParams.toString()}`;
+  const newTabHref = `/accounts?${newTabParams.toString()}`;
   const canOpenCompanySettings = canManageCompanySettings(appUser.role);
   const canImportData = appUser.role === "OWNER";
 
@@ -204,7 +396,7 @@ export default async function AccountsPage({
           <TenantBrand
             organizationName={appUser.tenant.name}
             title="Empresas/Prospects"
-            subtitle="Cadastre a Base Comercial inicial e registre um Contato Principal quando ele já estiver disponível."
+            subtitle="Consulte a Base Comercial ou cadastre uma nova Empresa/Prospect quando necessário."
           />
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <UserIdentityCard
@@ -232,8 +424,19 @@ export default async function AccountsPage({
           </div>
         </header>
 
-        <section className="grid gap-6 lg:grid-cols-[0.9fr_1.4fr]">
-          <div className="rounded-md border border-border bg-surface">
+        <AccountsTabsNavigation
+          activeTab={activeTab}
+          baseHref={baseTabHref}
+          newHref={newTabHref}
+        />
+
+        {activeTab === "new" ? (
+          <section
+            id="new-accounts-panel"
+            role="tabpanel"
+            aria-labelledby="new-accounts-tab"
+          >
+            <div className="mx-auto w-full max-w-5xl rounded-md border border-border bg-surface">
             <div className="border-b border-border px-4 py-3">
               <h2 className="flex items-center gap-2 text-base font-semibold">
                 <Plus size={18} className="text-primary" aria-hidden />
@@ -257,7 +460,12 @@ export default async function AccountsPage({
               </div>
             )}
 
-            <form action={createAccountAction} className="grid gap-4 p-4">
+            <form
+              id="new-account-form"
+              action={createAccountAction}
+              className="grid gap-5 p-5"
+            >
+              <input type="hidden" name="returnTo" value={newTabHref} />
               <label className="grid gap-1 text-sm">
                 <span className="font-medium">Empresa/Prospect</span>
                 <UppercaseInput
@@ -330,16 +538,27 @@ export default async function AccountsPage({
               <div className="rounded-md border border-border bg-background p-3">
                 <h3 className="text-sm font-semibold">Contato Principal</h3>
                 <div className="mt-3 grid gap-3">
-                  <label className="grid gap-1 text-sm">
-                    <span className="font-medium">Nome</span>
-                    <input
-                      name="contactName"
-                      type="text"
-                      autoComplete="name"
-                      className="h-10 rounded-md border border-border bg-surface px-3 text-sm"
-                    />
-                  </label>
-                  <div className="grid gap-3 2xl:grid-cols-[minmax(0,1fr)_10rem]">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="grid min-w-0 gap-1 text-sm">
+                      <span className="font-medium">Nome</span>
+                      <input
+                        name="contactName"
+                        type="text"
+                        autoComplete="name"
+                        className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm"
+                      />
+                    </label>
+                    <label className="grid min-w-0 gap-1 text-sm">
+                      <span className="font-medium">Função/Cargo (Opcional)</span>
+                      <input
+                        name="contactTitle"
+                        type="text"
+                        autoComplete="organization-title"
+                        className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm"
+                      />
+                    </label>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
                     <label className="grid min-w-0 gap-1 text-sm">
                       <span className="font-medium">E-mail</span>
                       <input
@@ -365,7 +584,7 @@ export default async function AccountsPage({
 
               <div className="rounded-md border border-border bg-background p-3">
                 <h3 className="text-sm font-semibold">Próxima Ação</h3>
-                <div className="mt-3 grid gap-3">
+                <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,0.8fr)]">
                   <label className="grid gap-1 text-sm">
                     <span className="font-medium">Ação</span>
                     <input
@@ -385,13 +604,21 @@ export default async function AccountsPage({
                 </div>
               </div>
 
-              <button className="h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
-                Cadastrar Empresa/Prospect
-              </button>
+              <AccountCreateActions baseHref={baseTabHref} />
             </form>
           </div>
 
-          <div className="rounded-md border border-border bg-surface">
+          </section>
+        ) : (
+          <section
+            id="base-accounts-panel"
+            role="tabpanel"
+            aria-labelledby="base-accounts-tab"
+          >
+            <div
+              id="base-comercial"
+              className="scroll-mt-4 rounded-md border border-border bg-surface"
+            >
             <div className="border-b border-border px-4 py-3">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -404,7 +631,7 @@ export default async function AccountsPage({
               </div>
 
               <form
-                className="mt-4 grid gap-3 md:grid-cols-[1fr_12rem_auto_auto]"
+                className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_10rem_13rem_auto_auto]"
                 method="get"
               >
                 <label className="grid gap-1 text-sm">
@@ -438,21 +665,60 @@ export default async function AccountsPage({
                     ))}
                   </select>
                 </label>
-                <button className="inline-flex h-10 items-center justify-center gap-2 self-end rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">Funil</span>
+                  <select
+                    name="pipeline"
+                    defaultValue={selectedPipeline?.value ?? ""}
+                    className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+                  >
+                    <option value="">Todo o Funil</option>
+                    {pipelineStages.map((stage) => (
+                      <option key={stage.id} value={`stage:${stage.id}`}>
+                        Etapa: {stage.name}
+                      </option>
+                    ))}
+                    <option value="won">Ganhas no Período</option>
+                    <option value="lost">Perdidas no Período</option>
+                    <option value="outside">Fora do Pipeline</option>
+                  </select>
+                </label>
+                {selectedPipeline?.type === "won" ||
+                selectedPipeline?.type === "lost" ? (
+                  <input type="hidden" name="period" value={periodDays} />
+                ) : null}
+                <button
+                  title="Aplicar Filtros"
+                  aria-label="Aplicar Filtros"
+                  className="inline-flex h-10 items-center justify-center gap-2 self-end rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+                >
                   <Filter size={16} aria-hidden />
                   Filtrar
                 </button>
-                {hasActiveFilters && (
-                  <Link
-                    href="/accounts"
-                    className="inline-flex h-10 items-center justify-center gap-2 self-end rounded-md border border-border px-4 text-sm font-medium"
-                  >
-                    <X size={16} aria-hidden />
-                    Limpar
-                  </Link>
-                )}
+                <Link
+                  href="/accounts"
+                  title="Limpar Filtros"
+                  aria-label="Limpar Filtros"
+                  className="inline-flex h-10 items-center justify-center gap-2 self-end rounded-md border border-border px-4 text-sm font-medium"
+                >
+                  <BrushCleaning size={16} aria-hidden />
+                  Limpar
+                </Link>
               </form>
             </div>
+
+            {selectedPipeline && pipelineFilterLabel ? (
+              <div className="border-b border-border bg-surface-muted px-4 py-3">
+                <p className="text-sm font-medium text-foreground">
+                  Filtro do Funil: {pipelineFilterLabel}
+                </p>
+                <p className="mt-1 text-sm leading-5 text-muted">
+                  {selectedPipeline.type === "outside"
+                    ? "Exibindo Prospects visíveis sem Oportunidade aberta."
+                    : "O Dashboard conta Oportunidades; esta lista agrupa as Empresas/Prospects visíveis vinculadas a elas."}
+                </p>
+              </div>
+            ) : null}
 
             {accounts.length === 0 ? (
               <div className="px-4 py-10 text-sm text-muted">
@@ -538,8 +804,9 @@ export default async function AccountsPage({
                 })}
               </div>
             )}
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );
