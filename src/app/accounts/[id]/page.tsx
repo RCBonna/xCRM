@@ -3,6 +3,7 @@ import {
   BriefcaseBusiness,
   CalendarClock,
   Check,
+  FileText,
   LogOut,
   Mail,
   MoveRight,
@@ -46,6 +47,10 @@ import { UserIdentityCard } from "@/components/user-identity-card";
 import { getAppUser, redirectPathForTenantStatus } from "@/lib/auth";
 import { BRAZILIAN_STATES } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
+import {
+  formatProposalNumber,
+  proposalStatusLabels,
+} from "@/lib/proposals";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   getAccountVisibilityWhere,
@@ -113,6 +118,8 @@ const interactionSummaryLabels: Record<string, string> = {
   "Dados Atualizados": "Dados Atualizados",
   "Oportunidade Criada": "Oportunidade Criada",
   "Oportunidade Movida": "Oportunidade Movida",
+  "Proposta Criada": "Proposta Criada",
+  "Proposta Publicada": "Proposta Publicada",
   "Prospect criado": "Prospect Criado",
   "Prospect Criado": "Prospect Criado",
 };
@@ -200,6 +207,19 @@ export default async function AccountDetailPage({
                 id: true,
                 name: true,
                 position: true,
+              },
+            },
+            proposals: {
+              orderBy: {
+                createdAt: "desc",
+              },
+              select: {
+                id: true,
+                number: true,
+                version: true,
+                status: true,
+                total: true,
+                createdAt: true,
               },
             },
           },
@@ -884,6 +904,65 @@ export default async function AccountDetailPage({
                             ? dateFormatter.format(opportunity.expectedCloseDate)
                             : "Sem previsão"}
                         </span>
+                      </div>
+
+                      <div className="grid gap-2 rounded-md border border-border bg-background p-3">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="flex items-center gap-2 text-xs font-semibold">
+                              <FileText
+                                size={14}
+                                className="text-primary"
+                                aria-hidden
+                              />
+                              Propostas
+                            </p>
+                            <p className="mt-1 text-xs text-muted">
+                              {opportunity.proposals.length === 0
+                                ? "Nenhuma Proposta criada para esta Oportunidade."
+                                : `${opportunity.proposals.length} proposta${
+                                    opportunity.proposals.length === 1 ? "" : "s"
+                                  } vinculada${
+                                    opportunity.proposals.length === 1 ? "" : "s"
+                                  }.`}
+                            </p>
+                          </div>
+                          <Link
+                            href={`/accounts/${account.id}/proposals/new?opportunity=${opportunity.id}`}
+                            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border px-3 text-xs font-medium text-muted transition-colors hover:border-primary hover:text-foreground"
+                          >
+                            <Plus size={14} aria-hidden />
+                            Criar Proposta
+                          </Link>
+                        </div>
+                        {opportunity.proposals.length > 0 ? (
+                          <div className="grid gap-2">
+                            {opportunity.proposals.map((proposal) => (
+                              <Link
+                                key={proposal.id}
+                                href={`/accounts/${account.id}/proposals/${proposal.id}`}
+                                className="grid gap-1 rounded border border-border bg-surface px-3 py-2 text-xs transition-colors hover:border-primary"
+                              >
+                                <span className="flex flex-wrap items-center justify-between gap-2">
+                                  <span className="font-semibold">
+                                    {formatProposalNumber(
+                                      proposal.number,
+                                      proposal.version,
+                                    )}
+                                  </span>
+                                  <span className="text-muted">
+                                    {proposalStatusLabels[proposal.status]}
+                                  </span>
+                                </span>
+                                <span className="text-muted">
+                                  {currencyFormatter.format(
+                                    Number(proposal.total),
+                                  )}
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
 
                       <form

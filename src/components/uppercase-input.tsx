@@ -10,6 +10,7 @@ type UppercaseInputProps = {
   autoComplete?: string;
   className?: string;
   defaultValue?: string | null;
+  maxLength?: number;
   name: string;
   required?: boolean;
 };
@@ -18,6 +19,7 @@ export function UppercaseInput({
   autoComplete,
   className,
   defaultValue,
+  maxLength,
   name,
   required,
 }: UppercaseInputProps) {
@@ -28,6 +30,7 @@ export function UppercaseInput({
       required={required}
       name={name}
       type="text"
+      maxLength={maxLength}
       value={value}
       onChange={(event) => setValue(normalizeUppercase(event.target.value))}
       autoCapitalize="characters"

@@ -867,6 +867,30 @@ Pendencias:
 - Definir política comercial e operacional para suspensão, reativação e comunicação com clientes.
 - Definir estrutura de GitHub Issues quando o repositorio for inicializado.
 
+### Produtos e Propostas
+
+A issue `#101` foi promovida para P1 em 2026-07-17 e iniciou o módulo comercial de Propostas vinculado às Oportunidades.
+
+Primeiro corte implementado:
+
+- Catálogo simples de Produtos/Serviços por tenant.
+- Cadastro restrito a Owner/Admin.
+- Proposta criada a partir de uma Oportunidade.
+- Itens de catálogo ou itens avulsos.
+- Snapshot dos itens para preservar preço, unidade e descrição enviados.
+- Numeração sequencial por tenant.
+- Status inicial `Rascunho` e publicação para `Pronta`.
+- PDF inicial gerado sob demanda.
+- Registro no Histórico Comercial ao criar e publicar.
+
+Fases futuras:
+
+- Versionamento avançado com substituição controlada de Propostas.
+- Storage privado do PDF publicado.
+- Envio por e-mail transacional.
+- Registro de aceite/recusa pelo cliente.
+- Integração com WhatsApp Business Platform somente após validar opt-in, operação por tenant e responsabilidade de envio.
+
 ## 12. Proximos passos sugeridos
 
 1. Inicializar repositorio Git/GitHub, se ainda nao existir.

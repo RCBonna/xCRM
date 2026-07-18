@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-07-16 18:14:55 -03:00
+Ultima modificacao: 2026-07-17 21:06:06 -03:00
 
 ## 2026-07-16
 
@@ -23,6 +23,15 @@ Ultima modificacao: 2026-07-16 18:14:55 -03:00
 - Padronizado o ícone `BrushCleaning` nas ações visíveis `Limpar` da Base Comercial e das abas de Equipes, Líderes e Usuários; `X` permanece reservado para cancelar, fechar ou remover.
 - Adicionados hints `Aplicar Filtros` e `Limpar Filtros` nos controles da Base Comercial, com os mesmos nomes acessíveis.
 - Mantida a issue aberta para validação autenticada com dados reais, perfis, temas e larguras de tela.
+
+### Estudo de Produtos e Propostas
+
+- Pesquisadas fontes oficiais sobre e-mail transacional, WhatsApp Business Platform, PDF privado, LGPD e assinatura eletrônica.
+- Criado `Docs/Estudo_Modulo_Produtos_e_Propostas.md` com alternativas, prós, contras, riscos, arquitetura candidata e plano incremental.
+- Recomendada a criação de Propostas versionadas vinculadas às Oportunidades, com Catálogo opcional e itens avulsos, evitando transformar o xCRM em ERP/CPQ no primeiro corte.
+- Recomendado iniciar por PDF privado e e-mail, mantendo WhatsApp manual no MVP e automação oficial por tenant em fase posterior.
+- Criada a issue `#101` como P2 para acompanhar a descoberta e uma eventual implementação, condicionada à aprovação após análise de propostas reais.
+- Atualizada versao WIP para `2026-07-16 21:04:38`.
 
 ## 2026-07-15
 
@@ -737,3 +746,49 @@ Ultima modificacao: 2026-07-16 18:14:55 -03:00
 - Incluído o campo opcional `Função/Cargo` no Contato Principal do cadastro de Nova Empresa/Prospect, com persistência em `contacts.title`.
 - Mantido o botão `Limpar` visível na Base Comercial mesmo sem filtros aplicados, direcionando para a lista geral.
 - Atualizada versao WIP para `2026-07-16 18:14:55`.
+- Promovida a issue GitHub `#101` para P1 e iniciada a implementação do módulo de Produtos e Propostas.
+- Criada a migration `prisma/20260717143000_add_products_and_proposals.sql` com `products`, `proposals`, `proposal_items`, enum `ProposalStatus` e contador `tenants.next_proposal_number`.
+- Aplicada a migration no Supabase remoto via script Node/`pg` com `DIRECT_URL`, após timeout do `npx prisma db execute`, e validada a existência das novas tabelas.
+- Criada a rota `/products` para Owner/Admin cadastrarem produtos e serviços do catálogo, com status ativo/inativo e acesso pelo menu.
+- Criadas ações de Proposta com cálculo servidor de subtotal, descontos, frete, acréscimos e total, sempre vinculadas a uma Oportunidade visível.
+- Criadas as rotas `/accounts/[id]/proposals/new` e `/accounts/[id]/proposals/[proposalId]` para montar, consultar, publicar e baixar Propostas.
+- Adicionada rota protegida `/api/proposals/[proposalId]/pdf` para gerar PDF inicial da Proposta com validação de tenant/escopo.
+- A tela de detalhe de Empresa/Prospect agora mostra, em cada Oportunidade, as Propostas vinculadas e o CTA `Criar Proposta`.
+- Atualizada versao WIP para `2026-07-17 17:07:54`.
+- Ajustado o formulário `Novo Produto` para evitar campos fora do box, com ordem SKU, Nome do Produto, Unidade, Preço Base e Descrição.
+- Adicionados limites de cadastro para Produto: SKU com até 20 caracteres, Nome do Produto com até 90 caracteres e Unidade com até 6 caracteres, também validados no servidor.
+- Atualizada versao WIP para `2026-07-17 17:40:07`.
+- O cadastro de Produto passou a formatar SKU, Nome do Produto e Unidade em caixa alta já durante a digitação, com normalização equivalente no servidor.
+- Atualizada versao WIP para `2026-07-17 17:52:39`.
+- A tela `/products` passou a usar abas `Catálogo` e `Novo Produto`, iniciando pelo Catálogo.
+- O Catálogo ganhou busca por SKU, nome, descrição e unidade, filtro de status e lista clicável de Produtos.
+- Criada a rota `/products/[id]` para editar SKU, Nome do Produto, Unidade, Preço Base, Descrição e status.
+- Mantida a decisão de preço genérico por tenant no Catálogo; ajustes por cliente/prospect ficam na Proposta, que preserva snapshot dos itens.
+- Atualizada versao WIP para `2026-07-17 18:01:45`.
+- Ajustado o erro de SKU duplicado no cadastro de Produto para retornar à aba `Novo Produto` mantendo os campos preenchidos.
+- A edição de Produto passou a ter botão `Cancelar`; ao salvar ou cancelar, o usuário retorna para o Catálogo.
+- Atualizada versao WIP para `2026-07-17 18:39:49`.
+- Ajustado o Catálogo para que hover e foco de Produto cubram a linha inteira, mantendo o botão de status independente.
+- Adicionado botão `Cancelar` na aba `Novo Produto`, retornando para o Catálogo.
+- Atualizada versao WIP para `2026-07-17 18:53:14`.
+- Ajustada a montagem de Proposta para reduzir a largura dos campos de Valor Unitário e Desconto do Item e renomear o resumo de linha para `Total do Item`.
+- Incluído o campo `% Desconto` como apoio ao `Desconto Geral`: ao informar percentual, o valor é calculado; ao informar valor, o percentual é calculado como referência.
+- O resumo da Proposta passou a exibir `Subtotal dos Itens`, `Descontos/Acréscimos` e `Total da Proposta`, deixando explícita a fórmula `Subtotal - Desconto Geral + Frete + Acréscimos`.
+- Documentada a decisão de que `Desconto Geral` é um desconto adicional da Proposta, não a soma dos descontos dos itens.
+- Atualizada versao WIP para `2026-07-17 19:39:01`.
+- Substituída a seleção de Produto da Proposta por busca com lupa e `datalist`, permitindo localizar itens por SKU ou Produto sem abrir uma lista longa.
+- Removido o campo visível redundante `Nome do Item`; o nome continua sendo enviado internamente a partir do Produto selecionado ou do texto digitado como item avulso.
+- Compactada a descrição do item para uma linha redimensionável pelo usuário.
+- Incluído `% Desc. Item` para calcular o Desconto do Item por percentual ou usar valor direto, seguindo o mesmo padrão do Desconto Geral.
+- Ajustada a grade dos campos do item para evitar sobreposição e alinhado o resumo financeiro em três terços: subtotal à esquerda, ajustes ao centro e total à direita.
+- Atualizada versao WIP para `2026-07-17 19:58:27`.
+- Ajustadas as grades responsivas dos campos financeiros dos itens e dos descontos gerais para evitar sobreposição em larguras intermediárias.
+- O valor de `Descontos/Acréscimos` no resumo financeiro passa a ficar vermelho quando negativo e mantém a cor padrão quando zero ou positivo.
+- Atualizada versao WIP para `2026-07-17 20:17:51`.
+- O campo `Qtde.` da Proposta passou a aceitar somente números e um separador decimal (`.` ou `,`) durante a digitação.
+- A criação de Proposta passou a rejeitar quantidade inválida no servidor, evitando que texto manualmente enviado seja interpretado como quantidade padrão.
+- Atualizada versao WIP para `2026-07-17 20:57:36`.
+- O botão `Baixar PDF` da Proposta passou a abrir o PDF em nova aba/janela, permitindo salvar ou fechar sem sair da tela.
+- Os textos de Condições, Condições de Pagamento, Condições Comerciais e Observações agora quebram dentro do box mesmo quando digitados sem espaços.
+- Os valores de Desconto aparecem em vermelho na tela da Proposta e no resumo do PDF.
+- Atualizada versao WIP para `2026-07-17 21:06:06`.

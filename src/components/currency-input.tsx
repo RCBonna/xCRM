@@ -1,12 +1,16 @@
 "use client";
 
+import type { ChangeEventHandler } from "react";
 import { useEffect, useRef } from "react";
 
 type CurrencyInputProps = {
   className?: string;
+  defaultValue?: string;
   id?: string;
-  name: string;
+  name?: string;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
   placeholder?: string;
+  value?: string;
 };
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -42,9 +46,12 @@ function formatInputValue(input: HTMLInputElement) {
 
 export function CurrencyInput({
   className,
+  defaultValue,
   id,
   name,
+  onChange,
   placeholder = "R$ 0,00",
+  value,
 }: CurrencyInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -77,8 +84,11 @@ export function CurrencyInput({
       type="text"
       inputMode="decimal"
       autoComplete="off"
+      defaultValue={defaultValue}
       placeholder={placeholder}
+      value={value}
       className={className}
+      onChange={onChange}
       onBlur={(event) => formatInputValue(event.currentTarget)}
       onFocus={(event) => event.currentTarget.select()}
     />

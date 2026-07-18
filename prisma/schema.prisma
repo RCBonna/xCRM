@@ -9,45 +9,49 @@ datasource db {
 }
 
 model Tenant {
-  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name           String
-  legalName      String?         @map("legal_name")
-  document       String?
-  status         RecordStatus    @default(ACTIVE)
-  plan           String?
-  createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @updatedAt @map("updated_at")
-  segment        String?
-  accounts       Account[]
-  activities     Activity[]
-  aiJobs         AiJob[]
-  attachments    Attachment[]
-  contacts       Contact[]
-  importRows     ImportRow[]
-  imports        ImportBatch[]
-  interactions   Interaction[]
-  notifications  Notification[]
-  opportunities  Opportunity[]
-  stages         PipelineStage[]
-  pipelines      Pipeline[]
-  stageMovements StageMovement[]
-  statusEvents   TenantStatusEvent[]
-  teamMembers    TeamMember[]
-  teams          Team[]
-  users          User[]
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String
+  legalName          String?             @map("legal_name")
+  document           String?
+  status             RecordStatus        @default(ACTIVE)
+  plan               String?
+  nextProposalNumber Int                 @default(1) @map("next_proposal_number")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  segment            String?
+  accounts           Account[]
+  activities         Activity[]
+  aiJobs             AiJob[]
+  attachments        Attachment[]
+  contacts           Contact[]
+  importRows         ImportRow[]
+  imports            ImportBatch[]
+  interactions       Interaction[]
+  notifications      Notification[]
+  opportunities      Opportunity[]
+  stages             PipelineStage[]
+  pipelines          Pipeline[]
+  products           Product[]
+  proposals          Proposal[]
+  proposalItems      ProposalItem[]
+  stageMovements     StageMovement[]
+  statusEvents       TenantStatusEvent[]
+  teamMembers        TeamMember[]
+  teams              Team[]
+  users              User[]
 
   @@map("tenants")
 }
 
 model PlatformAdmin {
-  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  authUserId    String         @unique @map("auth_user_id") @db.Uuid
+  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authUserId    String              @unique @map("auth_user_id") @db.Uuid
   name          String
-  email         String         @unique
-  status        RecordStatus   @default(ACTIVE)
-  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  notifications Notification[] @relation("NotificationRecipientPlatformAdmin")
+  email         String              @unique
+  status        RecordStatus        @default(ACTIVE)
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  notifications Notification[]      @relation("NotificationRecipientPlatformAdmin")
   statusEvents  TenantStatusEvent[] @relation("TenantStatusEventActor")
 
   @@index([status])
@@ -89,6 +93,8 @@ model User {
   createdNotifications  Notification[]  @relation("NotificationActorUser")
   receivedNotifications Notification[]  @relation("NotificationRecipientUser")
   ownedOpportunities    Opportunity[]   @relation("OpportunityOwner")
+  ownedProducts         Product[]       @relation("ProductCreator")
+  ownedProposals        Proposal[]      @relation("ProposalOwner")
   changedStageMovements StageMovement[] @relation("StageMovementChanger")
   teamMemberships       TeamMember[]
   managedTeams          Team[]          @relation("TeamManager")
@@ -182,6 +188,7 @@ model Account {
   contacts          Contact[]
   interactions      Interaction[]
   opportunities     Opportunity[]
+  proposals         Proposal[]
 
   @@index([tenantId, ownerUserId])
   @@index([tenantId, name])
@@ -210,6 +217,7 @@ model Contact {
   tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   interactions  Interaction[]
   opportunities Opportunity[]
+  proposals     Proposal[]
 
   @@unique([tenantId, accountId], map: "contacts_one_primary_per_account", where: raw("is_primary"))
   @@index([tenantId, accountId])
@@ -271,6 +279,7 @@ model Opportunity {
   updatedAt         DateTime          @updatedAt @map("updated_at")
   activities        Activity[]
   interactions      Interaction[]
+  proposals         Proposal[]
   account           Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
   contact           Contact?          @relation(fields: [contactId], references: [id])
   owner             User?             @relation("OpportunityOwner", fields: [ownerUserId], references: [id])
@@ -282,6 +291,88 @@ model Opportunity {
   @@index([tenantId, ownerUserId])
   @@index([tenantId, stageId])
   @@map("opportunities")
+}
+
+model Product {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String         @map("tenant_id") @db.Uuid
+  createdByUserId String?        @map("created_by_user_id") @db.Uuid
+  sku             String?
+  name            String
+  description     String?
+  unit            String         @default("UN")
+  basePrice       Decimal        @default(0) @map("base_price") @db.Decimal(12, 2)
+  status          RecordStatus   @default(ACTIVE)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  createdBy       User?          @relation("ProductCreator", fields: [createdByUserId], references: [id])
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  proposalItems   ProposalItem[]
+
+  @@unique([tenantId, sku])
+  @@index([tenantId, status, name])
+  @@map("products")
+}
+
+model Proposal {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String         @map("tenant_id") @db.Uuid
+  accountId       String         @map("account_id") @db.Uuid
+  opportunityId   String         @map("opportunity_id") @db.Uuid
+  contactId       String?        @map("contact_id") @db.Uuid
+  ownerUserId     String?        @map("owner_user_id") @db.Uuid
+  number          Int
+  version         Int            @default(1)
+  status          ProposalStatus @default(DRAFT)
+  issuedAt        DateTime       @default(now()) @map("issued_at")
+  validUntil      DateTime?      @map("valid_until")
+  currency        String         @default("BRL")
+  subtotal        Decimal        @default(0) @db.Decimal(12, 2)
+  discount        Decimal        @default(0) @db.Decimal(12, 2)
+  freight         Decimal        @default(0) @db.Decimal(12, 2)
+  additions       Decimal        @default(0) @db.Decimal(12, 2)
+  total           Decimal        @default(0) @db.Decimal(12, 2)
+  introduction    String?
+  paymentTerms    String?        @map("payment_terms")
+  commercialTerms String?        @map("commercial_terms")
+  notes           String?
+  publishedAt     DateTime?      @map("published_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  account         Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  contact         Contact?       @relation(fields: [contactId], references: [id])
+  items           ProposalItem[]
+  opportunity     Opportunity    @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  owner           User?          @relation("ProposalOwner", fields: [ownerUserId], references: [id])
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, number, version])
+  @@index([tenantId, accountId])
+  @@index([tenantId, opportunityId])
+  @@index([tenantId, status])
+  @@map("proposals")
+}
+
+model ProposalItem {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId            String   @map("tenant_id") @db.Uuid
+  proposalId          String   @map("proposal_id") @db.Uuid
+  productId           String?  @map("product_id") @db.Uuid
+  position            Int
+  snapshotSku         String?  @map("snapshot_sku")
+  snapshotName        String   @map("snapshot_name")
+  snapshotDescription String?  @map("snapshot_description")
+  snapshotUnit        String   @default("UN") @map("snapshot_unit")
+  quantity            Decimal  @default(1) @db.Decimal(12, 3)
+  unitPrice           Decimal  @default(0) @map("unit_price") @db.Decimal(12, 2)
+  discount            Decimal  @default(0) @db.Decimal(12, 2)
+  lineTotal           Decimal  @default(0) @map("line_total") @db.Decimal(12, 2)
+  product             Product? @relation(fields: [productId], references: [id])
+  proposal            Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, proposalId])
+  @@map("proposal_items")
 }
 
 model StageMovement {
@@ -456,6 +547,17 @@ enum OpportunityStatus {
   WON
   LOST
   ARCHIVED
+}
+
+enum ProposalStatus {
+  DRAFT
+  READY
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  SUPERSEDED
+  CANCELED
 }
 
 enum ActivityStatus {

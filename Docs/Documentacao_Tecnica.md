@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-07-16 18:14:55 -03:00
+Ultima modificacao: 2026-07-17 21:06:06 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -638,6 +638,40 @@ Observacoes de seguranca:
 - O plano de produto, regras das métricas, estados e referências visuais aprovadas estão em `Docs/plano_dash.md` e `Docs/assets`.
 - Nenhuma migration foi necessária para o redesenho.
 - A validação técnica executou ESLint, `prisma validate`, build Next.js e detectores Impeccable de layout/tipografia sem achados; `/dashboard` e `/dashboard-anterior` preservam o redirecionamento anônimo para `/login`.
+- O estudo `Docs/Estudo_Modulo_Produtos_e_Propostas.md`, acompanhado pela issue `#101`, avalia um futuro módulo de Propostas versionadas vinculadas às Oportunidades, Catálogo opcional, PDF privado, e-mail transacional e integração posterior com WhatsApp por tenant. O estudo não altera o schema nem o comportamento atual.
+
+## Produtos e Propostas
+
+- A issue `#101` foi promovida para P1 e implementa o primeiro corte funcional do módulo de Propostas.
+- A migration `prisma/20260717143000_add_products_and_proposals.sql` cria `products`, `proposals`, `proposal_items`, enum `ProposalStatus` e a coluna `tenants.next_proposal_number`.
+- `Product` pertence ao tenant, possui `sku` opcional único por tenant, `name`, `description`, `unit`, `basePrice`, `status` e usuário criador opcional.
+- A criação de Produto valida limites no servidor: `sku` até 20 caracteres, `name` até 90 caracteres e `unit` até 6 caracteres. `sku`, `name` e `unit` são normalizados para caixa alta no cadastro.
+- `Proposal` pertence ao tenant, à Empresa/Prospect e à Oportunidade. Também pode apontar para Contato e Responsável, possui numeração sequencial por tenant, versão, status, validade, subtotal, desconto, frete, acréscimos, total e textos comerciais.
+- `ProposalItem` guarda snapshot de SKU, nome, descrição, unidade, quantidade, valor unitário, desconto e total de linha. Esse snapshot evita que mudanças futuras no Catálogo alterem Propostas já criadas.
+- `/products` é restrita a `OWNER` e `ADMIN`, permitindo cadastrar Produtos/Serviços e alternar status ativo/inativo.
+- `/products` abre na aba `Catálogo`, com busca por SKU, nome, descrição ou unidade, filtro de status e lista clicável. A aba `Novo Produto` concentra o cadastro.
+- No Catálogo, cada linha de Produto possui um link absoluto sobre a área da linha para abrir a edição, com `focus-visible` e `focus-within` cobrindo a largura total. A ação de status permanece em uma camada acima para não disparar a navegação.
+- `/products/[id]` permite editar SKU, nome, unidade, preço base, descrição e status do Produto dentro do tenant atual.
+- Erros de `createProductAction`, incluindo SKU duplicado, redirecionam para `/products?tab=new` preservando os valores enviados em query string para correção do formulário.
+- `updateProductAction` redireciona para `/products?tab=catalog` após salvar; a tela de edição e a aba `Novo Produto` também oferecem `Cancelar` com retorno ao Catálogo.
+- O Catálogo mantém `basePrice` como preço genérico por tenant. Preço por cliente/prospect não foi modelado neste corte; exceções comerciais são tratadas no item da Proposta, preservadas em `ProposalItem`.
+- `/accounts/[id]/proposals/new?opportunity=<id>` cria Propostas a partir de uma Oportunidade visível. A tela aceita itens de catálogo e itens avulsos.
+- `createProposalAction` recalcula todos os totais no servidor, valida tenant/escopo pela Oportunidade, valida Contato do mesmo Prospect e registra `Proposta Criada` no histórico.
+- `ProposalBuilder` mantém o percentual de desconto apenas como conveniência de UI. O valor persistido e enviado para `createProposalAction` continua sendo `discount`, mantendo uma única fonte de verdade no backend.
+- `Subtotal dos Itens` é calculado após descontos por item. `Desconto Geral` é aplicado adicionalmente no nível da Proposta; a fórmula permanece `total = max(0, subtotal - discount + freight + additions)`.
+- A seleção de Produto em `ProposalBuilder` usa campo de busca com `datalist`, ícone de lupa e campos hidden para `productId`, `itemName` e `itemDiscount`, evitando o envio duplicado de campos apenas visuais.
+- O percentual de desconto por item também é apenas conveniência de UI; `createProposalAction` continua recebendo e persistindo o valor monetário `itemDiscount`.
+- `CurrencyInput` passou a aceitar `name` opcional para permitir campos monetários controlados apenas como display/entrada local sem criar chaves extras no `FormData`.
+- As grades financeiras de `ProposalBuilder` usam colunas responsivas com `min-w-0`, `w-full` e breakpoint `2xl` para evitar sobreposição de campos monetários e rótulos em larguras intermediárias.
+- A cor de `Descontos/Acréscimos` é condicional: `text-danger` para ajuste líquido negativo e `text-foreground` para zero ou positivo.
+- `ProposalBuilder` sanitiza `Qtde.` com `sanitizeDecimalInput`, aceitando apenas dígitos e um separador decimal. `createProposalAction` valida quantidade com `parseQuantity`, retornando `0` para entrada inválida em vez de aplicar fallback.
+- A página de detalhe da Proposta abre `/api/proposals/[proposalId]/pdf` em nova aba com `target="_blank"` e `rel="noopener noreferrer"`.
+- O bloco de Condições usa `min-w-0`, `whitespace-pre-wrap` e `break-words` para conter textos longos sem espaços dentro do painel.
+- Valores de desconto usam `text-danger` na UI e `dangerText` no PDF.
+- `/accounts/[id]/proposals/[proposalId]` mostra status, dados comerciais, itens, totais, condições, botão de publicação e link para PDF.
+- `publishProposalAction` altera Propostas `DRAFT` para `READY`, grava `publishedAt` e registra `Proposta Publicada` no histórico.
+- `/api/proposals/[proposalId]/pdf` gera PDF sob demanda com `@react-pdf/renderer` e valida o mesmo escopo antes de entregar o arquivo.
+- E-mail transacional, WhatsApp oficial, storage privado do PDF e versionamento avançado permanecem fora deste primeiro corte.
 
 ## Versao WIP no topo
 
@@ -649,7 +683,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-07-16 18:03:35`
+- Valor: `2026-07-17 21:06:06`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

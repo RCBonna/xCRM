@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-07-16 18:14:55 -03:00
+Ultima modificacao: 2026-07-17 21:06:06 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -557,6 +557,17 @@ Versao atual:
 - `2026-07-12 16:58:21`
 - `2026-07-12 17:11:55`
 - `2026-07-12 17:35:02`
+- `2026-07-17 17:07:54`
+- `2026-07-17 17:40:07`
+- `2026-07-17 17:52:39`
+- `2026-07-17 18:01:45`
+- `2026-07-17 18:39:49`
+- `2026-07-17 18:53:14`
+- `2026-07-17 19:39:01`
+- `2026-07-17 19:58:27`
+- `2026-07-17 20:17:51`
+- `2026-07-17 20:57:36`
+- `2026-07-17 21:06:06`
 
 ## Fluxos ainda nao implementados
 
@@ -605,6 +616,43 @@ Quando uma célula de e-mail contém mais de um endereço, o xCRM cria um contat
 - Use `Adicionar Contato` ou o ícone de remoção para completar ou corrigir a lista.
 - Endereços repetidos na mesma célula são ignorados, e o sistema avisa quando não consegue reconhecer um e-mail válido.
 - Para uma carga temporária criada antes desta melhoria, abra a linha e use `Reprocessar Contatos`. Confirme a operação para recriar a lista usando os Dados Originais da Planilha. A Empresa/Prospect, ações e observações permanecem como estavam; apenas edições manuais da lista de contatos serão substituídas.
+
+## Catálogo de Produtos e Propostas
+
+Owner e Admin podem acessar `Catálogo de Produtos` pelo menu superior. A tela abre na aba `Catálogo`, onde é possível buscar por SKU, Produto, descrição ou unidade e filtrar por Status. A linha inteira de um Produto fica destacada ao passar o mouse ou focar pelo teclado; clique em qualquer parte da linha para editar seus dados.
+
+Use a aba `Novo Produto` para cadastrar Produtos ou Serviços com nome, unidade, SKU opcional, preço base e descrição. Use `Cancelar` para voltar ao Catálogo sem cadastrar. Produtos inativos deixam de aparecer como opção na montagem de novas Propostas, mas continuam preservados em Propostas já criadas.
+
+Se houver erro no cadastro, como SKU duplicado, o sistema mantém a aba `Novo Produto` aberta com os campos preenchidos para correção. Ao editar um Produto existente, `Salvar Produto` e `Cancelar` retornam para o Catálogo.
+
+No cadastro de Produto, o SKU aceita até 20 caracteres, o Nome do Produto até 90 caracteres e a Unidade até 6 caracteres. SKU, Nome do Produto e Unidade são formatados em caixa alta durante a digitação.
+
+O Preço Base é genérico para a organização. Quando houver negociação ou condição específica para um cliente/prospect, ajuste o valor diretamente na Proposta. Propostas já criadas mantêm o snapshot dos itens, mesmo que o Produto seja alterado depois no Catálogo.
+
+Para criar uma Proposta:
+
+- Abra uma Empresa/Prospect.
+- Expanda `Oportunidades`.
+- Na Oportunidade desejada, clique em `Criar Proposta`.
+- Selecione o Contato, informe validade e introdução quando necessário.
+- Use a busca com lupa para localizar itens do Catálogo por SKU ou Produto. Se o texto digitado não corresponder a um Produto cadastrado, ele será tratado como item avulso.
+- Revise `Subtotal dos Itens`, `Descontos/Acréscimos` e `Total da Proposta`. O total é calculado como `Subtotal dos Itens - Desconto Geral + Frete + Acréscimos`.
+- Informe condições de pagamento, condições comerciais e observações.
+- Clique em `Criar Proposta`.
+
+O campo `% Desconto` é um apoio de cálculo: ao informar um percentual, o sistema calcula o `Desconto Geral`; ao informar o valor do `Desconto Geral`, o percentual é recalculado como referência. O `Desconto Geral` é um desconto adicional da Proposta inteira.
+
+Nos itens, `% Desc. Item` calcula o `Desconto do Item` com base em quantidade e valor unitário. Também é possível informar diretamente o valor do `Desconto do Item`, e o percentual será recalculado como referência. Descontos informados em itens já reduzem o `Total do Item` e entram no `Subtotal dos Itens`.
+
+O campo `Qtde.` aceita números com vírgula ou ponto decimal. Letras e símbolos são removidos durante a digitação.
+
+No resumo financeiro, `Descontos/Acréscimos` aparece em vermelho quando o ajuste líquido reduz o total da Proposta. Quando o ajuste é zero ou aumenta o total, a cor permanece padrão.
+
+Depois de criada, a Proposta pode ser aberta pela própria Oportunidade. A tela mostra itens, totais, condições e status. Enquanto estiver como `Rascunho`, use `Publicar` para marcar a Proposta como pronta para envio. O botão `Baixar PDF` abre o PDF em uma nova aba/janela, permitindo salvar ou fechar sem sair da Proposta.
+
+Textos longos em Condições, Condições de Pagamento, Condições Comerciais e Observações quebram dentro do painel da Proposta. Valores de desconto são destacados em vermelho.
+
+As Propostas ficam vinculadas à Oportunidade e geram registros no Histórico Comercial quando são criadas ou publicadas. Alterações posteriores no Catálogo não mudam os itens já gravados na Proposta.
 
 - Para suspender uma organização, clique em `Suspender Organização`, informe o motivo obrigatório e confirme a operação. A equipe perde o acesso operacional até que a organização seja reativada.
 - Para reativar, clique em `Reativar Organização`, revise o impacto e confirme. Um motivo pode ser registrado para auditoria.

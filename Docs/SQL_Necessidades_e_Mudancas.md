@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-07-12 19:57:15 -03:00
+Ultima modificacao: 2026-07-17 14:30:00 -03:00
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -72,6 +72,44 @@ Observacao:
 
 - Nenhuma migration foi criada ou aplicada neste ajuste.
 - A correcao foi feita no `.env` local, que permanece ignorado pelo Git.
+
+## 2026-07-17 14:30:00 -03:00 - Modulo inicial de Produtos e Propostas
+
+Status: Aplicado no Supabase remoto
+
+Objetivo:
+
+- Criar catalogo simples de Produtos/Servicos por tenant.
+- Permitir Propostas vinculadas a Oportunidades.
+- Guardar snapshot dos itens, valores, unidade e descricao enviados para que propostas ja criadas nao sejam alteradas por mudancas futuras no catalogo.
+- Numerar propostas por tenant com `next_proposal_number`.
+
+Migration documentada:
+
+```powershell
+npx prisma db execute --file prisma/20260717143000_add_products_and_proposals.sql
+npm run prisma:generate
+```
+
+Observacao de aplicacao local:
+
+- A CLI `prisma db execute` ficou sem resposta usando `DATABASE_URL`.
+- A migration foi aplicada com `pg`/Node usando `DIRECT_URL` e `ssl.rejectUnauthorized=false`, o mesmo criterio de conexao usado pelo app local.
+- Validado com `to_regclass` para `products`, `proposals` e `proposal_items`.
+
+Arquivo SQL:
+
+```text
+prisma/20260717143000_add_products_and_proposals.sql
+```
+
+Principais objetos:
+
+- `products`
+- `proposals`
+- `proposal_items`
+- enum `ProposalStatus`
+- coluna `tenants.next_proposal_number`
 
 ## 2026-06-29 16:13:00 -03:00 - Status de revisao para importacao temporaria
 

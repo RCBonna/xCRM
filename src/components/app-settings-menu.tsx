@@ -11,6 +11,7 @@ import {
   Monitor,
   Moon,
   Paintbrush,
+  PackageSearch,
   Sun,
   UsersRound,
 } from "lucide-react";
@@ -186,6 +187,18 @@ export function AppSettingsMenu({
                   aria-hidden
                 />
                 Cadastro Prospects/Clientes
+              </Link>
+              <Link
+                href="/products"
+                onClick={() => setIsOpen(false)}
+                className="mt-1 flex h-11 items-center gap-2 rounded px-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted"
+              >
+                <PackageSearch
+                  size={16}
+                  className="text-primary"
+                  aria-hidden
+                />
+                Catálogo de Produtos
               </Link>
               <Link
                 href="/settings/team"
