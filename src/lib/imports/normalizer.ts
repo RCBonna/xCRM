@@ -1,4 +1,8 @@
 import type { RawSpreadsheetRow } from "@/lib/imports/spreadsheet";
+import {
+  applyImportMapping,
+  type ImportMapping,
+} from "@/lib/imports/mapping";
 
 type NormalizedContact = {
   name: string | null;
@@ -15,7 +19,11 @@ type NormalizedImportRow = {
     document: string | null;
     city: string | null;
     state: string | null;
+    postalCode: string | null;
     address: string | null;
+    addressNumber: string | null;
+    addressComplement: string | null;
+    district: string | null;
     website: string | null;
     segment: string | null;
     mainSupplier: string | null;
@@ -46,15 +54,34 @@ const columnAliases = {
   legalName: ["razao social", "razão social"],
   document: ["cnpj", "documento"],
   contactName: ["contato", "nome do contato", "pessoa"],
+  contactRole: ["funcao", "função", "cargo", "funcao cargo", "função cargo"],
   email: ["e-mail", "email", "mail"],
   phone: ["fone", "telefone", "whatsapp", "celular"],
   city: ["cidade", "municipio", "município"],
   state: ["uf", "estado"],
+  postalCode: ["cep", "codigo postal", "código postal"],
   address: ["endereco", "endereço"],
+  addressNumber: ["numero", "número", "nro", "num"],
+  addressComplement: ["complemento", "compl"],
+  district: ["bairro", "distrito"],
   website: ["site", "site do cliente", "website"],
+  segment: ["segmento", "ramo", "setor"],
   mainSupplier: ["principal fornecedor", "fornecedor", "marca"],
+  notes: [
+    "observacao comercial",
+    "observação comercial",
+    "notas",
+    "observacoes",
+    "observações",
+  ],
   action: ["acao", "ação", "historico", "histórico", "observacao", "observação"],
   nextAction: ["proxima visita", "próxima visita", "proxima acao", "próxima ação"],
+  nextActionDate: [
+    "data proxima acao",
+    "data próxima ação",
+    "data proxima visita",
+    "data próxima visita",
+  ],
   channel: ["presencial/email/telefone", "canal", "origem"],
 };
 
@@ -109,6 +136,12 @@ function normalizePhone(value: string | null) {
   return phone.length > 0 ? phone : null;
 }
 
+function normalizePostalCode(value: string | null) {
+  const postalCode = value?.replace(/\D/g, "") ?? "";
+
+  return postalCode.length > 0 ? postalCode : null;
+}
+
 function normalizeDate(value: string | null) {
   if (!value) {
     return null;
@@ -139,10 +172,12 @@ function extractContactsFromEmailCell({
   emailCell,
   contactName,
   phone,
+  role,
 }: {
   emailCell: string | null;
   contactName: string | null;
   phone: string | null;
+  role: string | null;
 }): ContactExtraction {
   if (!emailCell) {
     return {
@@ -153,7 +188,7 @@ function extractContactsFromEmailCell({
                 name: contactName || "Contato a Revisar",
                 email: null,
                 phone,
-                role: null,
+                role,
                 isPrimary: true,
               },
             ]
@@ -173,7 +208,7 @@ function extractContactsFromEmailCell({
                 name: contactName || "Contato a Revisar",
                 email: null,
                 phone,
-                role: null,
+                role,
                 isPrimary: true,
               },
             ]
@@ -210,7 +245,7 @@ function extractContactsFromEmailCell({
         "Contato a Revisar",
       email,
       phone: isFirstContact ? phone : null,
-      role: null,
+      role,
       isPrimary: isFirstContact,
     });
   }
@@ -245,40 +280,58 @@ function buildWarnings(row: NormalizedImportRow, extractionWarnings: string[]) {
   return warnings;
 }
 
-export function normalizeSpreadsheetRow(row: RawSpreadsheetRow): NormalizedImportRow {
+export function normalizeSpreadsheetRow(
+  row: RawSpreadsheetRow,
+  mapping?: ImportMapping | null,
+): NormalizedImportRow {
+  const mappedRow = applyImportMapping(row, mapping ?? null);
   const companyName = normalizeUppercase(
-    findValue(row.values, columnAliases.companyName),
+    findValue(mappedRow.values, columnAliases.companyName),
   );
   const legalName =
-    normalizeUppercase(findValue(row.values, columnAliases.legalName)) ??
+    normalizeUppercase(findValue(mappedRow.values, columnAliases.legalName)) ??
     companyName;
-  const contactName = findValue(row.values, columnAliases.contactName);
-  const emailCell = findValue(row.values, columnAliases.email);
-  const phone = normalizePhone(findValue(row.values, columnAliases.phone));
-  const action = findValue(row.values, columnAliases.action);
-  const nextAction = findValue(row.values, columnAliases.nextAction);
-  const nextActionDate = normalizeDate(nextAction);
-  const channel = findValue(row.values, columnAliases.channel);
+  const contactName = findValue(mappedRow.values, columnAliases.contactName);
+  const contactRole = findValue(mappedRow.values, columnAliases.contactRole);
+  const emailCell = findValue(mappedRow.values, columnAliases.email);
+  const phone = normalizePhone(findValue(mappedRow.values, columnAliases.phone));
+  const notes = findValue(mappedRow.values, columnAliases.notes);
+  const action = findValue(mappedRow.values, columnAliases.action);
+  const nextAction = findValue(mappedRow.values, columnAliases.nextAction);
+  const nextActionDate =
+    normalizeDate(findValue(mappedRow.values, columnAliases.nextActionDate)) ??
+    normalizeDate(nextAction);
+  const channel = findValue(mappedRow.values, columnAliases.channel);
   const contactExtraction = extractContactsFromEmailCell({
     emailCell,
     contactName,
     phone,
+    role: contactRole,
   });
 
   const normalizedRow: NormalizedImportRow = {
     company: {
       name: companyName,
       legalName,
-      document: normalizeDocument(findValue(row.values, columnAliases.document)),
-      city: normalizeUppercase(findValue(row.values, columnAliases.city)),
-      state: normalizeUppercase(findValue(row.values, columnAliases.state)),
-      address: findValue(row.values, columnAliases.address),
-      website: findValue(row.values, columnAliases.website),
-      segment: null,
-      mainSupplier: normalizeUppercase(
-        findValue(row.values, columnAliases.mainSupplier),
+      document: normalizeDocument(findValue(mappedRow.values, columnAliases.document)),
+      city: normalizeUppercase(findValue(mappedRow.values, columnAliases.city)),
+      state: normalizeUppercase(findValue(mappedRow.values, columnAliases.state)),
+      postalCode: normalizePostalCode(
+        findValue(mappedRow.values, columnAliases.postalCode),
       ),
-      notes: action || channel || null,
+      address: findValue(mappedRow.values, columnAliases.address),
+      addressNumber: findValue(mappedRow.values, columnAliases.addressNumber),
+      addressComplement: findValue(
+        mappedRow.values,
+        columnAliases.addressComplement,
+      ),
+      district: findValue(mappedRow.values, columnAliases.district),
+      website: findValue(mappedRow.values, columnAliases.website),
+      segment: findValue(mappedRow.values, columnAliases.segment),
+      mainSupplier: normalizeUppercase(
+        findValue(mappedRow.values, columnAliases.mainSupplier),
+      ),
+      notes: notes || action || channel || null,
     },
     contacts: contactExtraction.contacts,
     history: action

@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-07-18 13:38:30 -03:00
+Ultima modificacao: 2026-07-18 17:56:19 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -698,6 +698,34 @@ Observacoes de seguranca:
 - O normalizador deve aceitar mapeamento explícito sem perder o comportamento atual por aliases quando nenhum mapeamento for informado.
 - A recomendação técnica é persistir o mapeamento usado em `imports.column_mapping Json?` para auditoria e suporte.
 - A interação principal recomendada é uma grade com selects por campo xCRM, não drag-and-drop obrigatório, preservando acessibilidade e uso em telas menores.
+- O estudo passou a prever `Padrão do Sistema` imutável, download de planilha padrão CSV/XLSX e modelos salvos por tenant em tabela candidata `import_mapping_templates`.
+
+## Mapeamento de Colunas na Importação
+
+- A issue `#94` iniciou a implementação do mapeamento manual antes da criação da carga temporária.
+- A migration `prisma/20260718180500_add_import_mapping_templates.sql` adiciona `imports.column_mapping` e cria `import_mapping_templates`.
+- `imports.column_mapping` grava o mapeamento efetivamente usado na carga, permitindo suporte e auditoria posterior.
+- `ImportMappingTemplate` pertence ao tenant, possui nome único por tenant, `mappingJson`, `status` e usuário criador opcional.
+- `src/lib/imports/mapping.ts` centraliza os campos de importação, aliases, `Modelo Padrão do Sistema`, sugestão automática por cabeçalho, validação, aplicação de mapeamento e geração de CSV padrão.
+- O `Modelo Padrão do Sistema` é definido em código e não pode ser alterado pelo tenant. Modelos do usuário são salvos separadamente em `import_mapping_templates`.
+- `normalizeSpreadsheetRow(row, mapping?)` aceita mapeamento explícito. Quando informado, o mapeamento projeta as colunas da planilha para os cabeçalhos padrão antes da normalização.
+- O normalizador continua suportando aliases antigos quando nenhum mapeamento é informado.
+- A normalização passou a reconhecer também `Função/Cargo`, `Segmento`, `Observação Comercial` e `Data da Próxima Ação` como campos mapeáveis.
+- A normalização e a revisão de importação também reconhecem campos de endereço já existentes em `Account`: `postalCode`, `addressNumber`, `addressComplement` e `district`, expostos na UI como `CEP`, `Número`, `Complemento` e `Bairro`.
+- Quando `E-mail` está mapeado, a UI informa que múltiplos e-mails em uma mesma célula serão separados em contatos para revisão.
+- As mensagens de retorno de ações sobre uma linha de importação incluem `rowNumber`, mantendo clareza quando a seleção avança automaticamente para outra linha.
+- A grade de mapeamento usa tabela fixa e coluna `Ajuda` com quebra de texto para evitar overflow horizontal fora do painel.
+- `ImportMappingStarter` é um Client Component usado em `/imports` quando não há carga ativa. Ele chama `previewImportFileAction` para pré-ler XLSX/CSV no servidor com o mesmo parser da carga final, mostra cabeçalhos, aplica sugestão automática, permite escolher modelo salvo, ajustar selects e visualizar as primeiras linhas.
+- O starter usa controle customizado para seleção de arquivo, evitando texto localizado do input nativo e contendo nomes longos dentro do painel.
+- O campo manual `Caminho de Origem` deixou de aparecer na criação de carga, pois o navegador não informa o caminho local real do arquivo.
+- O resumo de origem e métricas da carga só é renderizado quando existe `activeImport`, evitando um painel vazio antes da seleção do arquivo.
+- O download `/api/imports/template.csv` gera um CSV padrão com cabeçalhos e uma linha fictícia de exemplo. O arquivo pode ser aberto no Excel.
+- O CSV padrão é gerado com BOM UTF-8 para que o Excel no Windows reconheça acentuação ao abrir o arquivo diretamente.
+- `previewImportFileAction` valida Owner, extensão e tamanho do arquivo e retorna cabeçalhos e até três linhas de prévia sem criar carga temporária.
+- `startImportBatchAction` recebe `columnMappingJson`, valida campo obrigatório e existência da coluna no arquivo, salva `columnMapping` no batch e cria/atualiza o modelo do tenant quando `mappingTemplateName` é enviado.
+- O botão de criar carga fica desabilitado na UI quando o campo obrigatório `Empresa/Prospect` não está mapeado, mas a validação final permanece no servidor.
+- `reprocessImportRowContactsAction` reutiliza o `columnMapping` da carga para recriar contatos a partir dos Dados Originais da Planilha.
+- Evoluções ainda possíveis: gerenciar/inativar modelos salvos em tela dedicada, exportar XLSX nativo além do CSV e mostrar uma prévia normalizada linha a linha antes da carga.
 
 ## Versao WIP no topo
 
@@ -709,7 +737,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-07-18 13:38:30`
+- Valor: `2026-07-18 20:05:48`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

@@ -1,7 +1,7 @@
 # Estudo: Mapeamento Manual de Colunas na Importacao
 
 Criado em: 2026-07-18 13:38:30 -03:00  
-Ultima modificacao: 2026-07-18 13:38:30 -03:00
+Ultima modificacao: 2026-07-18 17:56:19 -03:00
 
 ## Contexto
 
@@ -98,7 +98,19 @@ Campos sugeridos:
 - `Linha de Cabeçalho`: select ou stepper com número da linha.
 - Prévia de 3 a 5 linhas abaixo da linha escolhida.
 
-### 3. Mapear Campos
+### 3. Escolher Modelo de Mapeamento
+
+Antes da grade manual, o Owner deve poder escolher um modelo:
+
+- `Padrão do Sistema`: modelo imutável mantido pelo xCRM, baseado nos campos esperados e nos aliases atuais.
+- Modelos salvos do tenant: modelos criados pelo próprio Owner/Admin para planilhas recorrentes.
+- `Novo Mapeamento`: começa pelas sugestões automáticas do arquivo atual.
+
+O `Padrão do Sistema` não deve ser editável. Se o usuário quiser adaptar, deve usar `Salvar Como Modelo`, criando uma cópia própria para o tenant.
+
+Também é recomendado oferecer uma ação `Baixar Planilha Padrão`, em CSV e preferencialmente XLSX, para que o cliente veja exatamente quais colunas o xCRM espera. Essa planilha deve conter cabeçalhos e uma linha de exemplo fictícia, sem dados reais.
+
+### 4. Mapear Campos
 
 Usar uma grade com três colunas principais:
 
@@ -115,9 +127,9 @@ Interações:
 - A primeira opção deve ser `Não Importar`.
 - Campos obrigatórios sem mapeamento aparecem com aviso.
 - Sugestões por alias vêm preenchidas automaticamente.
-- O usuário pode limpar tudo, restaurar sugestões ou salvar um modelo.
+- O usuário pode limpar tudo, restaurar sugestões, carregar o padrão do sistema ou salvar como modelo do tenant.
 
-### 4. Prévia de Leitura
+### 5. Prévia de Leitura
 
 Após o mapeamento, a tela mostra uma prévia com 3 a 10 linhas usando os nomes finais do xCRM:
 
@@ -130,7 +142,7 @@ Após o mapeamento, a tela mostra uma prévia com 3 a 10 linhas usando os nomes 
 
 Essa prévia evita criar uma carga inteira errada. Se `Empresa/Prospect` estiver sem mapeamento, o botão de criar carga fica bloqueado.
 
-### 5. Criar Carga Temporária
+### 6. Criar Carga Temporária
 
 Quando o Owner confirma, a carga é criada já com `normalizedJson` gerado a partir do mapeamento aprovado. A revisão por linha continua igual ao fluxo atual.
 
@@ -142,9 +154,11 @@ Criar tipos e funções em `src/lib/imports/mapping.ts`:
 
 - `ImportFieldKey`: enum/string union dos campos xCRM mapeáveis.
 - `ImportColumnMapping`: `{ field: ImportFieldKey; sourceColumn: string | null }`.
+- `systemDefaultImportMapping`: lista imutável dos campos/cabeçalhos padrão esperados pelo xCRM.
 - `suggestImportMapping(headers)`: aplica aliases atuais.
 - `applyImportMapping(row, mapping)`: transforma `RawSpreadsheetRow` em valores esperados pelo normalizador.
 - `validateImportMapping(mapping)`: exige `companyName`.
+- `buildStandardImportTemplate(format)`: gera CSV/XLSX padrão com cabeçalhos e exemplo fictício.
 
 Refatorar `normalizeSpreadsheetRow` para aceitar opcionalmente um mapeamento:
 
@@ -156,12 +170,26 @@ Sem mapeamento, usa o comportamento atual por aliases. Com mapeamento, lê expli
 
 ### Persistência
 
-Há duas opções:
+Há três níveis de persistência:
 
-1. Sem banco no primeiro corte: o mapeamento é enviado junto com a criação da carga e aplicado naquele momento. Mais simples.
-2. Com banco: adicionar `imports.column_mapping Json?` para auditoria e reuso futuro.
+1. Modelo padrão do sistema: definido no código, imutável pelo usuário.
+2. Mapeamento usado na carga: salvo em `imports.column_mapping Json?`.
+3. Modelos do tenant: salvos em uma tabela dedicada para reutilização.
 
 Recomendação: adicionar `imports.column_mapping Json?` já no primeiro corte. Como a carga temporária é uma decisão operacional, manter o mapeamento usado ajuda auditoria, suporte e diagnóstico.
+
+Para modelos reutilizáveis, criar tabela candidata:
+
+- `import_mapping_templates`
+- `tenant_id`
+- `name`
+- `mapping_json`
+- `created_by_user_id`
+- `status`
+- `created_at`
+- `updated_at`
+
+O nome deve ser único por tenant enquanto ativo. O padrão do sistema não precisa ficar nessa tabela, salvo se no futuro houver gestão administrativa da plataforma para modelos globais.
 
 ### Server Actions
 
@@ -197,6 +225,10 @@ Usar uma grade densa, com linhas repetíveis e estados claros:
 
 Ações:
 
+- `Baixar Planilha Padrão`
+- `Usar Padrão do Sistema`
+- `Selecionar Modelo Salvo`
+- `Salvar Como Modelo`
 - `Restaurar Sugestões`
 - `Limpar Mapeamento`
 - `Criar Carga Temporária`
@@ -214,12 +246,17 @@ Mostrar uma tabela pequena, sem tentar substituir a revisão final:
 
 - O Owner consegue escolher arquivo de qualquer pasta do dispositivo.
 - O sistema mostra cabeçalhos detectados antes de criar a carga temporária.
+- O sistema oferece `Padrão do Sistema` imutável como referência de mapeamento.
+- O sistema permite baixar uma planilha padrão CSV/XLSX com cabeçalhos esperados e exemplo fictício.
+- O Owner consegue salvar o mapeamento atual como modelo do tenant.
+- O Owner consegue selecionar um modelo salvo do tenant em importações futuras.
 - O sistema sugere mapeamento inicial usando os aliases atuais.
 - O Owner consegue trocar a coluna associada a cada campo xCRM.
 - `Empresa/Prospect` é obrigatório para criar a carga.
 - Campos opcionais podem ficar como `Não Importar`.
 - A prévia mostra como as primeiras linhas serão normalizadas.
 - O mapeamento aplicado é salvo em `imports.column_mapping`.
+- Modelos salvos pelo tenant não alteram o `Padrão do Sistema`.
 - A revisão, aprovação, rejeição, importação individual, importação em lote e descarte continuam funcionando como hoje.
 - A extração de múltiplos e-mails da mesma célula continua preservada.
 
@@ -231,20 +268,46 @@ Mostrar uma tabela pequena, sem tentar substituir a revisão final:
 - Não salvar arquivo temporário em local fixo do servidor.
 - Não inferir campos críticos com excesso de confiança. Sugestão automática deve ser editável.
 - Não bloquear importação por ausência de campos opcionais.
+- Não permitir edição direta do `Padrão do Sistema`; adaptações devem ser salvas como modelo do tenant.
+- Evitar que modelos salvos fiquem obsoletos sem aviso quando o schema de importação evoluir. Uma versão do modelo pode ser necessária.
 
 ## Plano de Implementação
 
 1. Criar tipos de mapeamento e extrair aliases atuais para `mapping.ts`.
-2. Criar função para sugerir mapeamento a partir dos cabeçalhos.
-3. Refatorar normalizador para aceitar mapeamento explícito.
-4. Adicionar coluna `imports.column_mapping Json?` e documentar SQL.
-5. Criar Client Component para etapa de prévia/mapeamento antes da carga.
-6. Atualizar `startImportBatchAction` para receber e persistir o mapeamento.
-7. Atualizar manual, documentação técnica e diário.
-8. Validar com planilhas com cabeçalhos conhecidos, cabeçalhos desconhecidos e campos faltantes.
+2. Criar o `Padrão do Sistema` imutável e a geração de planilha padrão CSV/XLSX.
+3. Criar função para sugerir mapeamento a partir dos cabeçalhos.
+4. Refatorar normalizador para aceitar mapeamento explícito.
+5. Adicionar coluna `imports.column_mapping Json?` e documentar SQL.
+6. Criar tabela `import_mapping_templates` para modelos salvos por tenant.
+7. Criar Client Component para etapa de prévia/mapeamento antes da carga.
+8. Atualizar `startImportBatchAction` para receber e persistir o mapeamento.
+9. Adicionar ações para salvar, selecionar e inativar modelos do tenant.
+10. Atualizar manual, documentação técnica e diário.
+11. Validar com planilhas com cabeçalhos conhecidos, cabeçalhos desconhecidos e campos faltantes.
 
 ## Decisão Recomendada
 
 Implementar a `#94` como uma etapa intermediária dentro da própria tela `/imports`, antes da criação da carga temporária.
 
 Eu não recomendo criar uma página separada neste momento. O mapeamento é parte da importação, e separar a rota tende a espalhar o fluxo. A tela atual pode suportar a etapa desde que a carga ativa continue ocupando a tela principal somente depois da confirmação.
+
+## Implementação Inicial - 2026-07-18
+
+Status: iniciada e funcional no fluxo principal de `/imports`.
+
+O que foi implementado:
+
+- `src/lib/imports/mapping.ts` com campos xCRM, aliases, `Modelo Padrão do Sistema`, sugestão automática, validação, aplicação do mapeamento e geração de CSV padrão.
+- `src/components/import-mapping-starter.tsx` como Client Component para acionar prévia server-side de XLSX/CSV, mostrar cabeçalhos detectados, ajustar selects e enviar `columnMappingJson`.
+- `src/app/api/imports/template.csv/route.ts` para download do CSV padrão com exemplo fictício.
+- `normalizeSpreadsheetRow(row, mapping?)` para aplicar mapeamento explícito antes da normalização.
+- `startImportBatchAction` persistindo `imports.column_mapping`, validando campo obrigatório e salvando modelo próprio do tenant quando informado.
+- `reprocessImportRowContactsAction` usando o mapeamento salvo da carga ao recriar contatos.
+- Migration `prisma/20260718180500_add_import_mapping_templates.sql` aplicada no Supabase remoto.
+
+Evoluções preservadas para uma próxima etapa:
+
+- Gestão dedicada para renomear/inativar modelos salvos.
+- Download XLSX nativo, além do CSV que já abre no Excel.
+- Prévia normalizada com contagem de alertas por linha antes da criação da carga.
+- Atalhos avançados como limpar mapeamento ou restaurar sugestões sem trocar o modelo selecionado.

@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 
 import type { JobStatus, Prisma } from "@/generated/prisma/client";
 import { getAppUser } from "@/lib/auth";
+import {
+  parseImportMapping,
+  parseImportMappingJson,
+  validateImportMapping,
+} from "@/lib/imports/mapping";
 import { normalizeSpreadsheetRow } from "@/lib/imports/normalizer";
 import {
   getUploadedFileMetadata,
@@ -27,7 +32,11 @@ type ReviewRowJson = {
     document: string | null;
     city: string | null;
     state: string | null;
+    postalCode: string | null;
     address: string | null;
+    addressNumber: string | null;
+    addressComplement: string | null;
+    district: string | null;
     website: string | null;
     segment: string | null;
     mainSupplier: string | null;
@@ -133,6 +142,64 @@ async function getOwnerUser() {
   }
 
   return appUser;
+}
+
+export async function previewImportFileAction(formData: FormData) {
+  await getOwnerUser();
+  const uploadedFile = formData.get("file");
+
+  if (
+    !uploadedFile ||
+    typeof uploadedFile === "string" ||
+    uploadedFile.size === 0
+  ) {
+    return {
+      error: "Selecione um arquivo para pré-visualizar.",
+      headers: [],
+      rows: [],
+    };
+  }
+
+  const fileMetadata = getUploadedFileMetadata(uploadedFile);
+
+  if (!fileMetadata) {
+    return {
+      error: "Selecione uma planilha nos formatos XLSX ou CSV.",
+      headers: [],
+      rows: [],
+    };
+  }
+
+  if (uploadedFile.size > 10 * 1024 * 1024) {
+    return {
+      error: "O arquivo deve ter no máximo 10 MB.",
+      headers: [],
+      rows: [],
+    };
+  }
+
+  const file = {
+    ...fileMetadata,
+    content: Buffer.from(await uploadedFile.arrayBuffer()),
+  };
+  const rows = await readUploadedSpreadsheetRows(file);
+  const headers = Object.keys(rows[0]?.values ?? {});
+
+  if (rows.length === 0 || headers.length === 0) {
+    return {
+      error: "Não foi possível identificar cabeçalhos e linhas válidas.",
+      headers: [],
+      rows: [],
+    };
+  }
+
+  return {
+    error: null,
+    headers,
+    rows: rows.slice(0, 3).map((row) =>
+      headers.map((header) => String(row.values[header] ?? "")),
+    ),
+  };
 }
 
 async function refreshImportCounts(importId: string, tenantId: string) {
@@ -304,7 +371,11 @@ async function importReviewedRow({
           document: reviewJson.company.document,
           city: reviewJson.company.city,
           state: reviewJson.company.state,
+          postalCode: reviewJson.company.postalCode,
           address: reviewJson.company.address,
+          addressNumber: reviewJson.company.addressNumber,
+          addressComplement: reviewJson.company.addressComplement,
+          district: reviewJson.company.district,
           website: reviewJson.company.website,
           segment: reviewJson.company.segment,
           mainSupplier: reviewJson.company.mainSupplier,
@@ -584,7 +655,11 @@ function getReviewRowFromForm(formData: FormData): ReviewRowJson {
       document: normalizeOptionalDocument(formData.get("document")),
       city: normalizeOptionalUppercase(formData.get("city")),
       state: normalizeOptionalUppercase(formData.get("state")),
+      postalCode: normalizeOptionalText(formData.get("postalCode"))?.replace(/\D/g, "") ?? null,
       address: normalizeOptionalText(formData.get("address")),
+      addressNumber: normalizeOptionalText(formData.get("addressNumber")),
+      addressComplement: normalizeOptionalText(formData.get("addressComplement")),
+      district: normalizeOptionalText(formData.get("district")),
       website: normalizeOptionalText(formData.get("website")),
       segment: normalizeOptionalText(formData.get("segment")),
       mainSupplier: normalizeOptionalUppercase(formData.get("mainSupplier")),
@@ -652,6 +727,11 @@ export async function reprocessImportRowContactsAction(formData: FormData) {
       rowNumber: true,
       rawJson: true,
       normalizedJson: true,
+      import: {
+        select: {
+          columnMapping: true,
+        },
+      },
     },
   });
 
@@ -659,10 +739,13 @@ export async function reprocessImportRowContactsAction(formData: FormData) {
     redirect("/imports?error=Linha%20temporaria%20nao%20encontrada.");
   }
 
-  const reprocessed = normalizeSpreadsheetRow({
-    rowNumber: row.rowNumber,
-    values: getRawSpreadsheetValues(row.rawJson),
-  });
+  const reprocessed = normalizeSpreadsheetRow(
+    {
+      rowNumber: row.rowNumber,
+      values: getRawSpreadsheetValues(row.rawJson),
+    },
+    parseImportMapping(row.import.columnMapping),
+  );
   const currentReview = row.normalizedJson as ReviewRowJson;
   const preservedWarnings = currentReview.aiSuggestion.warnings.filter(
     (warning) =>
@@ -707,6 +790,10 @@ export async function startImportBatchAction(formData: FormData) {
   const appUser = await getOwnerUser();
   const uploadedFile = formData.get("file");
   const sourcePath = normalizeOptionalText(formData.get("sourcePath"));
+  const columnMapping = parseImportMappingJson(formData.get("columnMappingJson"));
+  const mappingTemplateName = normalizeOptionalText(
+    formData.get("mappingTemplateName"),
+  );
 
   if (
     !uploadedFile ||
@@ -730,6 +817,20 @@ export async function startImportBatchAction(formData: FormData) {
 
   if (sourcePath && sourcePath.length > 1000) {
     redirect("/imports?error=O%20Caminho%20de%20Origem%20deve%20ter%20no%20maximo%201000%20caracteres.");
+  }
+
+  if (mappingTemplateName && mappingTemplateName.length > 80) {
+    redirect("/imports?error=O%20nome%20do%20modelo%20deve%20ter%20no%20maximo%2080%20caracteres.");
+  }
+
+  const mappingValidation = validateImportMapping(columnMapping);
+
+  if (!mappingValidation.isValid) {
+    redirect(
+      `/imports?error=${encodeMessage(
+        `Revise o mapeamento. Campo obrigatório sem coluna: ${mappingValidation.missingRequiredFields.join(", ")}.`,
+      )}`,
+    );
   }
 
   const activeImport = await prisma.importBatch.findFirst({
@@ -762,6 +863,24 @@ export async function startImportBatchAction(formData: FormData) {
     redirect("/imports?error=O%20arquivo%20selecionado%20nao%20possui%20linhas%20validas.");
   }
 
+  const headerValidation = validateImportMapping(
+    columnMapping,
+    Object.keys(rows[0]?.values ?? {}),
+  );
+
+  if (!headerValidation.isValid) {
+    const missingFields = [
+      ...headerValidation.missingRequiredFields,
+      ...headerValidation.unavailableRequiredFields,
+    ];
+
+    redirect(
+      `/imports?error=${encodeMessage(
+        `Revise o mapeamento. Campo obrigatório sem coluna válida: ${missingFields.join(", ")}.`,
+      )}`,
+    );
+  }
+
   const importBatch = await prisma.importBatch.create({
     data: {
       tenantId: appUser.tenantId,
@@ -769,6 +888,7 @@ export async function startImportBatchAction(formData: FormData) {
       fileName: file.fileName,
       sourcePath,
       sourceType: file.extension.replace(".", "").toUpperCase(),
+      columnMapping: columnMapping as Prisma.InputJsonValue,
       status: "REVIEWING",
       totalRows: rows.length,
       rows: {
@@ -777,13 +897,38 @@ export async function startImportBatchAction(formData: FormData) {
             tenantId: appUser.tenantId,
             rowNumber: row.rowNumber,
             rawJson: row.values as Prisma.InputJsonValue,
-            normalizedJson: normalizeSpreadsheetRow(row) as Prisma.InputJsonValue,
+            normalizedJson: normalizeSpreadsheetRow(
+              row,
+              columnMapping,
+            ) as Prisma.InputJsonValue,
             status: "REVIEWING",
           })),
         },
       },
     },
   });
+
+  if (mappingTemplateName && columnMapping) {
+    await prisma.importMappingTemplate.upsert({
+      where: {
+        tenantId_name: {
+          tenantId: appUser.tenantId,
+          name: mappingTemplateName,
+        },
+      },
+      create: {
+        tenantId: appUser.tenantId,
+        createdByUserId: appUser.id,
+        name: mappingTemplateName,
+        mappingJson: columnMapping as Prisma.InputJsonValue,
+      },
+      update: {
+        createdByUserId: appUser.id,
+        mappingJson: columnMapping as Prisma.InputJsonValue,
+        status: "ACTIVE",
+      },
+    });
+  }
 
   await prisma.interaction.create({
     data: {
@@ -849,7 +994,12 @@ export async function updateImportRowAction(formData: FormData) {
 
   await refreshImportCounts(row.importId, appUser.tenantId);
   revalidatePath("/imports");
-  redirect(`/imports?row=${row.id}&message=Linha%20temporaria%20salva.`);
+  const lineMessage =
+    nextStatus === "APPROVED"
+      ? `Linha ${row.rowNumber} aprovada.`
+      : `Linha ${row.rowNumber} salva.`;
+
+  redirect(`/imports?row=${row.id}&message=${encodeMessage(lineMessage)}`);
 }
 
 export async function rejectImportRowAction(formData: FormData) {
@@ -899,7 +1049,9 @@ export async function rejectImportRowAction(formData: FormData) {
   });
   revalidatePath("/imports");
   redirect(
-    `/imports${nextRowId ? `?row=${nextRowId}&` : "?"}message=Linha%20rejeitada.`,
+    `/imports${nextRowId ? `?row=${nextRowId}&` : "?"}message=${encodeMessage(
+      `Linha ${row.rowNumber} rejeitada.`,
+    )}`,
   );
 }
 
@@ -949,7 +1101,9 @@ export async function importSingleRowAction(formData: FormData) {
   });
   revalidatePath("/imports");
   redirect(
-    `/imports${nextRowId ? `?row=${nextRowId}&` : "?"}message=Linha%20importada%20para%20a%20base%20definitiva.`,
+    `/imports${nextRowId ? `?row=${nextRowId}&` : "?"}message=${encodeMessage(
+      `Linha ${row.rowNumber} importada para a base definitiva.`,
+    )}`,
   );
 }
 

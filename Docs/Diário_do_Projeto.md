@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-07-18 13:38:30 -03:00
+Ultima modificacao: 2026-07-18 17:56:19 -03:00
 
 ## 2026-07-16
 
@@ -809,3 +809,32 @@ Ultima modificacao: 2026-07-18 13:38:30 -03:00
 - Criado o estudo da issue `#94` em `Docs/Estudo_Mapeamento_Manual_Importacao.md`, propondo uma etapa de mapeamento dentro de `/imports` com sugestões por alias, grade Campo do xCRM x Coluna da Planilha x Status e prévia de leitura antes de criar a carga temporária.
 - Registrada a recomendação de usar selects guiados como interação principal e manter drag-and-drop apenas como possível atalho futuro, por acessibilidade e previsibilidade operacional.
 - Atualizada versao WIP para `2026-07-18 13:38:30`.
+- Evoluído o estudo da issue `#94` com a decisão de manter um `Padrão do Sistema` imutável, oferecer download de planilha padrão CSV/XLSX e permitir que o Owner salve modelos próprios de mapeamento por tenant.
+- Atualizada versao WIP para `2026-07-18 17:56:19`.
+- Iniciada a implementação da issue `#94`.
+- Criada a migration `prisma/20260718180500_add_import_mapping_templates.sql`, adicionando `imports.column_mapping` e a tabela `import_mapping_templates`.
+- Aplicada a migration no Supabase remoto via script Node/`pg` após timeout do `npx prisma db execute`, com validação de catálogo confirmando tabela e coluna.
+- Criado `src/lib/imports/mapping.ts` com campos xCRM, aliases, sugestão automática, validação, aplicação de mapeamento e geração de CSV padrão.
+- O normalizador de importação passou a aceitar mapeamento explícito sem perder o comportamento por aliases, incluindo campos como Função/Cargo, Segmento, Observação Comercial e Data da Próxima Ação.
+- A tela `/imports`, quando não há carga ativa, passou a acionar uma prévia server-side de XLSX/CSV a partir do componente client, mostrar cabeçalhos detectados, grade de mapeamento por select, prévia das primeiras linhas, download de CSV padrão e opção de salvar o mapeamento como modelo do tenant ao criar a carga.
+- `startImportBatchAction` agora valida o mapeamento, persiste `column_mapping` na carga e cria/atualiza modelo salvo por tenant quando informado.
+- Atualizada versao WIP para `2026-07-18 18:13:23`.
+- Ajustado o CSV padrão de importação para incluir BOM UTF-8, permitindo que o Excel no Windows reconheça acentuação ao abrir o arquivo diretamente.
+- Atualizada versao WIP para `2026-07-18 18:33:19`.
+- Centralizado verticalmente o conteúdo das linhas da grade de mapeamento da Importação Temporária, alinhando campo, select e descrição de ajuda.
+- Atualizada versao WIP para `2026-07-18 19:02:15`.
+- Substituído o input nativo de arquivo da Importação Temporária por controle customizado com rótulo `Escolher Arquivo`, evitando o texto localizado `ficheiro` do navegador.
+- Removido da criação de carga o campo `Caminho de Origem`, já que o navegador não fornece o caminho local real do arquivo.
+- Ajustadas larguras e `min-w-0` no starter de importação para evitar campos ultrapassando o limite do box.
+- Atualizada versao WIP para `2026-07-18 19:10:59`.
+- Incluídos no mapeamento da Importação Temporária os campos de endereço já existentes na base: `CEP`, `Número`, `Complemento` e `Bairro`.
+- A revisão da linha importada passou a exibir e preservar esses campos antes da importação definitiva para `Account`.
+- O aviso de mapeamento informa que múltiplos e-mails na mesma célula serão separados em contatos para revisão.
+- Atualizada versao WIP para `2026-07-18 19:38:12`.
+- Mensagens de ações por linha da Importação Temporária passaram a informar o número da linha, como `Linha 2 rejeitada`, `Linha 3 salva`, `Linha 4 aprovada` ou `Linha 5 importada`.
+- Ajustada a grade de mapeamento para preservar a coluna `Ajuda` visível, com tabela fixa, larguras proporcionais e texto quebrando dentro do painel.
+- Ajustada a prévia das primeiras linhas para não expandir a largura da tela ao exibir muitas colunas.
+- Atualizada versao WIP para `2026-07-18 19:52:01`.
+- Ocultado o resumo superior de origem e métricas da Importação Temporária quando não existe carga ativa.
+- Ajustado o texto do seletor para `Nenhum arquivo selecionado. Clique aqui para selecionar um arquivo.`.
+- Atualizada versao WIP para `2026-07-18 20:05:48`.

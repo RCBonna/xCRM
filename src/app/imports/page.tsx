@@ -2,7 +2,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   FileCheck2,
-  FileSpreadsheet,
   FileUp,
   Info,
   LogOut,
@@ -10,7 +9,6 @@ import {
   Save,
   Search,
   Trash2,
-  Upload,
   UsersRound,
   XCircle,
 } from "lucide-react";
@@ -23,13 +21,13 @@ import {
   importSingleRowAction,
   rejectImportRowAction,
   reprocessImportRowContactsAction,
-  startImportBatchAction,
   updateImportRowAction,
 } from "@/app/imports/actions";
 import { signOutAction } from "@/app/auth/actions";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { CnpjInput } from "@/components/cnpj-input";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
+import { ImportMappingStarter } from "@/components/import-mapping-starter";
 import { ImportStatusFilter } from "@/components/import-status-filter";
 import { ImportReviewContacts } from "@/components/import-review-contacts";
 import { TenantBrand } from "@/components/tenant-brand";
@@ -56,7 +54,11 @@ type ReviewRowJson = {
     document?: string | null;
     city?: string | null;
     state?: string | null;
+    postalCode?: string | null;
     address?: string | null;
+    addressNumber?: string | null;
+    addressComplement?: string | null;
+    district?: string | null;
     website?: string | null;
     segment?: string | null;
     mainSupplier?: string | null;
@@ -225,6 +227,7 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
     activeImport,
     activeTeamsWithLeader,
     unreadNotificationsCount,
+    importMappingTemplates,
   ] = await Promise.all([
     prisma.importBatch.findFirst({
       where: {
@@ -264,6 +267,20 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
         tenantId: appUser.tenantId,
         recipientUserId: appUser.id,
         readAt: null,
+      },
+    }),
+    prisma.importMappingTemplate.findMany({
+      where: {
+        tenantId: appUser.tenantId,
+        status: "ACTIVE",
+      },
+      orderBy: {
+        name: "asc",
+      },
+      select: {
+        id: true,
+        name: true,
+        mappingJson: true,
       },
     }),
   ]);
@@ -415,8 +432,9 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
           </section>
         )}
 
-        <section className="rounded-md border border-border bg-surface">
-          <div className="grid gap-0 divide-y divide-border lg:grid-cols-[minmax(0,1.8fr)_auto_repeat(4,minmax(8rem,0.45fr))] lg:divide-x lg:divide-y-0">
+        {activeImport && (
+          <section className="rounded-md border border-border bg-surface">
+            <div className="grid gap-0 divide-y divide-border lg:grid-cols-[minmax(0,1.8fr)_auto_repeat(4,minmax(8rem,0.45fr))] lg:divide-x lg:divide-y-0">
             <div className="min-w-0 px-4 py-3">
               <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">
                 Origem da Carga
@@ -424,9 +442,11 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
               <p className="mt-1 truncate text-sm font-medium">
                 {activeImport?.fileName ?? "Nenhuma carga ativa"}
               </p>
-              <p className="mt-1 truncate text-xs text-muted" title={activeImport?.sourcePath ?? undefined}>
-                {activeImport?.sourcePath ?? "Caminho de origem não informado."}
-              </p>
+              {activeImport?.sourcePath ? (
+                <p className="mt-1 truncate text-xs text-muted" title={activeImport.sourcePath}>
+                  {activeImport.sourcePath}
+                </p>
+              ) : null}
             </div>
             <div className="flex items-center justify-center px-3 py-3">
               {activeImport ? (
@@ -483,57 +503,12 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                 {rejectedRows}
               </p>
             </div>
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
 
         {!activeImport && (
-          <section className="rounded-md border border-border bg-surface p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold">Iniciar Carga Temporária</h2>
-                <p className="mt-1 text-sm leading-6 text-muted">
-                  Somente o Owner pode iniciar a carga. Enquanto uma carga estiver
-                  em andamento, outra importação fica bloqueada.
-                </p>
-              </div>
-              <FileSpreadsheet size={22} className="text-primary" aria-hidden />
-            </div>
-
-            <form action={startImportBatchAction} className="mt-5 grid gap-3">
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">Arquivo da Planilha</span>
-                <span className="flex flex-col gap-2 md:flex-row md:items-center">
-                  <input
-                    required
-                    name="file"
-                    type="file"
-                    accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
-                    className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-center text-sm file:mr-4 file:h-full file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground"
-                  />
-                  <button className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
-                    <Upload size={16} aria-hidden />
-                    Carregar Planilha
-                  </button>
-                </span>
-                <span className="text-xs text-muted">
-                  Selecione uma planilha XLSX ou CSV do seu dispositivo, com até 10 MB.
-                </span>
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">Caminho de Origem <span className="font-normal text-muted">(Opcional)</span></span>
-                <input
-                  name="sourcePath"
-                  type="text"
-                  maxLength={1000}
-                  placeholder="Cole o caminho completo do arquivo, se precisar registrá-lo"
-                  className="h-10 rounded-md border border-border bg-background px-3 text-sm"
-                />
-                <span className="text-xs text-muted">
-                  O navegador não informa esse caminho automaticamente. O arquivo é enviado mesmo sem preenchê-lo.
-                </span>
-              </label>
-            </form>
-          </section>
+          <ImportMappingStarter mappingTemplates={importMappingTemplates} />
         )}
 
         {activeImport && (
@@ -789,11 +764,43 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                         className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
                       />
                     </label>
+                    <label className="grid w-full max-w-40 gap-1 text-sm lg:col-span-2">
+                      <span className="text-xs font-medium">CEP</span>
+                      <input
+                        name="postalCode"
+                        defaultValue={reviewJson.company?.postalCode ?? ""}
+                        className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
+                      />
+                    </label>
                     <label className="grid min-w-0 gap-1 text-sm lg:col-span-4">
                       <span className="text-xs font-medium">Endereço</span>
                       <input
                         name="address"
                         defaultValue={reviewJson.company?.address ?? ""}
+                        className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
+                      />
+                    </label>
+                    <label className="grid w-full max-w-32 gap-1 text-sm lg:col-span-2">
+                      <span className="text-xs font-medium">Número</span>
+                      <input
+                        name="addressNumber"
+                        defaultValue={reviewJson.company?.addressNumber ?? ""}
+                        className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
+                      />
+                    </label>
+                    <label className="grid min-w-0 gap-1 text-sm lg:col-span-3">
+                      <span className="text-xs font-medium">Complemento</span>
+                      <input
+                        name="addressComplement"
+                        defaultValue={reviewJson.company?.addressComplement ?? ""}
+                        className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
+                      />
+                    </label>
+                    <label className="grid min-w-0 gap-1 text-sm lg:col-span-3">
+                      <span className="text-xs font-medium">Bairro</span>
+                      <input
+                        name="district"
+                        defaultValue={reviewJson.company?.district ?? ""}
                         className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
                       />
                     </label>

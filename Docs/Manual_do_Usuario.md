@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-07-18 13:38:30 -03:00
+Ultima modificacao: 2026-07-18 17:56:19 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -577,6 +577,7 @@ Versao atual:
 - `2026-07-18 09:57:40`
 - `2026-07-18 10:25:30`
 - `2026-07-18 13:38:30`
+- `2026-07-18 17:56:19`
 
 ## Fluxos ainda nao implementados
 
@@ -618,7 +619,18 @@ Quando a tela de login não exibe um aviso de erro ou sucesso, o painel informat
 
 ## Importação de Contatos Múltiplos
 
-Quando uma célula de e-mail contém mais de um endereço, o xCRM cria um contato separado para cada e-mail reconhecido. O primeiro contato é marcado como Principal e os demais aparecem na revisão da linha.
+Ao abrir `Importação Temporária` sem carga ativa, o Owner seleciona a planilha pelo botão `Escolher Arquivo` e revisa o mapeamento antes de criar a carga.
+
+- Use `Baixar CSV Padrão` para obter um arquivo de referência com os cabeçalhos esperados pelo xCRM. O CSV pode ser aberto no Excel e já inclui codificação UTF-8 compatível com acentuação.
+- Depois de selecionar o arquivo XLSX ou CSV, o sistema mostra as colunas detectadas e sugere um mapeamento inicial.
+- Em `Modelo de Mapeamento`, escolha `Sugestão Automática`, `Modelo Padrão do Sistema` ou um modelo salvo do tenant.
+- Na grade, associe cada `Campo xCRM` à `Coluna da Planilha`. `Empresa/Prospect` é obrigatório; campos opcionais podem ficar como `Não Mapear`.
+- Campos como `CEP`, `Número`, `Complemento` e `Bairro` também podem ser mapeados quando existirem na planilha.
+- Use `Prévia das Primeiras Linhas` para conferir se o arquivo lido parece correto antes de carregar.
+- Para reutilizar o mesmo desenho de colunas no futuro, marque `Salvar Como Modelo`, informe um nome e então clique em `Carregar Planilha`.
+- O `Modelo Padrão do Sistema` não é editável. Ao salvar, o sistema cria ou atualiza um modelo próprio da organização.
+
+Quando uma célula de e-mail contém mais de um endereço, a tela de mapeamento avisa essa regra e o xCRM cria um contato separado para cada e-mail reconhecido. O primeiro contato é marcado como Principal e os demais aparecem na revisão da linha.
 
 - Revise a lista `Contatos` antes de aprovar: ajuste nome, Função/Cargo, e-mail e telefone conforme necessário.
 - Use `Definir Principal` para escolher a pessoa de referência da Empresa/Prospect.
