@@ -4,6 +4,7 @@ import {
   FileCheck2,
   FileSpreadsheet,
   FileUp,
+  Info,
   LogOut,
   RefreshCw,
   Save,
@@ -114,6 +115,25 @@ const rowStatusFilters: Array<{
   { label: "Falharam", value: "FAILED" },
 ];
 
+const statusBadgeClasses: Record<string, string> = {
+  QUEUED: "border-border bg-surface-muted text-muted",
+  PROCESSING: "border-primary/35 bg-primary/10 text-primary",
+  REVIEWING: "border-primary/35 bg-primary/10 text-primary",
+  APPROVED: "border-warning/40 bg-warning/10 text-warning",
+  IMPORTED: "border-success/35 bg-success/15 text-success",
+  COMPLETED: "border-success/35 bg-success/15 text-success",
+  DISCARDED: "border-danger/35 bg-danger/10 text-danger",
+  REJECTED: "border-danger/35 bg-danger/10 text-danger",
+  FAILED: "border-danger/35 bg-danger/10 text-danger",
+};
+
+function getStatusBadgeClass(status: string) {
+  return [
+    "inline-flex min-h-6 items-center rounded-md border px-2 py-0.5 text-xs font-medium normal-case tracking-normal",
+    statusBadgeClasses[status] ?? "border-border bg-surface-muted text-muted",
+  ].join(" ");
+}
+
 function formatDateTimeLocal(value?: string | null) {
   if (!value) {
     return "";
@@ -141,6 +161,10 @@ function normalizeSearchValue(value?: string | null) {
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("pt-BR")
     .trim();
+}
+
+function normalizeEmailValue(value?: string | null) {
+  return (value ?? "").trim().toLocaleLowerCase("pt-BR");
 }
 
 function getImportsHref({
@@ -303,6 +327,44 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
     isActive: currentStatusFilter === filter.value,
   }));
   const isImportedRow = selectedRow?.status === "IMPORTED";
+  const selectedExistingAccount = reviewJson.company?.name
+    ? await prisma.account.findFirst({
+        where: {
+          tenantId: appUser.tenantId,
+          name: {
+            equals: reviewJson.company.name,
+            mode: "insensitive",
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          contacts: {
+            where: {
+              email: {
+                not: null,
+              },
+            },
+            select: {
+              email: true,
+            },
+          },
+        },
+      })
+    : null;
+  const existingContactEmails = new Set(
+    selectedExistingAccount?.contacts
+      .map((contact) => normalizeEmailValue(contact.email))
+      .filter(Boolean) ?? [],
+  );
+  const repeatedContactEmails = Array.from(
+    new Set(
+      (reviewJson.contacts ?? [])
+        .map((contact) => normalizeEmailValue(contact.email))
+        .filter((email) => email && existingContactEmails.has(email)),
+    ),
+  );
   const userIdentity = appUser.name || user.email || "Usuário autenticado";
   const userEmail = appUser.email || user.email || "E-mail não informado";
   const userRole = appUser.role.toLowerCase();
@@ -446,7 +508,7 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                     name="file"
                     type="file"
                     accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
-                    className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-sm"
+                    className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-center text-sm file:mr-4 file:h-full file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground"
                   />
                   <button className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
                     <Upload size={16} aria-hidden />
@@ -587,7 +649,7 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                         <span className="text-xs font-semibold">
                           Linha {row.rowNumber}
                         </span>
-                        <span className="rounded bg-background px-2 py-0.5 text-xs text-muted">
+                        <span className={getStatusBadgeClass(row.status)}>
                           {statusLabels[row.status]}
                         </span>
                       </div>
@@ -608,8 +670,11 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                 >
                 <div className="flex flex-col gap-2 border-b border-border px-4 py-3 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">
-                      Linha {selectedRow.rowNumber} · {statusLabels[selectedRow.status]}
+                    <p className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-[0.12em] text-muted">
+                      <span>Linha {selectedRow.rowNumber}</span>
+                      <span className={getStatusBadgeClass(selectedRow.status)}>
+                        {statusLabels[selectedRow.status]}
+                      </span>
                     </p>
                     <h2 className="mt-1 text-base font-semibold">
                       {reviewJson.company?.name ?? "Empresa a Revisar"}
@@ -620,6 +685,43 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                     {Math.round((reviewJson.aiSuggestion?.confidence ?? 0) * 100)}%
                   </div>
                 </div>
+
+                {selectedExistingAccount && (
+                  <div
+                    role="status"
+                    className="mx-4 mt-3 rounded-md border border-primary/40 bg-primary/10 px-3 py-3 text-sm"
+                  >
+                    <div className="flex gap-3">
+                      <Info
+                        size={18}
+                        className="mt-0.5 shrink-0 text-primary"
+                        aria-hidden
+                      />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground">
+                          Empresa/Prospect já existente
+                        </p>
+                        <p className="mt-1 leading-6 text-muted">
+                          Esta linha será vinculada ao cadastro atual de{" "}
+                          <Link
+                            href={`/accounts/${selectedExistingAccount.id}`}
+                            className="font-medium text-primary underline-offset-4 hover:underline"
+                          >
+                            {selectedExistingAccount.name}
+                          </Link>
+                          . Os dados já cadastrados da Empresa/Prospect não serão
+                          sobrescritos; a importação acrescenta histórico, ações e
+                          contatos novos.
+                        </p>
+                        <p className="mt-1 leading-6 text-muted">
+                          {repeatedContactEmails.length > 0
+                            ? `Contatos com e-mail já cadastrado serão reaproveitados, sem duplicar: ${repeatedContactEmails.join(", ")}.`
+                            : "Se algum contato da linha tiver e-mail já cadastrado nesse Prospect, ele será reaproveitado e não será duplicado."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {warnings.length > 0 && (
                   <div className="mx-4 mt-3 rounded border border-border bg-background px-3 py-2 text-xs text-muted">

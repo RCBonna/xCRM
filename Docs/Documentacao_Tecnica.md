@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-07-17 21:06:06 -03:00
+Ultima modificacao: 2026-07-18 13:38:30 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -599,6 +599,8 @@ Observacoes de seguranca:
 - O resumo superior da carga e a fonte unica para arquivo, caminho informado e contagens. O painel lateral mantem apenas acoes de descarte, filtro, encaminhamento e importacao.
 - `Descartar Carga` fica no resumo superior e continua usando `ConfirmSubmitButton`; o painel lateral usa uma busca por `query` combinada ao filtro de status, com parametros preservados nos links das linhas e do filtro.
 - No desktop, `Descartar Carga` ocupa uma celula propria na mesma grade do resumo, imediatamente antes de `Linhas`; em telas estreitas, a grade volta a empilhar os itens para preservar leitura e alvos de toque.
+- O seletor nativo de arquivo da Importação Temporária centraliza o texto no campo e mantém o botão interno do navegador sem recriar o controle.
+- `getStatusBadgeClass` em `src/app/imports/page.tsx` padroniza as etiquetas de status da fila e do cabeçalho da linha, usando fundos suaves por semântica: primário para revisão/processamento, aviso para aprovação pendente de importação definitiva, sucesso para importação/conclusão, perigo para descarte/rejeição/falha e neutro para fila.
 - A tela `/platform` usa `PlatformTenantManagement` como superficie mestre-detalhe: busca e filtro escolhem uma organização, e o detalhe concentra visão operacional, acesso, auditoria e zona de risco sem repetir a lista de tenants.
 - `TenantStatusEvent` registra no banco toda suspensão ou reativação com status, motivo, data/hora e `PlatformAdmin` responsável. A migration `prisma/20260713111500_add_tenant_status_events.sql` foi aplicada e validada no Supabase remoto.
 - `suspendTenantAction` exige motivo; suspensão e reativação criam o evento de auditoria na mesma transação que altera `Tenant.status`.
@@ -673,6 +675,30 @@ Observacoes de seguranca:
 - `/api/proposals/[proposalId]/pdf` gera PDF sob demanda com `@react-pdf/renderer` e valida o mesmo escopo antes de entregar o arquivo.
 - E-mail transacional, WhatsApp oficial, storage privado do PDF e versionamento avançado permanecem fora deste primeiro corte.
 
+## Proteção Contra Descarte Acidental em Empresas/Prospects
+
+- `AccountsTabsNavigation` e `AccountCreateActions` usam `serializeCreateForm` para comparar o `FormData` atual com o retrato inicial do formulário `new-account-form`.
+- O campo técnico `returnTo` é ignorado na comparação.
+- Quando há diferença real, `UnsavedAccountDialog` substitui `window.confirm` por um diálogo interno com `role="alertdialog"`, foco inicial em `Continuar Editando`, fechamento por `Esc` e ação explícita `Descartar e Sair`.
+- Quando o formulário está vazio ou igual ao retrato inicial, a navegação para `Base Comercial` ocorre sem confirmação.
+
+## Aviso de Empresa/Prospect Existente na Importação
+
+- A issue `#98` não altera a regra de importação; apenas torna transparente o comportamento já existente.
+- Em `src/app/imports/page.tsx`, a linha selecionada consulta `Account` no mesmo tenant pelo nome da Empresa/Prospect com comparação `mode: "insensitive"`, espelhando o critério usado em `importReviewedRow`.
+- Quando há correspondência, a ficha de revisão exibe um aviso informativo antes dos warnings da linha e antes das ações `Aprovar Linha`/`Importar Linha`.
+- O aviso informa que a linha será vinculada ao cadastro atual, que os dados existentes da Empresa/Prospect não serão sobrescritos e que histórico, ações e contatos novos poderão ser acrescentados.
+- Os e-mails dos contatos já cadastrados nesse Prospect são comparados com os contatos da linha revisada; quando houver repetição, o aviso lista os e-mails que serão reaproveitados sem duplicação.
+
+## Estudo de Mapeamento Manual de Colunas
+
+- O estudo da issue `#94` foi salvo em `Docs/Estudo_Mapeamento_Manual_Importacao.md`.
+- A proposta mantém `/imports` como superfície única e adiciona uma etapa antes da criação da carga temporária.
+- A arquitetura recomendada cria `src/lib/imports/mapping.ts` para centralizar tipos, aliases, sugestão automática, validação e aplicação do mapeamento.
+- O normalizador deve aceitar mapeamento explícito sem perder o comportamento atual por aliases quando nenhum mapeamento for informado.
+- A recomendação técnica é persistir o mapeamento usado em `imports.column_mapping Json?` para auditoria e suporte.
+- A interação principal recomendada é uma grade com selects por campo xCRM, não drag-and-drop obrigatório, preservando acessibilidade e uso em telas menores.
+
 ## Versao WIP no topo
 
 Enquanto o projeto estiver em desenvolvimento, toda tela deve exibir no topo:
@@ -683,7 +709,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-07-17 21:06:06`
+- Valor: `2026-07-18 13:38:30`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

@@ -1,7 +1,7 @@
 # Manual do Usuario do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-07-17 21:06:06 -03:00
+Ultima modificacao: 2026-07-18 13:38:30 -03:00
 Status: Manual vivo, atualizado conforme as telas e fluxos forem implementados
 
 ## Regra de manutencao
@@ -443,6 +443,8 @@ Regras atuais:
 - A planilha carregada vira linhas temporarias com dados originais e uma sugestao organizada.
 - A pasta de origem aparece no topo da tela; os indicadores mostram a carga ativa, linhas temporarias, pendentes e concluidas/rejeitadas.
 - Cada linha pode ser revisada, corrigida, salva, aprovada, rejeitada ou importada individualmente.
+- Quando o nome da Empresa/Prospect da linha já existir na organização, a ficha mostra um aviso antes da aprovação/importação. Nesse caso, a linha será vinculada ao cadastro atual, sem sobrescrever dados já cadastrados da Empresa/Prospect.
+- Se um contato da linha tiver e-mail já cadastrado nesse Prospect, o contato existente será reaproveitado e não será duplicado. Contatos novos continuam sendo adicionados.
 - Depois de revisar várias linhas, o Owner pode usar `Importar Aprovadas` para enviar todas as linhas aprovadas para a Base Comercial em uma única operação.
 - Antes de importar as aprovadas, o Owner pode escolher uma equipe ativa; os prospects importados ficam sob responsabilidade do líder dessa equipe.
 - Quando prospects são encaminhados para uma equipe, o líder recebe uma notificação interna e vê um badge vermelho de pendências próximo ao próprio nome no topo das telas principais.
@@ -451,6 +453,8 @@ Regras atuais:
 - O campo CNPJ usa mascara no formato `AA.AAA.AAA/AAAA-00`.
 - A revisao aparece como uma bancada de triagem: resumo da carga no topo, fila de linhas a esquerda e ficha de correcao a direita.
 - A fila de linhas pode ser filtrada pelo icone de filtro no topo do card da carga: Todas, Em Revisão, Aprovadas, Importadas, Rejeitadas e Falharam.
+- Os status das linhas aparecem como etiquetas coloridas suaves para facilitar a leitura da fila sem transformar estados operacionais em alerta visual excessivo.
+- `Aprovada` usa cor de atenção suave porque ainda depende da importação definitiva; `Importada` usa verde por representar uma linha já concluída na base.
 - Ao selecionar uma linha dentro de um filtro, o sistema mantem o mesmo filtro ativo.
 - Quando um filtro nao possui linhas, a lista mostra que nao ha linhas para aquele status.
 - Durante a troca de filtro, o icone indica processamento ate a tela atualizar.
@@ -568,6 +572,11 @@ Versao atual:
 - `2026-07-17 20:17:51`
 - `2026-07-17 20:57:36`
 - `2026-07-17 21:06:06`
+- `2026-07-18 09:29:37`
+- `2026-07-18 09:41:09`
+- `2026-07-18 09:57:40`
+- `2026-07-18 10:25:30`
+- `2026-07-18 13:38:30`
 
 ## Fluxos ainda nao implementados
 
@@ -653,6 +662,12 @@ Depois de criada, a Proposta pode ser aberta pela própria Oportunidade. A tela 
 Textos longos em Condições, Condições de Pagamento, Condições Comerciais e Observações quebram dentro do painel da Proposta. Valores de desconto são destacados em vermelho.
 
 As Propostas ficam vinculadas à Oportunidade e geram registros no Histórico Comercial quando são criadas ou publicadas. Alterações posteriores no Catálogo não mudam os itens já gravados na Proposta.
+
+## Proteção de Cadastro em Andamento
+
+Na tela `Empresas/Prospects`, se houver dados digitados na aba `Nova Empresa/Prospect` e o usuário tentar voltar para `Base Comercial` ou clicar em `Cancelar`, o xCRM mostra uma confirmação própria com as opções `Continuar Editando` e `Descartar e Sair`.
+
+Quando o formulário está vazio, a troca para `Base Comercial` ocorre sem aviso.
 
 - Para suspender uma organização, clique em `Suspender Organização`, informe o motivo obrigatório e confirme a operação. A equipe perde o acesso operacional até que a organização seja reativada.
 - Para reativar, clique em `Reativar Organização`, revise o impacto e confirme. Um motivo pode ser registrado para auditoria.

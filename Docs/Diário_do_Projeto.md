@@ -1,7 +1,7 @@
 # Diario do Projeto xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-07-17 21:06:06 -03:00
+Ultima modificacao: 2026-07-18 13:38:30 -03:00
 
 ## 2026-07-16
 
@@ -792,3 +792,20 @@ Ultima modificacao: 2026-07-17 21:06:06 -03:00
 - Os textos de Condições, Condições de Pagamento, Condições Comerciais e Observações agora quebram dentro do box mesmo quando digitados sem espaços.
 - Os valores de Desconto aparecem em vermelho na tela da Proposta e no resumo do PDF.
 - Atualizada versao WIP para `2026-07-17 21:06:06`.
+- Fechada a issue GitHub `#101` após validação do fluxo de Produtos e Propostas pelo usuário.
+- Iniciada a revisão da issue `#100`, substituindo a confirmação nativa do navegador por um diálogo interno do xCRM ao sair da aba `Nova Empresa/Prospect` com dados digitados.
+- O diálogo de descarte mostra botões explícitos `Continuar Editando` e `Descartar e Sair`, preservando a ausência de alerta quando o formulário está vazio.
+- Atualizada versao WIP para `2026-07-18 09:29:37`.
+- Fechada a issue GitHub `#100` após validação funcional pelo usuário.
+- Iniciada a issue GitHub `#98` para sinalizar, durante a revisão da Importação Temporária, quando a linha será vinculada a uma Empresa/Prospect já existente.
+- A ficha da linha passou a exibir aviso informativo com link para o cadastro atual, deixando explícito que dados existentes da Empresa/Prospect não serão sobrescritos e que contatos com e-mail já cadastrado serão reaproveitados sem duplicação.
+- Atualizada versao WIP para `2026-07-18 09:41:09`.
+- Centralizado o texto do seletor de arquivo da Importação Temporária.
+- Padronizados badges coloridos para status das linhas de importação, com cores suaves para Em Revisão, Aprovada, Importada, Descartada, Rejeitada e Falhou.
+- Atualizada versao WIP para `2026-07-18 09:57:40`.
+- Ajustado o badge `Aprovada` para âmbar suave, diferenciando visualmente a linha pronta para importação da linha já `Importada`, que permanece verde.
+- Atualizada versao WIP para `2026-07-18 10:25:30`.
+- Fechada a issue GitHub `#98` após validação funcional pelo usuário.
+- Criado o estudo da issue `#94` em `Docs/Estudo_Mapeamento_Manual_Importacao.md`, propondo uma etapa de mapeamento dentro de `/imports` com sugestões por alias, grade Campo do xCRM x Coluna da Planilha x Status e prévia de leitura antes de criar a carga temporária.
+- Registrada a recomendação de usar selects guiados como interação principal e manter drag-and-drop apenas como possível atalho futuro, por acessibilidade e previsibilidade operacional.
+- Atualizada versao WIP para `2026-07-18 13:38:30`.
