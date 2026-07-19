@@ -66,6 +66,9 @@ type ReviewRowJson = {
     confidence: number;
     warnings: string[];
   };
+  importDecision?: {
+    existingAccountMode: "LINK_EXISTING" | "CREATE_NEW";
+  };
 };
 
 type OwnerUser = Awaited<ReturnType<typeof getOwnerUser>>;
@@ -346,20 +349,23 @@ async function importReviewedRow({
   }
 
   return prisma.$transaction(async (tx) => {
-    const existingAccount = await tx.account.findFirst({
-      where: {
-        tenantId: appUser.tenantId,
-        name: {
-          equals: reviewJson.company.name!,
-          mode: "insensitive",
-        },
-      },
-      select: {
-        id: true,
-        ownerUserId: true,
-      },
-    });
-
+    const shouldCreateNewAccount =
+      reviewJson.importDecision?.existingAccountMode === "CREATE_NEW";
+    const existingAccount = shouldCreateNewAccount
+      ? null
+      : await tx.account.findFirst({
+          where: {
+            tenantId: appUser.tenantId,
+            name: {
+              equals: reviewJson.company.name!,
+              mode: "insensitive",
+            },
+          },
+          select: {
+            id: true,
+            ownerUserId: true,
+          },
+        });
     const account =
       existingAccount ??
       (await tx.account.create({
@@ -693,6 +699,12 @@ function getReviewRowFromForm(formData: FormData): ReviewRowJson {
       confidence: warnings.length === 0 ? 1 : 0.75,
       warnings,
     },
+    importDecision: {
+      existingAccountMode:
+        normalizeOptionalText(formData.get("existingAccountMode")) === "CREATE_NEW"
+          ? "CREATE_NEW"
+          : "LINK_EXISTING",
+    },
   };
 }
 
@@ -991,6 +1003,37 @@ export async function updateImportRowAction(formData: FormData) {
           : null,
     },
   });
+
+  if (intent === "import") {
+    if (!reviewJson.company.name) {
+      redirect(`/imports?row=${row.id}&error=Informe%20o%20nome%20da%20empresa%20antes%20de%20importar.`);
+    }
+
+    await importReviewedRow({
+      row: {
+        id: row.id,
+        importId: row.importId,
+        rowNumber: row.rowNumber,
+        normalizedJson: reviewJson as Prisma.JsonValue,
+      },
+      appUser,
+    });
+
+    await refreshImportCounts(row.importId, appUser.tenantId);
+    const nextRowId = await getNextReviewRowId({
+      importId: row.importId,
+      tenantId: appUser.tenantId,
+      currentRowNumber: row.rowNumber,
+    });
+    revalidatePath("/imports");
+    revalidatePath("/accounts");
+    revalidatePath("/dashboard");
+    redirect(
+      `/imports${nextRowId ? `?row=${nextRowId}&` : "?"}message=${encodeMessage(
+        `Linha ${row.rowNumber} importada para a base definitiva.`,
+      )}`,
+    );
+  }
 
   await refreshImportCounts(row.importId, appUser.tenantId);
   revalidatePath("/imports");

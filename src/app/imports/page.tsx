@@ -18,7 +18,6 @@ import { redirect } from "next/navigation";
 import {
   discardImportBatchAction,
   importApprovedRowsAction,
-  importSingleRowAction,
   rejectImportRowAction,
   reprocessImportRowContactsAction,
   updateImportRowAction,
@@ -72,6 +71,7 @@ type ReviewRowJson = {
     isPrimary?: boolean;
   }>;
   history?: Array<{
+    summary?: string | null;
     body?: string | null;
   }>;
   futureActions?: Array<{
@@ -83,6 +83,9 @@ type ReviewRowJson = {
     confidence?: number;
     explanation?: string;
     warnings?: string[];
+  };
+  importDecision?: {
+    existingAccountMode?: "LINK_EXISTING" | "CREATE_NEW";
   };
 };
 
@@ -356,6 +359,7 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
         select: {
           id: true,
           name: true,
+          document: true,
           status: true,
           contacts: {
             where: {
@@ -382,6 +386,25 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
         .filter((email) => email && existingContactEmails.has(email)),
     ),
   );
+  const newContactsToAdd = (reviewJson.contacts ?? []).filter((contact) => {
+    const email = normalizeEmailValue(contact.email);
+
+    if (!contact.name && !contact.email && !contact.phone) {
+      return false;
+    }
+
+    return !email || !existingContactEmails.has(email);
+  });
+  const historyToAdd = (reviewJson.history ?? []).filter(
+    (item) => item.body || item.summary,
+  );
+  const futureActionsToAdd = (reviewJson.futureActions ?? []).filter(
+    (item) => item.title || item.description,
+  );
+  const existingAccountMode =
+    reviewJson.importDecision?.existingAccountMode === "CREATE_NEW"
+      ? "CREATE_NEW"
+      : "LINK_EXISTING";
   const userIdentity = appUser.name || user.email || "Usuário autenticado";
   const userEmail = appUser.email || user.email || "E-mail não informado";
   const userRole = appUser.role.toLowerCase();
@@ -661,12 +684,12 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                   </div>
                 </div>
 
-                {selectedExistingAccount && (
-                  <div
-                    role="status"
-                    className="mx-4 mt-3 rounded-md border border-primary/40 bg-primary/10 px-3 py-3 text-sm"
-                  >
-                    <div className="flex gap-3">
+                <div
+                  role="status"
+                  className="mx-4 mt-3 rounded-md border border-primary/40 bg-primary/10 px-3 py-3 text-sm"
+                >
+                  <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                    <div className="flex min-w-0 gap-3">
                       <Info
                         size={18}
                         className="mt-0.5 shrink-0 text-primary"
@@ -674,29 +697,76 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                       />
                       <div className="min-w-0">
                         <p className="font-semibold text-foreground">
-                          Empresa/Prospect já existente
+                          Destino da Importação
                         </p>
-                        <p className="mt-1 leading-6 text-muted">
-                          Esta linha será vinculada ao cadastro atual de{" "}
-                          <Link
-                            href={`/accounts/${selectedExistingAccount.id}`}
-                            className="font-medium text-primary underline-offset-4 hover:underline"
-                          >
-                            {selectedExistingAccount.name}
-                          </Link>
-                          . Os dados já cadastrados da Empresa/Prospect não serão
-                          sobrescritos; a importação acrescenta histórico, ações e
-                          contatos novos.
-                        </p>
-                        <p className="mt-1 leading-6 text-muted">
-                          {repeatedContactEmails.length > 0
-                            ? `Contatos com e-mail já cadastrado serão reaproveitados, sem duplicar: ${repeatedContactEmails.join(", ")}.`
-                            : "Se algum contato da linha tiver e-mail já cadastrado nesse Prospect, ele será reaproveitado e não será duplicado."}
-                        </p>
+                        {selectedExistingAccount ? (
+                          <>
+                            <p className="mt-1 leading-6 text-muted">
+                              Encontramos um cadastro atual com o mesmo nome:{" "}
+                              <Link
+                                href={`/accounts/${selectedExistingAccount.id}`}
+                                className="font-medium text-primary underline-offset-4 hover:underline"
+                              >
+                                {selectedExistingAccount.name}
+                              </Link>
+                              {selectedExistingAccount.document
+                                ? ` · CNPJ ${selectedExistingAccount.document}`
+                                : ""}
+                              .
+                            </p>
+                            <p className="mt-1 leading-6 text-muted">
+                              Ao vincular ao existente, dados já cadastrados da
+                              Empresa/Prospect não serão sobrescritos. Esta linha
+                              acrescenta {newContactsToAdd.length} contato(s),{" "}
+                              {historyToAdd.length} histórico(s) e{" "}
+                              {futureActionsToAdd.length} próxima(s) ação(ões),
+                              quando preenchidos.
+                            </p>
+                            <p className="mt-1 leading-6 text-muted">
+                              {repeatedContactEmails.length > 0
+                                ? `Contato(s) com e-mail já cadastrado serão reaproveitados, sem duplicar: ${repeatedContactEmails.join(", ")}.`
+                                : "Se algum contato da linha tiver e-mail já cadastrado nesse Prospect, ele será reaproveitado e não será duplicado."}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="mt-1 leading-6 text-muted">
+                            Nenhum cadastro com o mesmo nome foi encontrado. Esta
+                            linha criará uma nova Empresa/Prospect e usará os
+                            campos revisados nesta ficha como dados iniciais.
+                          </p>
+                        )}
                       </div>
                     </div>
+                    {selectedExistingAccount ? (
+                      <label className="grid w-full min-w-0 gap-1 text-sm xl:w-72 xl:shrink-0">
+                        <span className="text-xs font-medium">
+                          Decisão Para Esta Linha
+                        </span>
+                        <select
+                          form="review-import-row-form"
+                          name="existingAccountMode"
+                          defaultValue={existingAccountMode}
+                          disabled={isImportedRow}
+                          className="h-10 w-full min-w-0 truncate rounded-md border border-border bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-45"
+                        >
+                          <option value="LINK_EXISTING">
+                            Vincular ao cadastro existente
+                          </option>
+                          <option value="CREATE_NEW">
+                            Criar nova Empresa/Prospect
+                          </option>
+                        </select>
+                      </label>
+                    ) : (
+                      <input
+                        form="review-import-row-form"
+                        type="hidden"
+                        name="existingAccountMode"
+                        value="LINK_EXISTING"
+                      />
+                    )}
                   </div>
-                )}
+                </div>
 
                 {warnings.length > 0 && (
                   <div className="mx-4 mt-3 rounded border border-border bg-background px-3 py-2 text-xs text-muted">
@@ -918,16 +988,16 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
                     <CheckCircle2 size={14} aria-hidden />
                     Aprovar Linha
                   </button>
-                  <form action={importSingleRowAction} className="contents">
-                    <input type="hidden" name="rowId" value={selectedRow.id} />
-                    <button
-                      disabled={isImportedRow}
-                      className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-45"
-                    >
-                      <FileUp size={14} aria-hidden />
-                      Importar Linha
-                    </button>
-                  </form>
+                  <button
+                    form="review-import-row-form"
+                    name="intent"
+                    value="import"
+                    disabled={isImportedRow}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    <FileUp size={14} aria-hidden />
+                    Importar Linha
+                  </button>
                   <form action={rejectImportRowAction} className="contents">
                     <input type="hidden" name="rowId" value={selectedRow.id} />
                     <button

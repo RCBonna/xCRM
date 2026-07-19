@@ -838,3 +838,11 @@ Ultima modificacao: 2026-07-18 17:56:19 -03:00
 - Ocultado o resumo superior de origem e métricas da Importação Temporária quando não existe carga ativa.
 - Ajustado o texto do seletor para `Nenhum arquivo selecionado. Clique aqui para selecionar um arquivo.`.
 - Atualizada versao WIP para `2026-07-18 20:05:48`.
+- Criada a issue GitHub `#103` para decisão de vínculo quando a Importação Temporária detecta Empresa/Prospect existente por nome.
+- A revisão da linha passou a mostrar sempre o painel `Destino da Importação`.
+- Quando existe cadastro com mesmo nome, o Owner pode escolher entre `Vincular ao cadastro existente` ou `Criar nova Empresa/Prospect`.
+- O painel informa os acréscimos previstos ao vincular: contatos novos, históricos e próximas ações, reforçando que campos existentes da Empresa/Prospect não são sobrescritos.
+- O botão `Importar Linha` passou a enviar o formulário de revisão atual, respeitando a decisão escolhida sem exigir salvar antes.
+- Atualizada versao WIP para `2026-07-18 21:37:54`.
+- Ajustado o painel `Destino da Importação` para manter o select `Decisão Para Esta Linha` dentro do box, empilhando em larguras menores e limitando a largura apenas em telas `xl`.
+- Atualizada versao WIP para `2026-07-18 21:49:48`.

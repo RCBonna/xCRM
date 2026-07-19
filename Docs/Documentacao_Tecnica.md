@@ -690,6 +690,17 @@ Observacoes de seguranca:
 - O aviso informa que a linha será vinculada ao cadastro atual, que os dados existentes da Empresa/Prospect não serão sobrescritos e que histórico, ações e contatos novos poderão ser acrescentados.
 - Os e-mails dos contatos já cadastrados nesse Prospect são comparados com os contatos da linha revisada; quando houver repetição, o aviso lista os e-mails que serão reaproveitados sem duplicação.
 
+## Decisão de Vínculo na Importação
+
+- A issue `#103` evolui o aviso de Empresa/Prospect existente para uma decisão explícita por linha.
+- `ReviewRowJson.importDecision.existingAccountMode` armazena `LINK_EXISTING` ou `CREATE_NEW` dentro do `normalizedJson` da linha.
+- `getReviewRowFromForm` lê `existingAccountMode` do formulário e mantém `LINK_EXISTING` como padrão.
+- `importReviewedRow` consulta Account existente por nome apenas quando `existingAccountMode` não é `CREATE_NEW`.
+- Quando `CREATE_NEW` é escolhido, a importação cria nova Empresa/Prospect mesmo que exista cadastro com o mesmo nome.
+- O painel `Destino da Importação` aparece sempre na revisão: para linhas novas, informa que será criado novo cadastro; para linhas com nome existente, exibe select de decisão, link para o cadastro atual e acréscimos previstos.
+- O botão `Importar Linha` submete `review-import-row-form` com `intent=import`, salvando a revisão atual e importando em seguida. Isso garante que a decisão recém-selecionada seja respeitada sem exigir um clique prévio em `Salvar Revisão`.
+- Importação em lote usa a decisão salva no `normalizedJson` das linhas aprovadas.
+
 ## Estudo de Mapeamento Manual de Colunas
 
 - O estudo da issue `#94` foi salvo em `Docs/Estudo_Mapeamento_Manual_Importacao.md`.
@@ -737,7 +748,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-07-18 20:05:48`
+- Valor: `2026-07-18 21:49:48`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

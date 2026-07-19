@@ -638,6 +638,13 @@ Quando uma célula de e-mail contém mais de um endereço, a tela de mapeamento 
 - Endereços repetidos na mesma célula são ignorados, e o sistema avisa quando não consegue reconhecer um e-mail válido.
 - Para uma carga temporária criada antes desta melhoria, abra a linha e use `Reprocessar Contatos`. Confirme a operação para recriar a lista usando os Dados Originais da Planilha. A Empresa/Prospect, ações e observações permanecem como estavam; apenas edições manuais da lista de contatos serão substituídas.
 
+Quando a linha da importação tiver o mesmo nome de uma Empresa/Prospect já existente, o painel `Destino da Importação` mostra o cadastro encontrado e permite escolher:
+
+- `Vincular ao cadastro existente`: mantém os dados atuais da Empresa/Prospect sem sobrescrever e acrescenta contatos novos, históricos e próximas ações.
+- `Criar nova Empresa/Prospect`: cria outro cadastro mesmo com nome igual.
+
+Se a linha não deve ser importada, use `Rejeitar Linha`.
+
 ## Catálogo de Produtos e Propostas
 
 Owner e Admin podem acessar `Catálogo de Produtos` pelo menu superior. A tela abre na aba `Catálogo`, onde é possível buscar por SKU, Produto, descrição ou unidade e filtrar por Status. A linha inteira de um Produto fica destacada ao passar o mouse ou focar pelo teclado; clique em qualquer parte da linha para editar seus dados.
