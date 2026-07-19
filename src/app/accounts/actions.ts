@@ -9,6 +9,10 @@ import type {
   Prisma,
 } from "@/generated/prisma/client";
 import { getAppUser } from "@/lib/auth";
+import {
+  ACTIVITY_UNDO_WINDOW_MS,
+  completeVisibleActivity,
+} from "@/lib/activity-completion";
 import { isBrazilianStateCode } from "@/lib/brazilian-states";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -766,21 +770,14 @@ export async function completeAccountActivityAction(formData: FormData) {
     redirect("/accounts?error=Empresa%2FProspect%20nao%20encontrada.");
   }
 
-  const activity = await prisma.activity.findFirst({
-    where: {
-      id: activityId,
-      accountId: account.id,
-      tenantId: appUser.tenantId,
-      status: "PENDING",
-      ...(await getActivityVisibilityWhere(appUser)),
-    },
-    select: {
-      id: true,
-      title: true,
-    },
+  const result = await completeVisibleActivity({
+    activityId,
+    actor: appUser,
+    source: "Empresa/Prospect",
+    accountId: account.id,
   });
 
-  if (!activity) {
+  if (!result.ok) {
     redirect(
       `/accounts/${account.id}?error=${encodeMessage(
         "Ação pendente não encontrada.",
@@ -788,36 +785,18 @@ export async function completeAccountActivityAction(formData: FormData) {
     );
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.activity.update({
-      where: {
-        id: activity.id,
-      },
-      data: {
-        status: "COMPLETED",
-        completedAt: new Date(),
-      },
-    });
-
-    await tx.interaction.create({
-      data: {
-        tenantId: appUser.tenantId,
-        accountId: account.id,
-        userId: appUser.id,
-        channel: "MANUAL_NOTE",
-        direction: "INTERNAL",
-        summary: "Ação Concluída",
-        body: `Ação concluída: ${activity.title}.`,
-      },
-    });
-  });
-
   revalidatePath("/accounts");
   revalidatePath(`/accounts/${account.id}`);
   revalidatePath("/dashboard");
-  redirect(
-    `/accounts/${account.id}?message=${encodeMessage("Ação concluída.")}`,
-  );
+  revalidatePath("/dashboard-anterior");
+  revalidatePath("/agenda");
+
+  const params = new URLSearchParams({
+    message: `Atividade "${result.title}" concluída.`,
+    undoActivityId: result.activityId,
+    undoUntil: String(result.completedAt.getTime() + ACTIVITY_UNDO_WINDOW_MS),
+  });
+  redirect(`/accounts/${account.id}?${params.toString()}`);
 }
 
 export async function deleteAccountActivityAction(formData: FormData) {

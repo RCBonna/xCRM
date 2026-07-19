@@ -1,7 +1,7 @@
 # SQL - Necessidades e Mudancas do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-07-17 14:30:00 -03:00
+Ultima modificacao: 2026-07-18 22:42:18 -03:00
 Status: Documento unico para registrar necessidades, decisoes, migrations e comandos SQL do projeto
 
 ## Regras deste documento
@@ -1252,3 +1252,41 @@ Validacao:
 - `npx prisma db execute --file prisma/20260718180500_add_import_mapping_templates.sql` excedeu o tempo limite.
 - A migration foi aplicada via Node/`pg` usando `DIRECT_URL`.
 - Consulta de catálogo confirmou `public.import_mapping_templates` e `public.imports.column_mapping`.
+
+## 2026-07-18 22:42:18 -03:00 - Inicio do Roteiro de Recriacao do Banco
+
+Status: Fase 1 documentada; nenhuma migration aplicada e nenhum banco reinicializado
+
+Objetivo:
+
+- Inventariar todas as migrations do xCRM em uma ordem canônica verificável.
+- Impedir que novos arquivos SQL fiquem fora do roteiro de reconstrução.
+- Corrigir a ausência de `supabase/seed.sql`, embora o seed esteja habilitado no Supabase CLI.
+- Registrar os bloqueios antes de qualquer teste em banco vazio.
+
+Arquivos:
+
+```text
+Docs/Roteiro_Recriacao_Banco.md
+scripts/db/migration-manifest.json
+scripts/db/verify-migration-manifest.mjs
+supabase/seed.sql
+```
+
+Comando não destrutivo:
+
+```powershell
+npm run db:migrations:verify
+```
+
+Decisões:
+
+- O manifesto lista 16 migrations, em ordem cronológica, incluindo as pastas `supabase/migrations` e `prisma`.
+- O verificador não conecta ao banco e não executa SQL.
+- O seed é neutro; tenant e Owner continuam sendo criados pelo onboarding real.
+- O reset completo permanece bloqueado até que as migrations em `prisma/*.sql` sejam integradas ao histórico reconhecido pelo Supabase CLI e testadas em projeto descartável.
+
+Banco:
+
+- Nenhuma mudança de schema nesta etapa.
+- Nenhuma migration aplicada no Supabase atual.

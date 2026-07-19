@@ -6,6 +6,7 @@ import type { ActivityStatus, Prisma } from "@/generated/prisma/client";
 
 import { signOutAction } from "@/app/auth/actions";
 import { AgendaCalendar } from "@/components/agenda-calendar";
+import { ActivityFeedback } from "@/components/activity-feedback";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
 import { TenantBrand } from "@/components/tenant-brand";
 import { UserIdentityCard } from "@/components/user-identity-card";
@@ -40,6 +41,8 @@ type AgendaPageProps = {
     assignee?: string;
     error?: string;
     message?: string;
+    undoActivityId?: string;
+    undoUntil?: string;
   }>;
 };
 
@@ -162,7 +165,14 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
           </div>
         </header>
 
-        {(params.error || params.message) ? <div role={params.error ? "alert" : "status"} className={`rounded-md border px-3 py-2 text-sm ${params.error ? "border-danger text-danger" : "border-border text-muted"}`}>{params.error ?? params.message}</div> : null}
+        <ActivityFeedback
+          key={params.undoActivityId ?? "agenda-feedback"}
+          error={params.error}
+          message={params.message}
+          undoActivityId={params.undoActivityId}
+          undoUntil={params.undoUntil}
+          returnTo={returnTo}
+        />
 
         <section className="rounded-md border border-border bg-surface">
           <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-end lg:justify-between">

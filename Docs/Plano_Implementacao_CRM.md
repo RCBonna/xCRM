@@ -1,7 +1,7 @@
 # Plano de Implementacao do xCRM
 
 Criado em: 2026-06-12 17:13:16 -03:00  
-Ultima modificacao: 2026-06-29 16:13:00 -03:00
+Ultima modificacao: 2026-07-18 22:42:18 -03:00
 Status: Proposta inicial para validacao e evolucao diaria
 
 ## 1. Objetivo
@@ -890,6 +890,44 @@ Fases futuras:
 - Envio por e-mail transacional.
 - Registro de aceite/recusa pelo cliente.
 - Integração com WhatsApp Business Platform somente após validar opt-in, operação por tenant e responsabilidade de envio.
+
+### Continuidade Operacional do Banco
+
+A issue `#55` foi iniciada em 2026-07-18 para reduzir o risco acumulado pelo crescimento do schema.
+
+Primeiro corte:
+
+- Inventário canônico das 16 migrations SQL.
+- Verificação automatizada por `npm run db:migrations:verify`.
+- Seed neutro e versionado para o Supabase CLI.
+- Roteiro em `Docs/Roteiro_Recriacao_Banco.md`.
+
+Antes do encerramento, ainda é obrigatório consolidar o histórico reconhecido pelo Supabase CLI e validar a reconstrução completa em projeto descartável.
+
+### Convites e SMTP
+
+A issue `#36` recebeu estudo técnico em `Docs/Estudo_SMTP_Convites.md`.
+
+Direção recomendada para avaliação:
+
+- Supabase Auth para identidade e ciclo de senha.
+- Resend como Custom SMTP inicial.
+- Estado de convite persistido por tenant.
+- Reenvio, cancelamento e auditoria no xCRM.
+- API do provedor reservada para futuros e-mails comerciais, mantendo Auth separado de campanhas.
+
+### Confiança ao Concluir Atividades
+
+A issue `#75` foi iniciada em 2026-07-19 para padronizar a conclusão de atividades nas superfícies operacionais.
+
+Primeiro corte implementado:
+
+- Conclusão imediata, sem modal de confirmação para uma ação frequente.
+- Feedback contextual com identificação da atividade.
+- Ação `Desfazer` disponível por 5 minutos.
+- Validação de tenant, escopo, status e prazo no servidor.
+- Histórico de conclusão e reabertura.
+- Comportamento compartilhado entre Dashboard Anterior, Agenda e Empresa/Prospect.
 
 ## 12. Proximos passos sugeridos
 

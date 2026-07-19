@@ -149,6 +149,10 @@ function canManageCompanySettings(role: string) {
   return ["OWNER", "ADMIN"].includes(role);
 }
 
+function getWebsiteHref(website: string) {
+  return /^https?:\/\//i.test(website) ? website : `https://${website}`;
+}
+
 type AccountsPageProps = {
   searchParams: Promise<{
     error?: string;
@@ -744,29 +748,44 @@ export default async function AccountsPage({
                     : "Sem Próxima Ação agendada";
 
                   return (
-                    <Link
+                    <article
                       key={account.id}
-                      href={`/accounts/${account.id}`}
-                      className="group grid cursor-pointer gap-3 px-4 py-4 transition-colors hover:bg-surface-muted/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary md:grid-cols-[1.4fr_1fr]"
-                      aria-label={`Editar Empresa/Prospect ${account.name}`}
+                      className="group relative grid gap-3 px-4 py-4 transition-colors hover:bg-surface-muted/70 md:grid-cols-[minmax(0,1fr)_minmax(14rem,22rem)]"
                     >
-                      <div className="min-w-0">
+                      <Link
+                        href={`/accounts/${account.id}`}
+                        className="absolute inset-0 z-0 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+                        aria-label={`Editar Empresa/Prospect ${account.name}`}
+                      />
+                      <div className="pointer-events-none relative z-[1] min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-sm font-semibold transition-colors group-hover:text-primary">
-                            {account.name}
-                          </h3>
                           <span className="rounded bg-surface-muted px-2 py-1 text-xs font-medium text-muted">
                             {accountStatusLabels[account.status]}
                           </span>
+                          <h3 className="text-sm font-semibold transition-colors group-hover:text-primary">
+                            {account.name}
+                          </h3>
                         </div>
-                        <p className="mt-1 text-xs leading-5 text-muted">
-                          {[account.city, account.state]
-                            .filter(Boolean)
-                            .join(" - ") || "Localização não informada"}
-                        </p>
-                        <p className="text-xs leading-5 text-muted">
-                          {account.website ?? "Site não informado"}
-                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-5 text-muted">
+                          <span>
+                            {[account.city, account.state]
+                              .filter(Boolean)
+                              .join(" - ") || "Localização não informada"}
+                          </span>
+                          {account.website ? (
+                            <a
+                              href={getWebsiteHref(account.website)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="pointer-events-auto relative z-10 break-all text-primary underline-offset-4 hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                              aria-label={`Abrir site de ${account.name} em nova aba`}
+                            >
+                              {account.website}
+                            </a>
+                          ) : (
+                            <span>Site não informado</span>
+                          )}
+                        </div>
                         <div className="mt-3 grid gap-2 text-xs leading-5 text-muted">
                           <p className="flex items-center gap-2">
                             <History
@@ -787,7 +806,7 @@ export default async function AccountsPage({
                           </p>
                         </div>
                       </div>
-                      <div className="rounded-md bg-background p-3 text-xs leading-5 text-muted">
+                      <div className="pointer-events-none relative z-[1] self-start rounded-md bg-background p-3 text-xs leading-5 text-muted">
                         <div className="flex items-center gap-2 text-foreground">
                           <UserRound size={14} aria-hidden />
                           <span className="font-medium">
@@ -799,7 +818,7 @@ export default async function AccountsPage({
                         </p>
                         <p>{primaryContact?.phone ?? "Telefone não informado"}</p>
                       </div>
-                    </Link>
+                    </article>
                   );
                 })}
               </div>

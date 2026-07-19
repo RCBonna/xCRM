@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/app/auth/actions";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
+import { ActivityFeedback } from "@/components/activity-feedback";
 import { DashboardPendingActivitiesPanel } from "@/components/dashboard-pending-activities-panel";
 import { TenantBrand } from "@/components/tenant-brand";
 import { UserIdentityCard } from "@/components/user-identity-card";
@@ -40,6 +41,8 @@ type DashboardPageProps = {
   searchParams: Promise<{
     error?: string;
     message?: string;
+    undoActivityId?: string;
+    undoUntil?: string;
   }>;
 };
 
@@ -308,20 +311,14 @@ export default async function PreviousDashboardPage({ searchParams }: DashboardP
           </div>
         </header>
 
-        {(params.error || params.message) && (
-          <div
-            role={params.error ? "alert" : "status"}
-            aria-live={params.error ? "assertive" : "polite"}
-            className={[
-              "rounded-md border px-3 py-2 text-sm",
-              params.error
-                ? "border-danger text-danger"
-                : "border-border text-muted",
-            ].join(" ")}
-          >
-            {params.error ?? params.message}
-          </div>
-        )}
+        <ActivityFeedback
+          key={params.undoActivityId ?? "dashboard-feedback"}
+          error={params.error}
+          message={params.message}
+          undoActivityId={params.undoActivityId}
+          undoUntil={params.undoUntil}
+          returnTo="/dashboard-anterior"
+        />
 
         <section className="rounded-md border border-border bg-surface">
           <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">

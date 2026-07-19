@@ -846,3 +846,19 @@ Ultima modificacao: 2026-07-18 17:56:19 -03:00
 - Atualizada versao WIP para `2026-07-18 21:37:54`.
 - Ajustado o painel `Destino da Importação` para manter o select `Decisão Para Esta Linha` dentro do box, empilhando em larguras menores e limitando a largura apenas em telas `xl`.
 - Atualizada versao WIP para `2026-07-18 21:49:48`.
+- Validada, publicada e encerrada a issue GitHub `#103`; commit `98e324d` enviado ao branch `main`.
+- Encerradas as issues `#99`, `#95` e `#97` após confirmação de validação funcional pelo usuário.
+- Iniciada a issue `#55` com inventário canônico das 16 migrations, verificador automatizado e seed neutro compatível com `supabase/config.toml`.
+- Criado `Docs/Roteiro_Recriacao_Banco.md`, registrando riscos atuais, ordem provisória, bootstrap e bloqueios antes de testar um reset completo.
+- Criado `Docs/Estudo_SMTP_Convites.md` para a issue `#36`, comparando Resend, Brevo, Postmark, Amazon SES e SMTP corporativo.
+- Recomendada a arquitetura Supabase Auth + Custom SMTP do Resend + estado persistido de convites no xCRM.
+- Atualizada versao WIP para `2026-07-18 22:42:18`.
+- Iniciada a issue GitHub `#75` para aumentar a confiança na conclusão de atividades.
+- Centralizadas as regras de conclusão e reabertura de atividades, com validação de tenant, visibilidade e estado no servidor.
+- Dashboard Anterior, Agenda e Empresa/Prospect passaram a exibir confirmação contextual e botão `Desfazer` por 5 minutos.
+- Conclusão e reabertura agora geram histórico comercial consistente; operações concorrentes são protegidas por atualização condicional dentro de transação.
+- Atualizada versao WIP para `2026-07-19 09:36:56`.
+- Reorganizada a leitura dos registros da Base Comercial, exibindo status antes do nome e reunindo localização e Site na segunda linha.
+- O Site passou a abrir como link independente em nova aba, sem perder o clique no restante do registro para editar a Empresa/Prospect.
+- Compactado o resumo do Contato Principal, com largura máxima e altura ajustada ao conteúdo.
+- Atualizada versao WIP para `2026-07-19 20:00:16`.

@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getAppUser } from "@/lib/auth";
+import {
+  ACTIVITY_UNDO_WINDOW_MS,
+  completeVisibleActivity,
+} from "@/lib/activity-completion";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getActivityVisibilityWhere } from "@/lib/visibility";
@@ -138,36 +142,34 @@ export async function completeAgendaActivityAction(formData: FormData) {
     redirect(withFeedback(returnTo, "error", "Atividade não informada."));
   }
 
-  const activity = await findVisibleActivity(activityId, appUser);
+  const result = await completeVisibleActivity({
+    activityId,
+    actor: appUser,
+    source: "Agenda",
+  });
 
-  if (!activity || activity.status !== "PENDING") {
+  if (!result.ok) {
     redirect(withFeedback(returnTo, "error", "Atividade pendente não encontrada no seu escopo."));
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.activity.update({
-      where: { id: activity.id },
-      data: {
-        status: "COMPLETED",
-        completedAt: new Date(),
-      },
-    });
-
-    await tx.interaction.create({
-      data: {
-        tenantId: appUser.tenantId,
-        accountId: activity.accountId,
-        userId: appUser.id,
-        channel: "MANUAL_NOTE",
-        direction: "INTERNAL",
-        summary: "Ação Concluída",
-        body: `Atividade concluída pela Agenda: ${activity.title}.`,
-      },
-    });
-  });
-
   revalidatePath("/agenda");
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard-anterior");
   revalidatePath("/accounts");
-  redirect(withFeedback(returnTo, "message", "Atividade concluída."));
+
+  if (result.accountId) {
+    revalidatePath(`/accounts/${result.accountId}`);
+  }
+
+  const feedbackUrl = new URL(returnTo, "http://xcrm.local");
+  feedbackUrl.searchParams.set(
+    "message",
+    `Atividade "${result.title}" concluída.`,
+  );
+  feedbackUrl.searchParams.set("undoActivityId", result.activityId);
+  feedbackUrl.searchParams.set(
+    "undoUntil",
+    String(result.completedAt.getTime() + ACTIVITY_UNDO_WINDOW_MS),
+  );
+  redirect(`${feedbackUrl.pathname}${feedbackUrl.search}`);
 }

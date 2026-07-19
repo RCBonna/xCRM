@@ -33,6 +33,7 @@ import { signOutAction } from "@/app/auth/actions";
 import { ActionDateTimeInput } from "@/components/action-date-time-input";
 import { AccountAddPanel } from "@/components/account-add-panel";
 import { AppSettingsMenu } from "@/components/app-settings-menu";
+import { ActivityFeedback } from "@/components/activity-feedback";
 import { AccountCompletedActivitiesPanel } from "@/components/account-completed-activities-panel";
 import { AccountContactsPanel } from "@/components/account-contacts-panel";
 import { AccountCustomerDataPanel } from "@/components/account-customer-data-panel";
@@ -143,6 +144,8 @@ type AccountDetailPageProps = {
   searchParams: Promise<{
     error?: string;
     message?: string;
+    undoActivityId?: string;
+    undoUntil?: string;
   }>;
 };
 
@@ -548,20 +551,15 @@ export default async function AccountDetailPage({
           </Link>
 
           <div className="md:flex md:justify-end">
-            {(feedback.error || feedback.message) && (
-              <div
-                role={feedback.error ? "alert" : "status"}
-                aria-live={feedback.error ? "assertive" : "polite"}
-                className={[
-                  "w-full rounded-md border px-3 py-2 text-sm md:max-w-xl",
-                  feedback.error
-                    ? "border-danger text-danger"
-                    : "border-border text-muted",
-                ].join(" ")}
-              >
-                {feedback.error ?? feedback.message}
-              </div>
-            )}
+            <ActivityFeedback
+              key={feedback.undoActivityId ?? "account-feedback"}
+              error={feedback.error}
+              message={feedback.message}
+              undoActivityId={feedback.undoActivityId}
+              undoUntil={feedback.undoUntil}
+              returnTo={`/accounts/${account.id}`}
+              className="w-full md:max-w-xl"
+            />
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 # Documentacao Tecnica do xCRM
 
 Criado em: 2026-06-12 20:13:05 -03:00  
-Ultima modificacao: 2026-07-18 17:56:19 -03:00
+Ultima modificacao: 2026-07-18 22:42:18 -03:00
 Status: Documento vivo de arquitetura, implementacao e operacao tecnica
 
 ## Regra de manutencao
@@ -677,10 +677,25 @@ Observacoes de seguranca:
 
 ## Proteção Contra Descarte Acidental em Empresas/Prospects
 
+- Os registros da Base Comercial usam uma camada de navegação sobre toda a linha para manter o acesso ao detalhe por qualquer área livre, enquanto o Site permanece um link externo independente e semanticamente válido.
+- A hierarquia da linha apresenta primeiro o status e depois o nome da Empresa/Prospect; localização e Site compartilham a linha seguinte. O resumo do Contato Principal usa largura máxima controlada e altura definida pelo próprio conteúdo.
+
 - `AccountsTabsNavigation` e `AccountCreateActions` usam `serializeCreateForm` para comparar o `FormData` atual com o retrato inicial do formulário `new-account-form`.
 - O campo técnico `returnTo` é ignorado na comparação.
 - Quando há diferença real, `UnsavedAccountDialog` substitui `window.confirm` por um diálogo interno com `role="alertdialog"`, foco inicial em `Continuar Editando`, fechamento por `Esc` e ação explícita `Descartar e Sair`.
 - Quando o formulário está vazio ou igual ao retrato inicial, a navegação para `Base Comercial` ocorre sem confirmação.
+
+## Conclusão e Reabertura de Atividades
+
+- A issue `#75` padroniza a conclusão de atividades no Dashboard Anterior, na Agenda e no detalhe de Empresa/Prospect.
+- `src/lib/activity-completion.ts` concentra as transações de conclusão e reabertura, sempre aplicando tenant e regra de visibilidade antes da alteração.
+- A conclusão troca `PENDING` por `COMPLETED`, grava `completedAt` e registra `Ação Concluída` no histórico comercial.
+- Após concluir, a interface exibe feedback contextual com o título da atividade e a ação `Desfazer` durante 5 minutos.
+- `undoActivityCompletionAction` aceita somente retornos internos para Agenda, Dashboard Anterior ou detalhe de Empresa/Prospect, evitando redirecionamento externo.
+- O desfazer valida novamente autenticação, tenant, visibilidade, status e prazo no servidor; quando válido, restaura `PENDING`, limpa `completedAt` e registra `Ação Reaberta`.
+- As atualizações usam `updateMany` condicionado ao estado anterior dentro de transação, impedindo conclusão ou reabertura duplicada em solicitações concorrentes.
+- O feedback usa `role="status"` ou `role="alert"`, `aria-live` e botão com estado de processamento. A expiração visual não substitui a validação obrigatória do servidor.
+- Não foi necessária migration: a implementação reutiliza `Activity.status`, `Activity.completedAt` e `Interaction`.
 
 ## Aviso de Empresa/Prospect Existente na Importação
 
@@ -738,6 +753,24 @@ Observacoes de seguranca:
 - `reprocessImportRowContactsAction` reutiliza o `columnMapping` da carga para recriar contatos a partir dos Dados Originais da Planilha.
 - Evoluções ainda possíveis: gerenciar/inativar modelos salvos em tela dedicada, exportar XLSX nativo além do CSV e mostrar uma prévia normalizada linha a linha antes da carga.
 
+## Reproducao do Banco e Manifesto de Migrations
+
+- A issue `#55` passa a ser acompanhada por `Docs/Roteiro_Recriacao_Banco.md`.
+- `scripts/db/migration-manifest.json` declara a ordem canônica provisória das 16 migrations divididas entre `supabase/migrations` e `prisma`.
+- `scripts/db/verify-migration-manifest.mjs` verifica arquivos ausentes, vazios, duplicados, fora de ordem e SQLs não declarados.
+- `npm run db:migrations:verify` executa essa validação sem conectar ou alterar banco algum.
+- `supabase/seed.sql` foi criado como seed neutro porque o seed está habilitado em `supabase/config.toml`.
+- O seed não cria tenant nem credenciais. O primeiro tenant continua sendo criado pelo onboarding autenticado; o Platform Admin depende de bootstrap controlado com um UUID real de `auth.users`.
+- O projeto ainda não está autorizado a executar reset integral: as migrations em `prisma/*.sql` não entram automaticamente no `supabase db reset` e precisam ser consolidadas no histórico do Supabase na Fase 2.
+
+## Estudo de SMTP e Convites
+
+- `Docs/Estudo_SMTP_Convites.md` registra a análise da issue `#36`.
+- A recomendação é manter o Supabase Auth como autoridade de identidade e usar Custom SMTP do Resend para entrega.
+- O fluxo futuro deve chamar `supabase.auth.admin.inviteUserByEmail` somente no servidor e persistir estados do convite para permitir reenvio, cancelamento, auditoria e recuperação de falhas parciais.
+- A chave administrativa do Supabase nunca deve ser exposta com prefixo `NEXT_PUBLIC_` nem armazenada no banco.
+- Nenhuma integração SMTP ou mudança de autenticação foi aplicada nesta etapa; o documento aguarda decisão do usuário.
+
 ## Versao WIP no topo
 
 Enquanto o projeto estiver em desenvolvimento, toda tela deve exibir no topo:
@@ -748,7 +781,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-07-18 21:49:48`
+- Valor: `2026-07-18 22:42:18`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

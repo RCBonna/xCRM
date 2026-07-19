@@ -684,9 +684,19 @@ As Propostas ficam vinculadas à Oportunidade e geram registros no Histórico Co
 
 ## Proteção de Cadastro em Andamento
 
+Na aba `Base Comercial`, cada registro mostra o status antes do nome da Empresa/Prospect. A linha seguinte reúne Cidade/UF e o Site. Clique no Site para abri-lo em uma nova aba; clique em qualquer outra área do registro para editar a Empresa/Prospect.
+
 Na tela `Empresas/Prospects`, se houver dados digitados na aba `Nova Empresa/Prospect` e o usuário tentar voltar para `Base Comercial` ou clicar em `Cancelar`, o xCRM mostra uma confirmação própria com as opções `Continuar Editando` e `Descartar e Sair`.
 
 Quando o formulário está vazio, a troca para `Base Comercial` ocorre sem aviso.
+
+## Concluir e Desfazer Atividades
+
+Ao concluir uma atividade no `Dashboard Anterior`, na `Agenda de Atividades` ou na Empresa/Prospect, o xCRM conclui a ação imediatamente e mostra uma confirmação com o nome da atividade.
+
+Durante os 5 minutos seguintes, use o botão `Desfazer` dessa mensagem para devolver a atividade às pendências. A lista, os indicadores e o histórico são atualizados automaticamente.
+
+Depois de 5 minutos, o botão deixa de ficar disponível. Se a atividade já tiver sido alterada por outra pessoa ou não estiver mais no seu escopo de acesso, o xCRM informa que não foi possível desfazer.
 
 - Para suspender uma organização, clique em `Suspender Organização`, informe o motivo obrigatório e confirme a operação. A equipe perde o acesso operacional até que a organização seja reativada.
 - Para reativar, clique em `Reativar Organização`, revise o impacto e confirme. Um motivo pode ser registrado para auditoria.

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "description": "Ordem canonica provisoria das migrations do xCRM enquanto os arquivos permanecem divididos entre Supabase e Prisma.",
+  "migrations": [
+    "supabase/migrations/20260612203250_init_xcrm_core.sql",
+    "supabase/migrations/20260612211500_allow_auth_user_multi_tenant.sql",
+    "supabase/migrations/20260613122754_accent_portuguese_labels.sql",
+    "supabase/migrations/20260613141121_add_account_notes.sql",
+    "supabase/migrations/20260613202532_title_case_visible_labels.sql",
+    "supabase/migrations/20260613210800_add_primary_contact_flag.sql",
+    "supabase/migrations/20260615164630_add_customer_address_fields.sql",
+    "prisma/20260615191000_add_tenant_segment.sql",
+    "prisma/20260616193138_add_team_status.sql",
+    "prisma/20260618192000_platform_admin_notifications.sql",
+    "prisma/20260629115500_add_import_review_statuses.sql",
+    "prisma/20260712070221_enable_rls_platform_admin_notifications.sql",
+    "prisma/20260712192500_add_import_source_path.sql",
+    "prisma/20260713111500_add_tenant_status_events.sql",
+    "prisma/20260717143000_add_products_and_proposals.sql",
+    "prisma/20260718180500_add_import_mapping_templates.sql"
+  ]
+}
