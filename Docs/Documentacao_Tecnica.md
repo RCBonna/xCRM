@@ -787,6 +787,13 @@ Observacoes de seguranca:
 - O clique fora apenas fecha o painel e não força a restauração de foco, preservando o destino escolhido pelo usuário do ponteiro.
 - O rótulo acessível do disparador alterna entre `Abrir Menu` e `Fechar Menu` conforme o estado.
 
+## Legibilidade do Dashboard no Mobile
+
+- O Dashboard redesenhado na issue `#99` usa `text-sm` para metadados operacionais de métricas, Pipeline, atividades e movimentações.
+- `UserIdentityCard` usa 14px para e-mail e papel em larguras abaixo de `sm`, retornando a 12px no desktop para manter o cabeçalho compacto.
+- Badges numéricos e a versão WIP permanecem em 12px por serem informações auxiliares curtas.
+- A validação da issue `#78` confirmou ausência de overflow horizontal em 320px, 390px, 1037px e 1440px.
+
 ## Versao WIP no topo
 
 Enquanto o projeto estiver em desenvolvimento, toda tela deve exibir no topo:
@@ -797,7 +804,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-07-19 20:45:05`
+- Valor: `2026-07-19 21:43:16`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

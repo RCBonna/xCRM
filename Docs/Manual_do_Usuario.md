@@ -702,6 +702,8 @@ Abra o menu superior pelo botão `Abrir Menu`. O foco do teclado será levado ao
 
 Pressione `Esc` para fechar o painel e retornar ao botão do menu. O botão passa a ser anunciado como `Fechar Menu` enquanto o painel estiver aberto.
 
+No celular, o e-mail e o papel exibidos no cartão do usuário usam texto maior para facilitar a leitura. Em telas maiores, o texto fica mais compacto para preservar espaço no cabeçalho.
+
 ## Concluir e Desfazer Atividades
 
 Ao concluir uma atividade no `Dashboard Anterior`, na `Agenda de Atividades` ou na Empresa/Prospect, o xCRM conclui a ação imediatamente e mostra uma confirmação com o nome da atividade.

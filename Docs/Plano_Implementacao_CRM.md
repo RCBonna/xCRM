@@ -940,6 +940,15 @@ A issue `#77` implementa gerenciamento explícito de foco no menu compartilhado:
 - rótulo acessível coerente com o estado aberto ou fechado;
 - preservação do foco do usuário ao fechar por clique externo.
 
+### Legibilidade Mobile do Dashboard
+
+A issue `#78` consolida o padrão responsivo após o redesenho da #99:
+
+- metadados operacionais usam pelo menos 14px no mobile;
+- elementos estritamente auxiliares podem permanecer em 12px;
+- o cartão de identidade aumenta e-mail/papel no mobile e preserva a densidade no desktop;
+- a validação cobre 320px, 390px, 1037px e 1440px sem overflow horizontal.
+
 ## 12. Proximos passos sugeridos
 
 1. Inicializar repositorio Git/GitHub, se ainda nao existir.

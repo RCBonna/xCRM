@@ -32,7 +32,7 @@ export function UserIdentityCard({
       </span>
       <div className="min-w-0">
         <p className="truncate text-sm font-medium leading-4">{name}</p>
-        <p className="truncate text-xs leading-4 text-muted">
+        <p className="truncate text-sm leading-4 text-muted sm:text-xs">
           {email} - {roleLabel}
         </p>
       </div>

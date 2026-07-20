@@ -877,3 +877,10 @@ Ultima modificacao: 2026-07-18 17:56:19 -03:00
 - Atualizada versao WIP para `2026-07-19 21:25:27`.
 - Issues GitHub `#77` e `#104` validadas funcionalmente pelo usuário e encerradas.
 - Atualizada versao WIP para `2026-07-19 21:36:41`.
+- Iniciada a issue GitHub `#78` para revisar a legibilidade dos metadados do Dashboard no mobile.
+- Confirmado que o redesenho da issue `#99` já havia removido os antigos Acessos Rápidos e elevado para 14px os metadados de métricas, Pipeline e movimentações.
+- O e-mail e papel no cartão de identidade passaram a usar 14px no mobile e 12px a partir de `sm`, preservando densidade no desktop.
+- Validado no navegador autenticado em 320px, 390px, 1037px e 1440px, sem overflow horizontal; somente a versão WIP permanece em 12px no mobile por ser informação auxiliar.
+- Atualizada versao WIP para `2026-07-19 21:43:16`.
+- Issue GitHub `#78` validada funcionalmente pelo usuário e encerrada.
+- Atualizada versao WIP para `2026-07-19 21:47:43`.
