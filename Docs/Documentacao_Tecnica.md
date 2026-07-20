@@ -282,6 +282,14 @@ Prioridade do MVP:
 - Claro.
 - Escuro.
 
+Persistência e isolamento:
+
+- `AppSettingsMenu` grava a preferência local na chave `xcrm-theme:tenant:{tenantId}:user:{userId}`.
+- O tema é uma preferência pessoal no dispositivo atual; não altera a configuração visual dos demais usuários da organização.
+- `useSyncExternalStore` mantém componentes e abas do mesmo usuário/tenant sincronizados e reage ao evento nativo de `storage`.
+- A chave global antiga `xcrm-theme` não é mais consumida, evitando herança entre organizações.
+- As rotas `/login` e `/platform` montam `ThemeScope` com o tema `Sistema`: o Login ainda não conhece usuário/tenant e a Administração da Plataforma não oferece seletor de tema.
+
 ## Validacoes atuais
 
 Comandos ja usados na fundacao:
@@ -771,6 +779,14 @@ Observacoes de seguranca:
 - A chave administrativa do Supabase nunca deve ser exposta com prefixo `NEXT_PUBLIC_` nem armazenada no banco.
 - Nenhuma integração SMTP ou mudança de autenticação foi aplicada nesta etapa; o documento aguarda decisão do usuário.
 
+## Gerenciamento de Foco do Menu Superior
+
+- `src/components/app-settings-menu.tsx` mantém referências explícitas para o botão disparador e o painel compartilhado.
+- Quando o painel é aberto, o foco é movido para o botão do tema ativo; se ele não estiver disponível, o primeiro controle interativo é usado como fallback.
+- Ao pressionar `Esc`, o painel é desmontado e o foco retorna ao botão do menu no frame seguinte.
+- O clique fora apenas fecha o painel e não força a restauração de foco, preservando o destino escolhido pelo usuário do ponteiro.
+- O rótulo acessível do disparador alterna entre `Abrir Menu` e `Fechar Menu` conforme o estado.
+
 ## Versao WIP no topo
 
 Enquanto o projeto estiver em desenvolvimento, toda tela deve exibir no topo:
@@ -781,7 +797,7 @@ Versao: AAAA-MM-DD hh:mm:ss
 
 Implementacao atual:
 
-- Valor: `2026-07-18 22:42:18`
+- Valor: `2026-07-19 20:45:05`
 - Arquivo fonte: `src/lib/app-version.ts`
 - Componente global: `src/components/version-banner.tsx`
 - Renderizacao: `src/app/layout.tsx`

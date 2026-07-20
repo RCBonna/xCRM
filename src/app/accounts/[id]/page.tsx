@@ -529,6 +529,8 @@ export default async function AccountDetailPage({
               unreadNotificationsCount={unreadNotificationsCount}
             />
             <AppSettingsMenu
+              tenantId={appUser.tenantId}
+              userId={appUser.id}
               canManageCompanySettings={canOpenCompanySettings}
               canImportData={canImportData}
             />

@@ -299,6 +299,8 @@ export default async function PreviousDashboardPage({ searchParams }: DashboardP
               />
             </div>
             <AppSettingsMenu
+              tenantId={appUser.tenantId}
+              userId={appUser.id}
               canManageCompanySettings={canOpenCompanySettings}
               canImportData={canImportData}
             />

@@ -120,6 +120,8 @@ export default async function ProductEditPage({
               unreadNotificationsCount={unreadNotificationsCount}
             />
             <AppSettingsMenu
+              tenantId={appUser.tenantId}
+              userId={appUser.id}
               canManageCompanySettings
               canImportData={appUser.role === "OWNER"}
             />

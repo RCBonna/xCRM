@@ -160,7 +160,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
           <TenantBrand organizationName={appUser.tenant.name} title="Agenda de Atividades" subtitle={`Planejamento comercial no escopo de ${roleLabel.toLocaleLowerCase("pt-BR")}.`} />
           <div className="grid w-full grid-cols-[auto_minmax(0,1fr)] gap-2 sm:w-auto sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
             <div className="col-span-2 min-w-0 sm:col-span-1"><UserIdentityCard name={appUser.name || user.email || "Usuário autenticado"} email={appUser.email || user.email || "E-mail não informado"} role={roleLabel} unreadNotificationsCount={unreadNotificationsCount} /></div>
-            <AppSettingsMenu canManageCompanySettings={canManageCompanySettings} canImportData={appUser.role === "OWNER"} />
+            <AppSettingsMenu tenantId={appUser.tenantId} userId={appUser.id} canManageCompanySettings={canManageCompanySettings} canImportData={appUser.role === "OWNER"} />
             <form action={signOutAction}><button className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium"><LogOut size={16} aria-hidden />Sair</button></form>
           </div>
         </header>

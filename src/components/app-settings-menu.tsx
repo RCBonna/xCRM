@@ -16,7 +16,13 @@ import {
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 const themes = [
   { value: "system", label: "Sistema", icon: Monitor },
@@ -28,34 +34,69 @@ const themes = [
 
 type ThemeValue = (typeof themes)[number]["value"];
 
+const THEME_CHANGE_EVENT = "xcrm-theme-change";
+
+function getServerTheme(): ThemeValue {
+  return "system";
+}
+
 type AppSettingsMenuProps = {
+  tenantId: string;
+  userId: string;
   canManageCompanySettings?: boolean;
   canImportData?: boolean;
 };
 
 export function AppSettingsMenu({
+  tenantId,
+  userId,
   canManageCompanySettings = false,
   canImportData = false,
 }: AppSettingsMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const themeStorageKey = `xcrm-theme:tenant:${tenantId}:user:${userId}`;
   const [isOpen, setIsOpen] = useState(false);
-  const [theme, setTheme] = useState<ThemeValue>(() => {
-    if (typeof window === "undefined") {
-      return "system";
-    }
-
-    const storedTheme = window.localStorage.getItem("xcrm-theme");
+  const getThemeSnapshot = useCallback((): ThemeValue => {
+    const storedTheme = window.localStorage.getItem(themeStorageKey);
     return themes.some((item) => item.value === storedTheme)
       ? (storedTheme as ThemeValue)
       : "system";
-  });
+  }, [themeStorageKey]);
+  const subscribeToTheme = useCallback(
+    (onStoreChange: () => void) => {
+      function handleStorage(event: StorageEvent) {
+        if (event.key === themeStorageKey) {
+          onStoreChange();
+        }
+      }
+
+      window.addEventListener("storage", handleStorage);
+      window.addEventListener(THEME_CHANGE_EVENT, onStoreChange);
+
+      return () => {
+        window.removeEventListener("storage", handleStorage);
+        window.removeEventListener(THEME_CHANGE_EVENT, onStoreChange);
+      };
+    },
+    [themeStorageKey],
+  );
+  const theme = useSyncExternalStore(
+    subscribeToTheme,
+    getThemeSnapshot,
+    getServerTheme,
+  );
 
   useEffect(() => {
-    window.localStorage.setItem("xcrm-theme", theme);
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
   useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
     function handlePointerDown(event: PointerEvent) {
       if (
         menuRef.current &&
@@ -71,33 +112,53 @@ export function AppSettingsMenu({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, []);
+  }, [isOpen]);
 
   useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      const activeTheme = panelRef.current?.querySelector<HTMLElement>(
+        '[aria-pressed="true"]',
+      );
+      const firstControl = panelRef.current?.querySelector<HTMLElement>(
+        'button:not([disabled]), a[href]',
+      );
+
+      (activeTheme ?? firstControl)?.focus();
+    });
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        event.preventDefault();
         setIsOpen(false);
+        window.requestAnimationFrame(() => triggerRef.current?.focus());
       }
     }
 
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [isOpen]);
 
   function updateTheme(value: ThemeValue) {
-    setTheme(value);
+    window.localStorage.setItem(themeStorageKey, value);
+    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }
 
   return (
     <div ref={menuRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         aria-expanded={isOpen}
         aria-controls="app-settings-menu-panel"
-        aria-label="Abrir Menu"
+        aria-label={isOpen ? "Fechar Menu" : "Abrir Menu"}
         title="Menu"
         onClick={() => setIsOpen((current) => !current)}
         className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-border bg-surface text-muted transition-colors hover:border-primary hover:text-foreground"
@@ -107,6 +168,7 @@ export function AppSettingsMenu({
 
       {isOpen ? (
         <div
+          ref={panelRef}
           id="app-settings-menu-panel"
           className="absolute left-0 top-14 z-20 w-72 rounded-md border border-border bg-surface shadow-lg shadow-black/10 sm:left-auto sm:right-0"
         >

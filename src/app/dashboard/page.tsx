@@ -450,6 +450,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               />
             </div>
             <AppSettingsMenu
+              tenantId={appUser.tenantId}
+              userId={appUser.id}
               canManageCompanySettings={canOpenCompanySettings}
               canImportData={appUser.role === "OWNER"}
             />

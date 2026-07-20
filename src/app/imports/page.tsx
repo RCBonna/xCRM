@@ -432,7 +432,7 @@ export default async function ImportsPage({ searchParams }: ImportsPageProps) {
               <ArrowLeft size={16} aria-hidden />
               Dashboard
             </Link>
-            <AppSettingsMenu canManageCompanySettings canImportData />
+            <AppSettingsMenu tenantId={appUser.tenantId} userId={appUser.id} canManageCompanySettings canImportData />
             <form action={signOutAction}>
               <button className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium">
                 <LogOut size={16} aria-hidden />

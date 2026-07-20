@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { signOutAction } from "@/app/auth/actions";
 import { markPlatformNotificationsReadAction } from "@/app/platform/actions";
 import { PlatformTenantManagement } from "@/components/platform-tenant-management";
+import { ThemeScope } from "@/components/theme-scope";
 import { getPlatformAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -78,6 +79,7 @@ export default async function PlatformPage({ searchParams }: PlatformPageProps) 
 
   return (
     <main className="min-h-screen bg-background text-foreground">
+      <ThemeScope />
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">

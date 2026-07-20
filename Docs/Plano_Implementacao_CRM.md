@@ -555,7 +555,9 @@ Regras iniciais:
 - `Sistema`, `Claro` e `Escuro` devem entrar no MVP.
 - `Azul` e `Verde` podem entrar como temas opcionais se o custo for baixo depois que os tokens estiverem prontos.
 - Todos os temas precisam respeitar contraste, legibilidade e estados de foco/erro/sucesso.
-- A preferencia de tema deve ser salva por usuario e respeitar tenant quando houver configuracao visual da empresa.
+- A preferencia local de tema deve ser salva por usuário e tenant, sem vazar entre organizações ou ser confundida com configuração visual corporativa.
+- O Login deve usar o tema `Sistema` enquanto não houver contexto autenticado de usuário e tenant.
+- A Administração da Plataforma deve usar o tema `Sistema` enquanto não houver um seletor próprio para esse contexto.
 
 ## 8. Stack tecnologica sugerida
 
@@ -928,6 +930,15 @@ Primeiro corte implementado:
 - Validação de tenant, escopo, status e prazo no servidor.
 - Histórico de conclusão e reabertura.
 - Comportamento compartilhado entre Dashboard Anterior, Agenda e Empresa/Prospect.
+
+### Acessibilidade do Menu Superior
+
+A issue `#77` implementa gerenciamento explícito de foco no menu compartilhado:
+
+- foco inicial no tema ativo ao abrir;
+- retorno ao botão disparador ao fechar com `Esc`;
+- rótulo acessível coerente com o estado aberto ou fechado;
+- preservação do foco do usuário ao fechar por clique externo.
 
 ## 12. Proximos passos sugeridos
 

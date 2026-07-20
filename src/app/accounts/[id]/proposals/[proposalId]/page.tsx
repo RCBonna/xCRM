@@ -135,6 +135,8 @@ export default async function ProposalPage({
               unreadNotificationsCount={unreadNotificationsCount}
             />
             <AppSettingsMenu
+              tenantId={appUser.tenantId}
+              userId={appUser.id}
               canManageCompanySettings={["OWNER", "ADMIN"].includes(appUser.role)}
               canImportData={appUser.role === "OWNER"}
             />

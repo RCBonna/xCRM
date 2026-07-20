@@ -416,6 +416,8 @@ export default async function AccountsPage({
               Dashboard
             </Link>
             <AppSettingsMenu
+              tenantId={appUser.tenantId}
+              userId={appUser.id}
               canManageCompanySettings={canOpenCompanySettings}
               canImportData={canImportData}
             />

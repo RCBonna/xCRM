@@ -63,6 +63,12 @@ No MVP, a prioridade e garantir:
 - Claro.
 - Escuro.
 
+A escolha fica salva neste navegador para o usuário dentro da organização atual. Trocar o tema em uma organização não altera a preferência usada pelo mesmo usuário em outra organização.
+
+A tela de Login usa sempre o tema `Sistema`, porque a organização e o usuário ainda não foram identificados.
+
+A tela `Administração da Plataforma xCRM` usa sempre o tema `Sistema` e não herda o tema selecionado nas áreas operacionais dos clientes.
+
 ## Feedback Visual dos Botoes
 
 Os botoes e links com aparência de botao respondem visualmente ao mouse e ao clique:
@@ -689,6 +695,12 @@ Na aba `Base Comercial`, cada registro mostra o status antes do nome da Empresa/
 Na tela `Empresas/Prospects`, se houver dados digitados na aba `Nova Empresa/Prospect` e o usuário tentar voltar para `Base Comercial` ou clicar em `Cancelar`, o xCRM mostra uma confirmação própria com as opções `Continuar Editando` e `Descartar e Sair`.
 
 Quando o formulário está vazio, a troca para `Base Comercial` ocorre sem aviso.
+
+## Navegação pelo Menu Superior
+
+Abra o menu superior pelo botão `Abrir Menu`. O foco do teclado será levado ao tema atualmente selecionado, permitindo continuar a navegação com `Tab`.
+
+Pressione `Esc` para fechar o painel e retornar ao botão do menu. O botão passa a ser anunciado como `Fechar Menu` enquanto o painel estiver aberto.
 
 ## Concluir e Desfazer Atividades
 

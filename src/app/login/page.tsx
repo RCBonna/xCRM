@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { LoginAccessTabs } from "@/components/login-access-tabs";
 import { LoginInfoPanel } from "@/components/login-info-panel";
+import { ThemeScope } from "@/components/theme-scope";
 import { getDefaultRedirectPath } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -27,6 +28,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="min-h-screen bg-background px-4 py-8 text-foreground">
+      <ThemeScope />
       <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_1.1fr]">
         <section className="flex min-h-[32rem] flex-col justify-between rounded-md border border-border bg-surface p-6">
           <div>

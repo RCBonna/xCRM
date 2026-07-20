@@ -84,6 +84,8 @@ export default async function CompanySettingsPage({
               unreadNotificationsCount={unreadNotificationsCount}
             />
             <AppSettingsMenu
+              tenantId={appUser.tenantId}
+              userId={appUser.id}
               canManageCompanySettings={canManageCompanySettings(appUser.role)}
               canImportData={canImportData}
             />

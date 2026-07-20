@@ -12,6 +12,7 @@ const themes = [
 ] as const;
 
 type ThemeValue = (typeof themes)[number]["value"];
+const PUBLIC_THEME_STORAGE_KEY = "xcrm-theme:public";
 
 export function ThemeSelector() {
   const [theme, setTheme] = useState<ThemeValue>(() => {
@@ -19,14 +20,14 @@ export function ThemeSelector() {
       return "system";
     }
 
-    const storedTheme = window.localStorage.getItem("xcrm-theme");
+    const storedTheme = window.localStorage.getItem(PUBLIC_THEME_STORAGE_KEY);
     return themes.some((item) => item.value === storedTheme)
       ? (storedTheme as ThemeValue)
       : "system";
   });
 
   useEffect(() => {
-    window.localStorage.setItem("xcrm-theme", theme);
+    window.localStorage.setItem(PUBLIC_THEME_STORAGE_KEY, theme);
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 

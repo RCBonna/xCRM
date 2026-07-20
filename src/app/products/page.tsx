@@ -189,6 +189,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               unreadNotificationsCount={unreadNotificationsCount}
             />
             <AppSettingsMenu
+              tenantId={appUser.tenantId}
+              userId={appUser.id}
               canManageCompanySettings
               canImportData={appUser.role === "OWNER"}
             />

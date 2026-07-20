@@ -862,3 +862,18 @@ Ultima modificacao: 2026-07-18 17:56:19 -03:00
 - O Site passou a abrir como link independente em nova aba, sem perder o clique no restante do registro para editar a Empresa/Prospect.
 - Compactado o resumo do Contato Principal, com largura máxima e altura ajustada ao conteúdo.
 - Atualizada versao WIP para `2026-07-19 20:00:16`.
+- Iniciada a issue GitHub `#77` para corrigir a ordem de foco do menu superior compartilhado.
+- Ao abrir o menu, o foco passa ao tema atualmente selecionado; ao fechar com `Esc`, retorna ao botão disparador.
+- O fechamento por clique fora preserva o foco do elemento acionado, evitando interferência na navegação por ponteiro.
+- Atualizada versao WIP para `2026-07-19 20:16:44`.
+- Criada e iniciada a issue GitHub `#104` após identificar compartilhamento indevido da preferência de tema entre organizações no mesmo navegador.
+- A chave local do tema passou a ser isolada por organização e usuário autenticado, evitando que a escolha em um tenant seja aplicada a outro.
+- A Administração da Plataforma passou a aplicar sempre o tema `Sistema`, sem herdar o último tema operacional utilizado.
+- A sincronização da preferência usa `useSyncExternalStore`, incluindo atualização entre abas do mesmo usuário e tenant sem misturar escopos.
+- Atualizada versao WIP para `2026-07-19 20:37:59`.
+- A tela de Login passou a aplicar explicitamente o tema `Sistema`, pois ainda não existe contexto autenticado de usuário e organização.
+- Atualizada versao WIP para `2026-07-19 20:45:05`.
+- Registrada no `AGENTS.md` a regra de que o encerramento de toda issue deve vir acompanhado do próximo passo lógico e prioritário, com justificativa, dependências, implementação prevista e forma de validação.
+- Atualizada versao WIP para `2026-07-19 21:25:27`.
+- Issues GitHub `#77` e `#104` validadas funcionalmente pelo usuário e encerradas.
+- Atualizada versao WIP para `2026-07-19 21:36:41`.

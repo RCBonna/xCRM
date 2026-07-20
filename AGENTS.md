@@ -9,6 +9,7 @@
 - Manter as Issues do Git atualizadas com o que for feito no app.
 - Quando reportado um erro, gerar uma issue para documentar e, depois de testado, fechar.
 - Quando terminarmos ajustes ou implementacoes, verificar no GitHub se tem issue e atualizar.
+- Sempre que uma issue for concluida, apresentar ao usuario o proximo passo logico e prioritario, informando obrigatoriamente: por que ele vem em seguida, dependencias, o que sera implementado e como podera ser validado.
 - Nao e necessario avisar sobre a pasta NFC-e, pois e uma pasta somente de testes de importacao de cupom.
 - A cada mudanca no app, atualizar tambem a documentacao tecnica e o manual do usuario quando a mudanca afetar arquitetura, configuracao, fluxo, tela, regra de negocio, permissao, IA, importacao, banco de dados ou comportamento visivel.
 - Como o projeto esta em WIP, manter no topo da tela a informacao `Versao: AAAA-MM-DD hh:mm:ss`. Todas as vezes que qualquer arquivo do sistema for alterado, atualizar esta informacao para a data/hora da mudanca. Futuramente isso pode ser substituido por build/commit do Git.

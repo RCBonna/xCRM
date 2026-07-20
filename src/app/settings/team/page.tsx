@@ -202,6 +202,8 @@ export default async function TeamSettingsPage({
               unreadNotificationsCount={unreadNotificationsCount}
             />
             <AppSettingsMenu
+              tenantId={appUser.tenantId}
+              userId={appUser.id}
               canManageCompanySettings
               canImportData={canImportData}
             />
